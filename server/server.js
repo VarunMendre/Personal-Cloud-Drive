@@ -1,7 +1,10 @@
 import { createWriteStream } from "fs";
-import { open, readdir, readFile, rm, rename } from "fs/promises";
+import { open, readdir, rm, rename, mkdir } from "fs/promises";
 import http from "http";
 import mime from "mime-types";
+import path from "path";
+
+const STORAGE = "./storage";
 
 const server = http.createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -22,57 +25,91 @@ const server = http.createServer(async (req, res) => {
         });
         console.log(queryParam);
 
-        const fileHandle = await open(`./storage${decodeURIComponent(url)}`);
+        const fullPath = path.join(STORAGE, decodeURIComponent(url));
+        const fileHandle = await open(fullPath);
         const stats = await fileHandle.stat();
+
         if (stats.isDirectory()) {
           serveDirectory(req, res);
         } else {
           const readStream = fileHandle.createReadStream();
-          res.setHeader("Content-Type", mime.contentType(url.slice(1)));
+          const ext = path.extname(fullPath);
+          res.setHeader(
+            "Content-Type",
+            mime.contentType(ext) || "application/octet-stream"
+          );
           res.setHeader("Content-Length", stats.size);
           if (queryParam.action === "download") {
             res.setHeader(
               "Content-Disposition",
-              `attachment; filename="${url.slice(1)}"`
+              `attachment; filename="${path.basename(fullPath)}"`
             );
           }
           readStream.pipe(res);
         }
       } catch (err) {
         console.log(err.message);
+        res.statusCode = 404;
         res.end("Not Found!");
       }
     }
   } else if (req.method === "OPTIONS") {
     res.end("OK");
   } else if (req.method === "POST") {
-    const writeStream = createWriteStream(`./storage/${req.headers.filename}`);
-    let count = 0;
-    req.on("data", (chunk) => {
-      count++;
-      writeStream.write(chunk);
-    });
-    req.on("end", () => {
-      console.log(count);
-      writeStream.end();
-      res.end("File uploaded on the server");
-    });
+    const contentType = req.headers["content-type"];
+    const folderPath = `./storage${req.url}`;
+
+    if (contentType === "application/json") {
+      //create folder
+      req.on("data", async (chunk) => {
+        const { folderName, type } = JSON.parse(chunk.toString());
+
+        if (type === "directory") {
+          try {
+            await mkdir(`${folderPath}${folderName}`, { recursive: true });
+            res.end("Folder created successfully");
+          } catch (error) {
+            res.end("Error while creating folder: " + error.message);
+          }
+        }
+      });
+    } else {
+      //Upload file
+      const writeStream = createWriteStream(
+        `${folderPath}${req.headers.filename}`
+      );
+      req.on("data", (chunk) => {
+        writeStream.write(chunk);
+      });
+      req.on("end", () => {
+        writeStream.end();
+        res.end("File uploaded on the server");
+      });
+    }
   } else if (req.method === "DELETE") {
+    const filePath = `./storage/${req.url}`;
     req.on("data", async (chunk) => {
       try {
-        const filename = chunk.toString();
-        await rm(`./storage/${filename}`);
-        res.end("File deleted successfully");
+        const { filename, type } = JSON.parse(chunk.toString());
+
+        if (type === "file") {
+          await rm(`${filePath}${filename}`);
+          res.end("File deleted successfully");
+        } else if (type === "directory") {
+          await rm(`${filePath}${filename}`, { recursive: true, force: true });
+          res.end("Folder deleted successfully");
+        }
       } catch (err) {
         res.end(err.message);
       }
     });
   } else if (req.method === "PATCH") {
+    const folderPath = `./storage/${req.url}`;
     req.on("data", async (chunk) => {
       const data = JSON.parse(chunk.toString());
       await rename(
-        `./storage/${data.oldFilename}`,
-        `./storage/${data.newFilename}`
+        `${folderPath}${data.oldFilename}`,
+        `${folderPath}${data.newFilename}`
       );
       res.end("File Renamed");
     });
@@ -80,12 +117,22 @@ const server = http.createServer(async (req, res) => {
 });
 
 async function serveDirectory(req, res) {
+  const folderPath = `./storage/${req.url}`;
   const [url] = req.url.split("?");
-  const itemsList = await readdir(`./storage${url}`);
+  const items = await readdir(`${folderPath}`, { withFileTypes: true });
+
+  const itemsList = await Promise.all(
+    items.map(async (item) => {
+      return {
+        name: item.name,
+        type: item.isDirectory() ? "directory" : "file",
+      };
+    })
+  );
   res.setHeader("Content-Type", "application/json");
   res.end(JSON.stringify(itemsList));
 }
 
-server.listen(80,() => {
+server.listen(80, () => {
   console.log("Server started");
 });
