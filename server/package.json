@@ -1,6 +1,18 @@
 {
     "type": "module",
     "dependencies": {
+        "express": "^5.1.0",
         "mime-types": "^2.1.35"
-    }
+    },
+    "name": "server",
+    "version": "1.0.0",
+    "description": "",
+    "main": "express_server.js",
+    "devDependencies": {},
+    "scripts": {
+        "dev": "node --watch server.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
 }
