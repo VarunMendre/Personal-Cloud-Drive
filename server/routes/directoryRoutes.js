@@ -1,20 +1,25 @@
 import express from "express";
 import { mkdir, readdir, stat } from "fs/promises";
-import path from "path";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const STORAGE_PATH = join(__dirname, "../storage");
 
 const router = express.Router();
 
 // Read
 router.get("/?*", async (req, res) => {
-  const dirname = path.join("/", req.params[0]);
-  const fullDirPath = `./storage/${dirname ? dirname : ""}`;
+  const dirname = req.params[0] || "";
+  const fullDirPath = join(STORAGE_PATH, dirname);
 
   try {
     const filesList = await readdir(fullDirPath);
     const resData = [];
 
     for (const item of filesList) {
-      const stats = await stat(`${fullDirPath}/${item}`);
+      const stats = await stat(join(fullDirPath, item));
       resData.push({ name: item, isDirectory: stats.isDirectory() });
     }
     res.json(resData);
@@ -25,9 +30,9 @@ router.get("/?*", async (req, res) => {
 
 // Create Directory
 router.post("/?*", async (req, res) => {
-  const dirname = path.join("/", req.params[0]);
+  const dirname = req.params[0];
   try {
-    await mkdir(`./storage/${dirname}`);
+    await mkdir(join(STORAGE_PATH,dirname));
     res.json({ message: "Directory Created!" });
   } catch (err) {
     res.json({ err: err.message });
