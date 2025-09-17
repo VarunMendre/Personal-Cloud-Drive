@@ -33,5 +33,9 @@ Thumbs.db
 # Server specific
 server/storage/*
 
+directoriesDB.json
+filesDB.json
+
+
 # Allow storage folder itself but ignore its contents
 !server/storage/.gitkeep

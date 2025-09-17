@@ -2,7 +2,7 @@
     "type": "module",
     "dependencies": {
         "cors": "^2.8.5",
-        "express": "^4.19.2",
+        "express": "^4.21.2",
         "mime-types": "^2.1.35"
     },
     "name": "server",
