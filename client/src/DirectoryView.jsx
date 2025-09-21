@@ -3,7 +3,6 @@ import { Link, useParams } from "react-router-dom";
 
 function DirectoryView() {
   const BASE_URL = "http://localhost:4000";
-  const [directoryItems, setDirectoryItems] = useState([]);
   const [directoriesList, setDirectoriesList] = useState([]);
   const [filesList, setFilesList] = useState([]);
   const [progress, setProgress] = useState(0);
@@ -106,7 +105,23 @@ function DirectoryView() {
 
   return (
     <>
-      <h1>My Files</h1>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+        }}
+      >
+        <h1>My Files</h1>
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+          }}
+        >
+          <Link to="/register">Register</Link>
+          <Link to="/login">Login</Link>
+        </div>
+      </div>
       <input type="file" onChange={uploadFile} />
       <input
         type="text"

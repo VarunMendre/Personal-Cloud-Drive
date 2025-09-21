@@ -35,7 +35,7 @@ server/storage/*
 
 directoriesDB.json
 filesDB.json
-
+usersDB.json
 
 # Allow storage folder itself but ignore its contents
 !server/storage/.gitkeep
