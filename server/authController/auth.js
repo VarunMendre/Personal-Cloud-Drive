@@ -7,6 +7,6 @@ export default function checkAuth(req, res, next) {
   if (!uid || !user) {
     return res.status(401).json({ message: "Unauthorized Access" });
   }
-
+  req.user = user;
   next();
 }

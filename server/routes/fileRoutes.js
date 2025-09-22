@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Create
 router.post("/:parentDirId?", (req, res, next) => {
-  const parentDirId = req.params.parentDirId || directoriesData[0].id;
+  const parentDirId = req.params.parentDirId || req.user.rootDirId
   const filename = req.headers.filename || 'untitled';
   const id = crypto.randomUUID();
   const extension = path.extname(filename);
@@ -41,6 +41,11 @@ router.post("/:parentDirId?", (req, res, next) => {
 router.get("/:id", (req, res) => {
   const { id } = req.params;
   const fileData = filesData.find((file) => file.id === id);
+  const parentDir = directoriesData.find(dir => dir.id === fileData.parentDirId );
+
+  if(parentDir.userId !== req.user.id) {
+    res.status(401).json({error: "Unauthorized Access"});
+  }
 
   if (!fileData) {
     return res.status(404).json({ message: "File Not Found!" });
