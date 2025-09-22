@@ -78,13 +78,16 @@ router.get("/:id", (req, res) => {
     return res.status(403).json({ error: "You don't have access to this file." });
   }
 
+  const filePath = `${process.cwd()}/storage/${id}${fileData.extension}`
+
   // If "download" is requested, set the appropriate headers
   if (req.query.action === "download") {
-    res.set("Content-Disposition", `attachment; filename=${fileData.name}`);
+    // res.set("Content-Disposition", `attachment; filename=${fileData.name}`);
+    return res.download(filePath, fileData.name);
   }
 
   // Send file
-  return res.sendFile(`${process.cwd()}/storage/${id}${fileData.extension}`, (err) => {
+  return res.sendFile(filePath, (err) => {
     if (!res.headersSent && err) {
       return res.status(404).json({ error: "File not found!" });
     }
