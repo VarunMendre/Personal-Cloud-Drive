@@ -42,9 +42,15 @@ function DirectoryView() {
    * Fetch directory contents
    */
   async function getDirectoryItems() {
-    const response = await fetch(`${BASE_URL}/directory/${dirId || ""}`);
+    const response = await fetch(`${BASE_URL}/directory/${dirId || ""}`,{
+      credentials:"include",
+    });
     const data = await response.json();
 
+    if(response.status === 401) {
+      navigate("/login");
+      return;
+    }
     // Set directory name
     if (data.name) {
       setDirectoryName(dirId ? data.name : "My Drive");
@@ -253,6 +259,7 @@ function DirectoryView() {
       headers: {
         dirname: newDirname,
       },
+      credentials: "include"
     });
     setNewDirname("New Folder");
     setShowCreateDirModal(false);

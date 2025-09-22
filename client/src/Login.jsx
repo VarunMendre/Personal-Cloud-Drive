@@ -33,12 +33,13 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch(`${BASE_URL}/login`, {
+      const response = await fetch(`${BASE_URL}/user/login`, {
         method: "POST",
         body: JSON.stringify(formData),
         headers: {
           "Content-Type": "application/json",
         },
+        credentials:"include",
       });
 
       const data = await response.json();

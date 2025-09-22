@@ -6,7 +6,7 @@ import usersData from '../usersDB.json' with {type: "json"}
 const router = express.Router();
 
 
-router.post('/', async (req, res, next) => {
+router.post('/register', async (req, res, next) => {
   const {name, email, password} = req.body
 
   const foundUser = usersData.find((user) => user.email === email)
@@ -48,5 +48,19 @@ router.post('/', async (req, res, next) => {
 
 })
 
+router.post("/login", async (req, res, next) => {
+  const {email, password} = req.body;
+  const user = usersData.find((user) => user.email === email);
+
+  if(!user || user.password !== password) {
+    return res.status(404).json({error: "Invalid Credentials"});
+  }
+
+  res.cookie('uid', user.id, {
+    httpOnly:true,
+    maxAge: 60 * 1000 * 60 * 24 * 7,
+  })
+  res.json({message: "Logged in"})
+});
 
 export default router;

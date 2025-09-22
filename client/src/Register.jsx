@@ -39,7 +39,7 @@ const Register = () => {
     setIsSuccess(false); // reset success if any
 
     try {
-      const response = await fetch(`${BASE_URL}/user`, {
+      const response = await fetch(`${BASE_URL}/user/register`, {
         method: "POST",
         body: JSON.stringify(formData),
         headers: {
