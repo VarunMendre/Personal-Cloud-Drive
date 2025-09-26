@@ -2,7 +2,7 @@ import express from "express";
 import { writeFile } from "fs/promises";
 import directoriesData from '../directoriesDB.json' with {type: "json"}
 import usersData from '../usersDB.json' with {type: "json"}
-import checkAuth from "../authController/auth.js";
+import checkAuth from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -72,5 +72,7 @@ router.post('/logout', checkAuth, (req, res) => {
   res.clearCookie('uid');
   res.status(204).end();
 });
+
+
 
 export default router;
