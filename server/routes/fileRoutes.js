@@ -6,6 +6,14 @@ import crypto from "crypto"; // Ensure you're importing crypto if not already
 import directoriesData from "../directoriesDB.json" with { type: "json" };
 import filesData from "../filesDB.json" with { type: "json" };
 import validateIdMiddleware from "../middleware/validateIdMiddleware.js";
+import { MongoClient } from "mongodb";
+
+const client = new MongoClient("mongodb://127.0.0.1:27017/");
+await client.connect();
+
+const db = client.db("StorageDrive");
+const directoryCollection = db.collection("directoriesCollection");
+const filesCollection = db.collection("filesCollection");
 
 const router = express.Router();
 
@@ -30,7 +38,9 @@ router.post("/:parentDirId?", (req, res, next) => {
   if (parentDirData.userId !== req.user.id) {
     return res
       .status(403)
-      .json({ error: "You do not have permission to upload to this directory." });
+      .json({
+        error: "You do not have permission to upload to this directory.",
+      });
   }
 
   const filename = req.headers.filename || "untitled";
@@ -74,15 +84,19 @@ router.get("/:id", (req, res) => {
   }
 
   // Check parent directory ownership
-  const parentDir = directoriesData.find((dir) => dir.id === fileData.parentDirId);
+  const parentDir = directoriesData.find(
+    (dir) => dir.id === fileData.parentDirId
+  );
   if (!parentDir) {
     return res.status(404).json({ error: "Parent directory not found!" });
   }
   if (parentDir.userId !== req.user.id) {
-    return res.status(403).json({ error: "You don't have access to this file." });
+    return res
+      .status(403)
+      .json({ error: "You don't have access to this file." });
   }
 
-  const filePath = `${process.cwd()}/storage/${id}${fileData.extension}`
+  const filePath = `${process.cwd()}/storage/${id}${fileData.extension}`;
 
   // If "download" is requested, set the appropriate headers
   if (req.query.action === "download") {
@@ -111,12 +125,16 @@ router.patch("/:id", async (req, res, next) => {
   }
 
   // Check parent directory ownership
-  const parentDir = directoriesData.find((dir) => dir.id === fileData.parentDirId);
+  const parentDir = directoriesData.find(
+    (dir) => dir.id === fileData.parentDirId
+  );
   if (!parentDir) {
     return res.status(404).json({ error: "Parent directory not found!" });
   }
   if (parentDir.userId !== req.user.id) {
-    return res.status(403).json({ error: "You don't have access to this file." });
+    return res
+      .status(403)
+      .json({ error: "You don't have access to this file." });
   }
 
   // Perform rename
@@ -145,12 +163,16 @@ router.delete("/:id", async (req, res, next) => {
   const fileData = filesData[fileIndex];
 
   // Check parent directory ownership
-  const parentDir = directoriesData.find((dir) => dir.id === fileData.parentDirId);
+  const parentDir = directoriesData.find(
+    (dir) => dir.id === fileData.parentDirId
+  );
   if (!parentDir) {
     return res.status(404).json({ error: "Parent directory not found!" });
   }
   if (parentDir.userId !== req.user.id) {
-    return res.status(403).json({ error: "You don't have access to this file." });
+    return res
+      .status(403)
+      .json({ error: "You don't have access to this file." });
   }
 
   try {
@@ -170,5 +192,15 @@ router.delete("/:id", async (req, res, next) => {
     next(err);
   }
 });
+const dirCount = await directoryCollection.countDocuments();
+if (dirCount === 0) {
+  await directoryCollection.insertMany(directoriesData);
+}
+
+const fileCount = await filesCollection.countDocuments();
+if (fileCount === 0) {
+  await filesCollection.insertMany(filesData);
+}
+
 
 export default router;

@@ -5,25 +5,39 @@ import directoryRoutes from "./routes/directoryRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import checkAuth from "./middleware/authMiddleware.js";
+import { connectDB } from "./db.js";
 
-const app = express();
+try {
+  const db = await connectDB();
+  console.log(db.namespace);
 
-app.use(cookieParser())
-app.use(express.json());
+  const app = express();
 
-app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true,
-}));
+  app.use(cookieParser());
+  app.use(express.json());
 
-app.use("/directory",checkAuth, directoryRoutes);
-app.use("/file", checkAuth, fileRoutes);
-app.use("/user", userRoutes);
+  app.use(
+    cors({
+      origin: "http://localhost:5173",
+      credentials: true,
+    })
+  );
 
-app.use((err, req, res, next) => {
-  res.status(err.status || 500).json({ message: "Something went wrong!" });
-});
+  app.use((req, res, next) => {
+    req.db = db;
+    next();
+  });
+  app.use("/directory", checkAuth, directoryRoutes);
+  app.use("/file", checkAuth, fileRoutes);
+  app.use("/user", userRoutes);
 
-app.listen(4000, () => {
-  console.log(`Server Started`);
-});
+  app.use((err, req, res, next) => {
+    res.status(err.status || 500).json({ message: "Something went wrong!" });
+  });
+
+  app.listen(4000, () => {
+    console.log(`Server Started`);
+  });
+} catch (err) {
+  console.log(err.message);
+}

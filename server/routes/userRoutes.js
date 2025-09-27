@@ -3,6 +3,13 @@ import { writeFile } from "fs/promises";
 import directoriesData from '../directoriesDB.json' with {type: "json"}
 import usersData from '../usersDB.json' with {type: "json"}
 import checkAuth from "../middleware/authMiddleware.js";
+import { MongoClient} from "mongodb";
+
+const client = new MongoClient("mongodb://127.0.0.1:27017/");
+await client.connect();
+
+const db = client.db("StorageDrive");
+const usersCollection = db.collection("usersCollection");
 
 const router = express.Router();
 
@@ -37,6 +44,8 @@ router.post('/register', async (req, res, next) => {
     password,
     rootDirId: dirId
   })
+
+  usersCollection.insertMany(usersData);
 
   try {
     await writeFile('./directoriesDB.json', JSON.stringify(directoriesData))
