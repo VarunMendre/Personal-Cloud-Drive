@@ -6,7 +6,6 @@ const router = express.Router();
 router.post("/register", async (req, res, next) => {
   const { name, email, password } = req.body;
   const db = req.db;
-
   const foundUser = await db.collection("users").findOne({ email });
   if (foundUser) {
     return res.status(409).json({
@@ -15,7 +14,6 @@ router.post("/register", async (req, res, next) => {
         "A user with this email address already exists. Please try logging in or use a different email.",
     });
   }
-
   try {
     const dirCollection = db.collection("directories");
     const userRootDir = await dirCollection.insertOne({
@@ -30,7 +28,6 @@ router.post("/register", async (req, res, next) => {
       password,
       rootDirId,
     });
-
     const userId = createdUser.insertedId;
     await dirCollection.updateOne({ _id: rootDirId }, { $set: { userId } });
     res.status(201).json({ message: "User Registered" });
@@ -60,7 +57,7 @@ router.get("/", checkAuth, (req, res) => {
   });
 });
 
-router.post("/logout", checkAuth, (req, res) => {
+router.post("/logout", (req, res) => {
   res.clearCookie("uid");
   res.status(204).end();
 });

@@ -1,44 +1,36 @@
 import express from "express";
 import { rm, writeFile } from "fs/promises";
-import crypto from "crypto";
-// import directoriesData from '../directoriesDB.json' with {type: "json"}
-// import filesData from '../filesDB.json' with {type: "json"}
+import directoriesData from "../directoriesDB.json" with { type: "json" };
+import filesData from "../filesDB.json" with { type: "json" };
 import validateIdMiddleware from "../middleware/validateIdMiddleware.js";
-import { ObjectId } from "mongodb";
+import { Db, ObjectId } from "mongodb";
 
 const router = express.Router();
 
-router.param("id", validateIdMiddleware);
 router.param("parentDirId", validateIdMiddleware);
+router.param("id", validateIdMiddleware);
 
 // Read
 router.get("/:id?", async (req, res) => {
-  const user = req.user;
   const db = req.db;
-  const id = req.params.id || user.rootDirId;
   const dirCollection = db.collection("directories");
-
-  // Find the directory and verify ownership
-  const directoryData = await dirCollection.findOne({
-    _id: new ObjectId(String(id)),
-  });
-
+  const user = req.user;
+  const _id = req.params.id ? new ObjectId(req.params.id) : user.rootDirId;
+  const directoryData = await dirCollection.findOne({ _id });
   if (!directoryData) {
     return res
       .status(404)
       .json({ error: "Directory not found or you do not have access to it!" });
   }
 
-  const files = [];
-  const directories = await dirCollection
-    .find({
-      parentDirId: new ObjectId(String(id)),
-    })
+  const files = await db
+    .collection("files")
+    .find({ parentDirId: directoryData._id })
     .toArray();
-
+  const directories = await dirCollection.find({ parentDirId: _id }).toArray();
   return res.status(200).json({
     ...directoryData,
-    files,
+    files: files.map((dir) => ({ ...dir, id: dir._id })),
     directories: directories.map((dir) => ({ ...dir, id: dir._id })),
   });
 });
@@ -50,10 +42,9 @@ router.post("/:parentDirId?", async (req, res, next) => {
 
   const parentDirId = req.params.parentDirId || user.rootDirId;
   const dirname = req.headers.dirname || "New Folder";
-
   try {
     const parentDir = await dirCollection.findOne({
-      _id: new ObjectId(String(parentDirId)),
+      _id: new Object(parentDirId),
     });
 
     if (!parentDir)
@@ -77,14 +68,16 @@ router.patch("/:id", async (req, res, next) => {
   const user = req.user;
   const { id } = req.params;
   const { newDirName } = req.body;
-  const db= req.db;
+  const db = req.db;
   const dirCollection = db.collection("directories");
-
   try {
-    await dirCollection.updateOne({
-      _id: new ObjectId(String(id)),
-      userId: user._id,
-    }, {$set: {name: newDirName}});
+    await dirCollection.updateOne(
+      {
+        _id: new ObjectId(id),
+        userId: user._id,
+      },
+      { $set: { name: newDirName } }
+    );
     res.status(200).json({ message: "Directory Renamed!" });
   } catch (err) {
     next(err);

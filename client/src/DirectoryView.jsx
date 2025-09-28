@@ -94,10 +94,17 @@ function DirectoryView() {
   }, [dirId]);
 
   /**
-   * Decide file icon
+   * Decide file icon (safe against null/undefined names)
    */
   function getFileIcon(filename) {
-    const ext = filename.split(".").pop().toLowerCase();
+    if (!filename || typeof filename !== "string") {
+      return "alt"; // fallback icon
+    }
+
+    const ext = filename.includes(".")
+      ? filename.split(".").pop().toLowerCase()
+      : "";
+
     switch (ext) {
       case "pdf":
         return "pdf";
@@ -381,6 +388,7 @@ function DirectoryView() {
     ...directoriesList.map((d) => ({ ...d, isDirectory: true })),
     ...filesList.map((f) => ({ ...f, isDirectory: false })),
   ];
+
   return (
     <div className="directory-view">
       {/* Top error message for general errors */}
