@@ -1,9 +1,7 @@
 import express from "express";
-import { rm, writeFile } from "fs/promises";
-import directoriesData from "../directoriesDB.json" with { type: "json" };
-import filesData from "../filesDB.json" with { type: "json" };
+import { rm } from "fs/promises";
 import validateIdMiddleware from "../middleware/validateIdMiddleware.js";
-import { Db, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 
 const router = express.Router();
 
@@ -40,11 +38,13 @@ router.post("/:parentDirId?", async (req, res, next) => {
   const db = req.db;
   const dirCollection = db.collection("directories");
 
-  const parentDirId = req.params.parentDirId || user.rootDirId;
+  const parentDirId = req.params.parentDirId
+    ? new ObjectId(req.params.parentDirId)
+    : user.rootDirId;
   const dirname = req.headers.dirname || "New Folder";
   try {
     const parentDir = await dirCollection.findOne({
-      _id: new Object(parentDirId),
+      _id: parentDirId,
     });
 
     if (!parentDir)
@@ -85,59 +85,57 @@ router.patch("/:id", async (req, res, next) => {
 });
 
 router.delete("/:id", async (req, res, next) => {
-  const user = req.user;
   const { id } = req.params;
-
-  const dirIndex = directoriesData.findIndex(
-    (directory) => directory.id === id
-  );
-  if (dirIndex === -1)
-    return res.status(404).json({ message: "Directory not found!" });
-
-  const directoryData = directoriesData[dirIndex];
-
-  // Check if the directory belongs to the user
-  if (directoryData.userId !== user.id) {
-    return res
-      .status(403)
-      .json({ message: "You are not authorized to delete this directory!" });
-  }
+  const db = req.db;
+  const dirCollection = db.collection("directories");
+  const filesCollection = db.collection("files");
+  const dirObjId = new ObjectId(id);
 
   try {
-    // Remove directory from the database
-    directoriesData.splice(dirIndex, 1);
+    const dirData = await dirCollection.findOne({
+      _id: dirObjId,
+      userId: req.user._id,
+    });
 
-    // Delete all associated files
-    for await (const fileId of directoryData.files) {
-      const fileIndex = filesData.findIndex((file) => file.id === fileId);
-      const fileData = filesData[fileIndex];
-      await rm(`./storage/${fileId}${fileData.extension}`);
-      filesData.splice(fileIndex, 1);
+    if (!dirData) {
+      return res.status(404).json({ error: "Directory not found" });
     }
 
-    // Delete all child directories
-    for await (const dirId of directoryData.directories) {
-      const childDirIndex = directoriesData.findIndex(({ id }) => id === dirId);
-      directoriesData.splice(childDirIndex, 1);
+    async function getDirContents(id) {
+      let files = await filesCollection
+        .find({ parentDirId: id }, { projection: { extension: 1 } })
+        .toArray();
+
+      let directories = await dirCollection
+        .find({ parentDirId: id }, { projection: { _id: 1 } })
+        .toArray();
+
+      for (const { _id, name } of directories) {
+        const { files: childFiles, directories: childDirectories } =
+          await getDirContents(new ObjectId(_id));
+
+        files = [...files, ...childFiles];
+        directories = [...directories, ...childDirectories];
+      }
+      return { files, directories };
     }
 
-    // Update parent directory
-    const parentDirData = directoriesData.find(
-      (dirData) => dirData.id === directoryData.parentDirId
-    );
-    if (parentDirData) {
-      parentDirData.directories = parentDirData.directories.filter(
-        (dirId) => dirId !== id
-      );
+    const { files, directories } = await getDirContents(dirObjId);
+
+    for (const { _id, extension } of files) {
+      await rm(`./storage/${_id.toString()}${extension}`);
     }
 
-    // Save updated data to the database
-    await writeFile("./filesDB.json", JSON.stringify(filesData));
-    await writeFile("./directoriesDB.json", JSON.stringify(directoriesData));
+    await filesCollection.deleteMany({
+      _id: { $in: files.map(({ _id }) => _id) },
+    });
+    await dirCollection.deleteMany({
+      _id: { $in: [...directories.map(({ _id }) => _id), dirObjId] },
+    });
 
-    res.status(200).json({ message: "Directory Deleted!" });
+    return res.json({ message: "File Deleted Successfully" });
   } catch (err) {
-    next(err);
+    return res.json({ error: `${err}` });
   }
 });
 
