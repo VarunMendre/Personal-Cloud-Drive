@@ -36,7 +36,11 @@ router.post("/register", async (req, res, next) => {
     });
     res.status(201).json({ message: "User Registered" });
   } catch (err) {
-    next(err);
+    if(err.code === 121) {
+      return res.status(400).json({message: "Invalid input data make sure you insert correct details"});
+    }else{
+      next(err);
+    }
   }
 });
 
