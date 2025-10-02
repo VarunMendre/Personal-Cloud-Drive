@@ -2,8 +2,9 @@ import express from "express";
 import { createWriteStream } from "fs";
 import { rm } from "fs/promises";
 import path from "path";
-import validateIdMiddleware from "../middleware/validateIdMiddleware.js";
+import validateIdMiddleware from "../middlewares/validateIdMiddleware.js";
 import { ObjectId } from "mongodb";
+
 const router = express.Router();
 
 router.param("parentDirId", validateIdMiddleware);

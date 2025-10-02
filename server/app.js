@@ -4,19 +4,15 @@ import cookieParser from "cookie-parser";
 import directoryRoutes from "./routes/directoryRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import checkAuth from "./middleware/authMiddleware.js";
+import checkAuth from "./middlewares/authMiddleware.js";
 import { connectDB } from "./config/db.js";
-import { error } from "console";
 
 try {
   const db = await connectDB();
-  console.log(db.namespace);
 
   const app = express();
-
   app.use(cookieParser());
   app.use(express.json());
-
   app.use(
     cors({
       origin: "http://localhost:5173",
@@ -28,11 +24,13 @@ try {
     req.db = db;
     next();
   });
+
   app.use("/directory", checkAuth, directoryRoutes);
   app.use("/file", checkAuth, fileRoutes);
   app.use("/user", userRoutes);
 
   app.use((err, req, res, next) => {
+    console.log(err);
     res.status(err.status || 500).json({ error: "Something went wrong!" });
   });
 
@@ -40,5 +38,6 @@ try {
     console.log(`Server Started`);
   });
 } catch (err) {
-  console.log(err.message);
+  console.log("Could not connect to database!");
+  console.log(err);
 }

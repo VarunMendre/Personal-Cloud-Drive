@@ -1,6 +1,6 @@
 import express from "express";
 import { rm } from "fs/promises";
-import validateIdMiddleware from "../middleware/validateIdMiddleware.js";
+import validateIdMiddleware from "../middlewares/validateIdMiddleware.js";
 import { ObjectId } from "mongodb";
 
 const router = express.Router();
@@ -8,7 +8,6 @@ const router = express.Router();
 router.param("parentDirId", validateIdMiddleware);
 router.param("id", validateIdMiddleware);
 
-// Read
 router.get("/:id?", async (req, res) => {
   const db = req.db;
   const dirCollection = db.collection("directories");
@@ -58,9 +57,15 @@ router.post("/:parentDirId?", async (req, res, next) => {
       userId: user._id,
     });
 
-    return res.status(200).json({ message: "Directory Created!" });
+    return res.status(201).json({ message: "Directory Created!" });
   } catch (err) {
-    next(err);
+    if (err.code === 121) {
+      res
+        .status(400)
+        .json({ error: "Invalid input, please enter valid details" });
+    } else {
+      next(err);
+    }
   }
 });
 
@@ -87,56 +92,56 @@ router.patch("/:id", async (req, res, next) => {
 router.delete("/:id", async (req, res, next) => {
   const { id } = req.params;
   const db = req.db;
-  const dirCollection = db.collection("directories");
   const filesCollection = db.collection("files");
+  const dirCollection = db.collection("directories");
   const dirObjId = new ObjectId(id);
 
-  try {
-    const dirData = await dirCollection.findOne({
+  const directoryData = await dirCollection.findOne(
+    {
       _id: dirObjId,
       userId: req.user._id,
-    });
+    },
+    { projection: { _id: 1 } }
+  );
 
-    if (!dirData) {
-      return res.status(404).json({ error: "Directory not found" });
-    }
-
-    async function getDirContents(id) {
-      let files = await filesCollection
-        .find({ parentDirId: id }, { projection: { extension: 1 } })
-        .toArray();
-
-      let directories = await dirCollection
-        .find({ parentDirId: id }, { projection: { _id: 1 } })
-        .toArray();
-
-      for (const { _id, name } of directories) {
-        const { files: childFiles, directories: childDirectories } =
-          await getDirContents(new ObjectId(_id));
-
-        files = [...files, ...childFiles];
-        directories = [...directories, ...childDirectories];
-      }
-      return { files, directories };
-    }
-
-    const { files, directories } = await getDirContents(dirObjId);
-
-    for (const { _id, extension } of files) {
-      await rm(`./storage/${_id.toString()}${extension}`);
-    }
-
-    await filesCollection.deleteMany({
-      _id: { $in: files.map(({ _id }) => _id) },
-    });
-    await dirCollection.deleteMany({
-      _id: { $in: [...directories.map(({ _id }) => _id), dirObjId] },
-    });
-
-    return res.json({ message: "File Deleted Successfully" });
-  } catch (err) {
-    return res.json({ error: `${err}` });
+  if (!directoryData) {
+    return res.status(404).json({ error: "Directory not found!" });
   }
+
+  async function getDirectoryContents(id) {
+    let files = await filesCollection
+      .find({ parentDirId: id }, { projection: { extension: 1 } })
+      .toArray();
+    let directories = await dirCollection
+      .find({ parentDirId: id }, { projection: { _id: 1 } })
+      .toArray();
+
+    for (const { _id, name } of directories) {
+      const { files: childFiles, directories: childDirectories } =
+        await getDirectoryContents(new ObjectId(_id));
+
+      files = [...files, ...childFiles];
+      directories = [...directories, ...childDirectories];
+    }
+
+    return { files, directories };
+  }
+
+  const { files, directories } = await getDirectoryContents(dirObjId);
+
+  for (const { _id, extension } of files) {
+    await rm(`./storage/${_id.toString()}${extension}`);
+  }
+
+  await filesCollection.deleteMany({
+    _id: { $in: files.map(({ _id }) => _id) },
+  });
+
+  await dirCollection.deleteMany({
+    _id: { $in: [...directories.map(({ _id }) => _id), dirObjId] },
+  });
+
+  return res.json({ message: "Files deleted successfully" });
 });
 
 export default router;

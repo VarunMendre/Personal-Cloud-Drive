@@ -1,5 +1,5 @@
 import express from "express";
-import checkAuth from "../middleware/authMiddleware.js";
+import checkAuth from "../middlewares/authMiddleware.js";
 import { ObjectId } from "mongodb";
 
 const router = express.Router();
@@ -20,6 +20,8 @@ router.post("/register", async (req, res, next) => {
     const userId = new ObjectId();
     const dirCollection = db.collection("directories");
     
+    // startTransaction()
+
     await dirCollection.insertOne({
       _id: rootDirId,
       name: `root-${email}`,
@@ -34,11 +36,16 @@ router.post("/register", async (req, res, next) => {
       password,
       rootDirId,
     });
+
+    // commitTransaction()
+
     res.status(201).json({ message: "User Registered" });
   } catch (err) {
-    if(err.code === 121) {
-      return res.status(400).json({message: "Invalid input data make sure you insert correct details"});
-    }else{
+    if (err.code === 121) {
+      res
+        .status(400)
+        .json({ error: "Invalid input, please enter valid details" });
+    } else {
       next(err);
     }
   }
