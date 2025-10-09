@@ -1,16 +1,19 @@
-import { MongoClient } from "mongodb";
-
-export const client = new MongoClient("mongodb://varun:varun123@127.0.0.1:27017/storageApp");
+import mongoose from "mongoose";
 
 export async function connectDB() {
-  await client.connect();
-  const db = client.db();
-  console.log("Database connected");
-  return db;
+  try {
+    await mongoose.connect(
+      "mongodb://varun:varun123@127.0.0.1:27017/storageApp"
+    );
+    console.log("Database connected");
+  } catch (err) {
+    console.log(err);
+    console.log("DB Couldn't connect");
+    process.exit(1);
+  }
 }
 
 process.on("SIGINT", async () => {
-  await client.close();
   console.log("Client Disconnected!");
   process.exit(0);
 });
