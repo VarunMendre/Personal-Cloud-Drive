@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { rm } from "fs/promises";
 
-export const getDirectory = async (req, res) => {
+export const getDirectoryById = async (req, res) => {
   const db = req.db;
   const dirCollection = db.collection("directories");
   const user = req.user;
@@ -61,7 +61,7 @@ export const createDirectory = async (req, res, next) => {
   }
 }
 
-export const updateDirectory = async (req, res, next) => {
+export const renameDirectory = async (req, res, next) => {
   const user = req.user;
   const { id } = req.params;
   const { newDirName } = req.body;

@@ -72,7 +72,7 @@ export const getFiles = async (req, res) => {
   });
 };
 
-export const updateFile = async (req, res, next) => {
+export const renameFile = async (req, res, next) => {
   const { id } = req.params;
   const db = req.db;
   const filesCollection = db.collection("files");

@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { client } from "../config/db.js";
 
-export const userRegistration = async (req, res, next) => {
+export const register = async (req, res, next) => {
   const { name, email, password } = req.body;
   const db = req.db;
   const foundUser = await db.collection("users").findOne({ email });
@@ -52,7 +52,7 @@ export const userRegistration = async (req, res, next) => {
   }
 }
 
-export const userLogin = async (req, res, next) => {
+export const login = async (req, res, next) => {
   const { email, password } = req.body;
   const db = req.db;
   const user = await db.collection("users").findOne({ email, password });
@@ -66,14 +66,14 @@ export const userLogin = async (req, res, next) => {
   res.json({ message: "logged in" });
 }
 
-export const getUser = (req, res) => {
+export const getCurrentUser = (req, res) => {
   res.status(200).json({
     name: req.user.name,
     email: req.user.email,
   });
 }
 
-export const logoutUser = (req, res) => {
+export const logout = (req, res) => {
   res.clearCookie("uid");
   res.status(204).end();
 }
