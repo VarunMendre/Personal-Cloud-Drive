@@ -62,10 +62,21 @@ export const login = async (req, res, next) => {
   if (!user) {
     return res.status(404).json({ error: "Invalid Credentials" });
   }
-  res.cookie("uid", user._id.toString(), {
-    httpOnly: true,
-    maxAge: 60 * 1000 * 60 * 24 * 7,
-  });
+
+  const cookiePayload = {
+    expiry: Math.round(Date.now() / 1000 + 40),
+    id: user._id.toString(),
+  };
+
+  res.cookie(
+    "uid",
+    Buffer.from(JSON.stringify(cookiePayload)).toString("base64url"),
+    {
+      httpOnly: true,
+      maxAge: 60 * 1000 * 60 * 24 * 7,
+      // maxAge: 60 * 1000,
+    }
+  );
   res.json({ message: "logged in" });
 };
 
