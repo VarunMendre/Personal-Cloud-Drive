@@ -99,6 +99,6 @@ export const getCurrentUser = (req, res) => {
 };
 
 export const logout = (req, res) => {
-  res.clearCookie("uid");
+  res.clearCookie("token");
   res.status(204).end();
 };
