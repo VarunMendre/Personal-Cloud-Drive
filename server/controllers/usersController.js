@@ -3,8 +3,6 @@ import User from "../models/userModel.js";
 import mongoose, { Types } from "mongoose";
 import crypto, { sign } from "crypto";
 
-export const mySecretKey = "varun-mendre-secret-key";
-
 export const register = async (req, res, next) => {
   const { name, email, password } = req.body;
 
@@ -67,27 +65,15 @@ export const login = async (req, res, next) => {
   }
 
   const cookiePayload = JSON.stringify({
-    expiry: Math.round(Date.now() / 1000 + 40),
+    expiry: Math.round(Date.now() / 1000 + 100),
     id: user._id.toString(),
   });
 
-  const signature = crypto
-    .createHash("SHA-256")
-    .update(cookiePayload)
-    .update(mySecretKey)
-    .digest("base64url");
-
-  const signedCookiePayload = `${Buffer.from(cookiePayload).toString("base64url")}.${signature}`;
-
-  res.cookie(
-    "token",
-    signedCookiePayload,
-    {
-      httpOnly: true,
-      maxAge: 60 * 1000 * 60 * 24 * 7,
-      // maxAge: 60 * 1000,
-    }
-  );
+  res.cookie("token", Buffer.from(cookiePayload).toString("base64url"), {
+    httpOnly: true,
+    maxAge: 60 * 1000 * 60 * 24 * 7,
+    signed: true,
+  });
   res.json({ message: "logged in" });
 };
 

@@ -1,29 +1,17 @@
-import { mySecretKey } from "../controllers/usersController.js";
 import User from "../models/userModel.js";
 import crypto, { sign } from "crypto";
 
 export default async function checkAuth(req, res, next) {
-  const { token } = req.cookies;
+  const { token } = req.signedCookies;
+
   if (!token) {
+    res.clearCookie("token");
     return res.status(401).json({ error: "Not logged!" });
   }
 
-  const [payLoad, oldSignature] = token.split(".");
-
-  const jsonPayload = Buffer.from(payLoad, "base64url").toString();
-
-  const newSignature = crypto
-    .createHash("SHA-256")
-    .update(jsonPayload)
-    .update(mySecretKey)
-    .digest("base64url");
-
-  if (oldSignature !== newSignature) {
-    res.clearCookie("token");
-    return res.status(204).json({ error: "Not logged!" });
-  }
-
-  const { id, expiry: expiryTimeInSeconds } = JSON.parse(jsonPayload);
+  const { id, expiry: expiryTimeInSeconds } = JSON.parse(
+    Buffer.from(token, "base64url").toString()
+  );
 
   const currentTimeInSeconds = Math.round(Date.now() / 1000);
 
