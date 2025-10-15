@@ -7,10 +7,15 @@ export const register = async (req, res, next) => {
   const { name, email, password } = req.body;
   const session = await mongoose.startSession();
 
-  const hashedPassword = crypto
-    .createHash("SHA-256")
-    .update(password)
-    .digest("hex");
+  const salt = crypto.randomBytes(16);
+  const hashedPassword = crypto.pbkdf2Sync(
+    password,
+    salt,
+    100000,
+    32,
+    "SHA-256"
+  );
+
   try {
     const rootDirId = new Types.ObjectId();
     const userId = new Types.ObjectId();
@@ -33,7 +38,7 @@ export const register = async (req, res, next) => {
         _id: userId,
         name,
         email,
-        password: hashedPassword,
+        password: `${salt.toString('base64url')}.${hashedPassword.toString("base64url")}`,
         rootDirId,
       },
       { session }
@@ -69,15 +74,22 @@ export const login = async (req, res, next) => {
     return res.status(404).json({ error: "Invalid Credentials" });
   }
 
-  const enteredPasswordHash = crypto
-    .createHash("SHA-256")
-    .update(password)
-    .digest("hex");
+  const [salt, savedPasswordHash] = user.password.split(".");
+  const enteredPasswordHash = crypto.pbkdf2Sync(
+    password,
+    Buffer.from(salt, "base64url"),
+    100000,
+    32,
+    "SHA-256"
+  ).toString("base64url");
 
-  if (user.password != enteredPasswordHash) {
+  console.log(enteredPasswordHash);
+  console.log(savedPasswordHash);
+
+  if (savedPasswordHash != enteredPasswordHash) {
     return res.status(404).json({ error: "Invalid Credentials" });
   }
-  
+
   const cookiePayload = JSON.stringify({
     expiry: Math.round(Date.now() / 1000 + 100),
     id: user._id.toString(),

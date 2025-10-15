@@ -1,7 +1,10 @@
-import { connectDB, client } from "./db.js";
+import mongoose from "mongoose";
+import { connectDB } from "./db.js";
 
+await connectDB();
+const client = mongoose.connection.getClient();
 try {
-  const db = await connectDB();
+  const db = mongoose.connection.db;
 
   const command = "create";
 
@@ -33,6 +36,9 @@ try {
           rootDirId: {
             bsonType: "objectId",
           },
+          __v: {
+            bsonType: "int",
+          },
         },
         additionalProperties: false,
       },
@@ -61,6 +67,9 @@ try {
             bsonType: ["objectId", "null"],
           },
         },
+        __v: {
+          bsonType: "int",
+        },
         additionalProperties: false,
       },
     },
@@ -88,7 +97,10 @@ try {
             bsonType: "objectId",
           },
           parentDirId: {
-            bsonType: ["objectId", "null"],
+            bsonType: "objectId",
+          },
+          __v: {
+            bsonType: "int",
           },
         },
         additionalProperties: false,
