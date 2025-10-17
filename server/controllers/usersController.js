@@ -8,9 +8,15 @@ export const register = async (req, res, next) => {
   const { name, email, password } = req.body;
   const session = await mongoose.startSession();
 
-  const hashedPassword = await bcrypt.hash(password, 12);
+  
+  // const hashedPassword = await bcrypt.hash(password, 12);
 
   try {
+    const existsUser = await User.findOne({ email });
+    if (existsUser) {
+      return res.status(400).json({ message: "User Already exists" });
+    }
+
     const rootDirId = new Types.ObjectId();
     const userId = new Types.ObjectId();
 
@@ -32,7 +38,7 @@ export const register = async (req, res, next) => {
         _id: userId,
         name,
         email,
-        password: hashedPassword,
+        password,
         rootDirId,
       },
       { session }
