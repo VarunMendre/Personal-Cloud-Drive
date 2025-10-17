@@ -115,3 +115,12 @@ export const logout = async (req, res) => {
   res.clearCookie("sid");
   res.status(204).end();
 };
+
+export const logoutAll = async (req, res, next) => {
+  const { sid } = req.signedCookies;
+  const session = await Session.findById(sid);
+
+  await Session.deleteMany({ userId: session.userId })
+  res.clearCookie('sid');
+  res.status(204).end();
+};
