@@ -80,7 +80,19 @@ export const login = async (req, res, next) => {
     return res.status(404).json({ error: "Invalid Credentials" });
   }
 
+  const MAX_DEVICES = 2;
+  const allSessions = await Session.find({ userId: user._id }).sort({createdAt : 1});
+
+  if (allSessions.length >= MAX_DEVICES) {
+    const sessionsToDelete = allSessions.length - MAX_DEVICES + 1;
+    for (let i = 0; i < sessionsToDelete; i++) {
+      await Session.findByIdAndDelete(allSessions[0]._id);
+    }
+  }
+
+  
   const session = await Session.create({ userId: user._id });
+
 
   res.cookie("sid", session.id, {
     httpOnly: true,
@@ -97,7 +109,9 @@ export const getCurrentUser = (req, res) => {
   });
 };
 
-export const logout = (req, res) => {
+export const logout = async (req, res) => {
+  const { sid } = req.signedCookies;
+  await Session.findByIdAndDelete(sid);
   res.clearCookie("sid");
   res.status(204).end();
 };
