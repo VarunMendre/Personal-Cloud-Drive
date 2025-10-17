@@ -1,28 +1,23 @@
+import Session from "../models/sessionModel.js";
 import User from "../models/userModel.js";
-import crypto, { sign } from "crypto";
 
 export default async function checkAuth(req, res, next) {
-  const { token } = req.signedCookies;
+  const { sid } = req.signedCookies;
 
-  if (!token) {
-    res.clearCookie("token");
-    return res.status(401).json({ error: "Not logged!" });
+  if (!sid) {
+    res.clearCookie("sid");
+    return res.status(401).json({ error: " 1 Not logged!" });
   }
 
-  const { id, expiry: expiryTimeInSeconds } = JSON.parse(
-    Buffer.from(token, "base64url").toString()
-  );
-
-  const currentTimeInSeconds = Math.round(Date.now() / 1000);
-
-  if (currentTimeInSeconds > expiryTimeInSeconds) {
-    res.clearCookie("token");
-    return res.status(204).json({ error: "Not logged!" });
+  const session = await Session.findById(sid);
+  if (!session) {
+    res.clearCookie("sid")
+    return res.status(401).json({ error: "2 Not logged!" });
   }
 
-  const user = await User.findOne({ _id: id }).lean();
+  const user = await User.findOne({ _id: session.userId }).lean();
   if (!user) {
-    return res.status(401).json({ error: "Not logged!" });
+    return res.status(401).json({ error: "3 Not logged!" });
   }
   req.user = user;
   next();

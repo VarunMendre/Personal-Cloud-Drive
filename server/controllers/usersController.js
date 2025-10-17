@@ -2,6 +2,7 @@ import Directory from "../models/directoryModel.js";
 import User from "../models/userModel.js";
 import mongoose, { Types } from "mongoose";
 import bcrypt from "bcryptjs";
+import Session from "../models/sessionModel.js";
 
 export const register = async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -67,20 +68,15 @@ export const login = async (req, res, next) => {
     return res.status(404).json({ error: "Invalid Credentials" });
   }
 
- 
   const isPasswordValid = await bcrypt.compare(password, user.password);
-
 
   if (!isPasswordValid) {
     return res.status(404).json({ error: "Invalid Credentials" });
   }
 
-  const cookiePayload = JSON.stringify({
-    expiry: Math.round(Date.now() / 1000 + 100),
-    id: user._id.toString(),
-  });
+  const session = await Session.create({ userId: user._id });
 
-  res.cookie("token", Buffer.from(cookiePayload).toString("base64url"), {
+  res.cookie("sid", session.id, {
     httpOnly: true,
     maxAge: 60 * 1000 * 60 * 24 * 7,
     signed: true,
@@ -96,6 +92,6 @@ export const getCurrentUser = (req, res) => {
 };
 
 export const logout = (req, res) => {
-  res.clearCookie("token");
+  res.clearCookie("sid");
   res.status(204).end();
 };

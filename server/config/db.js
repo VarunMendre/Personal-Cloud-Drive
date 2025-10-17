@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 export async function connectDB() {
   try {
-     await mongoose.connect(
+    await mongoose.connect(
       "mongodb://varun:varun123@127.0.0.1:27017/storageApp"
     );
     console.log("Database connected");
@@ -14,7 +14,7 @@ export async function connectDB() {
 }
 
 process.on("SIGINT", async () => {
-  await mongoose.disconnect()
+  await mongoose.disconnect();
   console.log("Client Disconnected!");
   process.exit(0);
 });
