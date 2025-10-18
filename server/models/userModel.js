@@ -1,5 +1,6 @@
 import { model, Schema } from "mongoose";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
+
 const userSchema = new Schema(
   {
     name: {
@@ -16,7 +17,7 @@ const userSchema = new Schema(
       unique: true,
       match: [
         /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$/,
-        "please enter an valid email",
+        "please enter a valid email",
       ],
     },
     password: {
@@ -26,27 +27,23 @@ const userSchema = new Schema(
     },
     rootDirId: {
       type: Schema.Types.ObjectId,
-      required: true,
-      ref: "Directory"
-    }
+      ref: "Directory",
+    },
   },
   {
     strict: "throw",
   }
 );
 
-// Hash password before saving
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
 
-// Method to compare password
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
-
 
 const User = model("User", userSchema);
 

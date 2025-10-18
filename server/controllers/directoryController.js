@@ -1,9 +1,8 @@
-import { ObjectId } from "mongodb";
 import { rm } from "fs/promises";
 import Directory from "../models/directoryModel.js";
 import File from "../models/fileModel.js";
 
-export const getDirectoryById = async (req, res) => {
+export const getDirectory = async (req, res) => {
   const user = req.user;
   const _id = req.params.id || user.rootDirId.toString();
   const directoryData = await Directory.findOne({ _id }).lean();
@@ -24,6 +23,7 @@ export const getDirectoryById = async (req, res) => {
 
 export const createDirectory = async (req, res, next) => {
   const user = req.user;
+
   const parentDirId = req.params.parentDirId || user.rootDirId.toString();
   const dirname = req.headers.dirname || "New Folder";
   try {
@@ -36,7 +36,7 @@ export const createDirectory = async (req, res, next) => {
         .status(404)
         .json({ message: "Parent Directory Does not exist!" });
 
-    await Directory.create({
+    await Directory.insertOne({
       name: dirname,
       parentDirId,
       userId: user._id,

@@ -1,10 +1,10 @@
-import mongoose, { model, Schema } from "mongoose";
+import { model, Schema } from "mongoose";
 
 const sessionSchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
-      required : true,
+      required: true,
     },
     createdAt: {
       type: Date,

@@ -3,10 +3,10 @@ import { connectDB } from "./db.js";
 
 await connectDB();
 const client = mongoose.connection.getClient();
+
 try {
   const db = mongoose.connection.db;
-
-  const command = "create";
+  const command = "collMod";
 
   await db.command({
     [command]: "users",
@@ -66,9 +66,9 @@ try {
           parentDirId: {
             bsonType: ["objectId", "null"],
           },
-        },
-        __v: {
-          bsonType: "int",
+          __v: {
+            bsonType: "int",
+          },
         },
         additionalProperties: false,
       },
