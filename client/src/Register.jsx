@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
 import "./Auth.css";
-import { loginWithGoogle } from "./apis/loginWithGoogle";
+import { GoogleLogin } from "@react-oauth/google";
 
 const Register = () => {
   const BASE_URL = "http://localhost:4000";
@@ -187,8 +186,8 @@ const Register = () => {
               {isSending
                 ? "Sending..."
                 : countdown > 0
-                  ? `${countdown}s`
-                  : "Send OTP"}
+                ? `${countdown}s`
+                : "Send OTP"}
             </button>
           </div>
           {serverError && <span className="error-msg">{serverError}</span>}
@@ -221,8 +220,8 @@ const Register = () => {
                 {isVerifying
                   ? "Verifying..."
                   : otpVerified
-                    ? "Verified"
-                    : "Verify OTP"}
+                  ? "Verified"
+                  : "Verify OTP"}
               </button>
             </div>
             {otpError && <span className="error-msg">{otpError}</span>}
@@ -258,13 +257,14 @@ const Register = () => {
       <p className="link-text">
         Already have an account? <Link to="/login">Login</Link>
       </p>
+
       <div className="or">
         <span>Or</span>
       </div>
 
       <div className="google-login">
         <GoogleLogin
-          onSuccess={async (credentialResponse) => {
+          onSuccess={async(credentialResponse) => {
             const data = await loginWithGoogle(credentialResponse.credential);
             if (data.error) {
               console.log(data);
@@ -272,6 +272,7 @@ const Register = () => {
             }
             navigate("/");
           }}
+          shape="pill"
           theme="filled_blue"
           text="continue_with"
           onError={() => {

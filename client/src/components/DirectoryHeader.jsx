@@ -42,7 +42,7 @@ function DirectoryHeader({
           // Set user info if logged in
           setUserName(data.name);
           setUserEmail(data.email);
-          setUserPicture(data.picture);
+          setUserPicture(data.picture)
           setLoggedIn(true);
         } else if (response.status === 401) {
           // User not logged in
@@ -172,11 +172,7 @@ function DirectoryHeader({
             title="User Menu"
             onClick={handleUserIconClick}
           >
-            {userPicture ? (
-              <img className="userPicture" src={userPicture} alt={userName} />
-            ) : (
-              <FaUser />
-            )}
+            {userPicture?  <img className="userPicture" src={userPicture} alt={userName} />:<FaUser />}
           </button>
 
           {showUserMenu && (

@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
 import "./Auth.css";
-import { loginWithGoogle } from "./apis/loginWithGoogle";
+import { GoogleLogin } from "@react-oauth/google";
+import "./App.css";
+import { loginWithGoogle } from "../src/apis/loginWithGoogle";
 
 const Login = () => {
   const BASE_URL = "http://localhost:4000";
@@ -117,14 +118,15 @@ const Login = () => {
 
       <div className="google-login">
         <GoogleLogin
-          onSuccess={async (credentialResponse) => {
+          onSuccess={async(credentialResponse) => {
             const data = await loginWithGoogle(credentialResponse.credential);
             if (data.error) {
               console.log(data);
               return;
             }
-            navigate("/");
+            navigate("/")
           }}
+          shape="pill"
           theme="filled_blue"
           text="continue_with"
           onError={() => {

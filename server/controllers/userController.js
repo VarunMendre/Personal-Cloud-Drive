@@ -12,6 +12,7 @@ export const register = async (req, res, next) => {
     return res.status(400).json({ error: "Invalid or Expired OTP" });
   }
   await optRecord.deleteOne();
+
   const session = await mongoose.startSession();
 
   try {
@@ -99,6 +100,7 @@ export const getCurrentUser = (req, res) => {
   res.status(200).json({
     name: req.user.name,
     email: req.user.email,
+    picture: req.user.picture,
   });
 };
 
