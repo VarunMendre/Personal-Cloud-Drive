@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 import "./Auth.css";
+import { loginWithGoogle } from "./apis/loginWithGoogle";
 
 const Register = () => {
   const BASE_URL = "http://localhost:4000";
 
   const [formData, setFormData] = useState({
-    name: "Varun Mendre",
-    email: "varunmm0404@gmail.com",
-    password: "1234",
+    name: "Anurag Singh",
+    email: "anuragprocodrr@gmail.com",
+    password: "abcd",
   });
 
   const [serverError, setServerError] = useState("");
@@ -122,7 +124,7 @@ const Register = () => {
     try {
       const response = await fetch(`${BASE_URL}/user/register`, {
         method: "POST",
-        body: JSON.stringify({...formData, otp}),
+        body: JSON.stringify({ ...formData, otp }),
         headers: { "Content-Type": "application/json" },
       });
       const data = await response.json();
@@ -190,7 +192,6 @@ const Register = () => {
             </button>
           </div>
           {serverError && <span className="error-msg">{serverError}</span>}
-         
         </div>
 
         {/* OTP Input + Verify */}
@@ -224,9 +225,8 @@ const Register = () => {
                     : "Verify OTP"}
               </button>
             </div>
-             {otpError && <span className="error-msg">{otpError}</span>}
+            {otpError && <span className="error-msg">{otpError}</span>}
           </div>
-          
         )}
 
         {/* Password */}
@@ -258,6 +258,28 @@ const Register = () => {
       <p className="link-text">
         Already have an account? <Link to="/login">Login</Link>
       </p>
+      <div className="or">
+        <span>Or</span>
+      </div>
+
+      <div className="google-login">
+        <GoogleLogin
+          onSuccess={async (credentialResponse) => {
+            const data = await loginWithGoogle(credentialResponse.credential);
+            if (data.error) {
+              console.log(data);
+              return;
+            }
+            navigate("/");
+          }}
+          theme="filled_blue"
+          text="continue_with"
+          onError={() => {
+            console.log("Login Failed");
+          }}
+          useOneTap
+        />
+      </div>
     </div>
   );
 };

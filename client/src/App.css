@@ -1,3 +1,39 @@
 body {
   font-family: Arial, sans-serif;
 }
+
+.or {
+  position: relative;
+  text-align: center;
+}
+
+.or span {
+  position: relative;
+  background-color: white;
+  padding: 0 4px;
+}
+
+.or::before {
+  content: "";
+  background-color: gainsboro;
+  width: 100%;
+  height: 2px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.google-login {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.userPicture {
+  width: 20px;
+  border: 1px solid rgb(182, 180, 180);
+  padding: 1px;
+  border-radius: 100%;
+}
