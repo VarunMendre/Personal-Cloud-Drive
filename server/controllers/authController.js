@@ -1,11 +1,11 @@
 import { sendOtpService } from "../services/sendOtpService.js";
 import OTP from "../models/otpModel.js";
-import { OAuth2Client } from "google-auth-library";
 import { verifyIdToken } from "../services/googleAuthService.js";
 import User from "../models/userModel.js";
-import mongoose,{Types} from "mongoose";
+import mongoose, { Types } from "mongoose";
 import Directory from "../models/directoryModel.js";
 import Session from "../models/sessionModel.js";
+import axios from "axios";
 
 export const sendOtp = async (req, res, next) => {
   const { email } = req.body;
@@ -14,24 +14,23 @@ export const sendOtp = async (req, res, next) => {
   res.status(201).json(resData);
 };
 
-export const verifyOtp =  async (req, res, next) => {
-    const { email, otp } = req.body;
-    const optRecord = await OTP.findOne({ email, otp });
-    if (!optRecord) {
-        return res.status(400).json({ error: "Invalid or Expired OTP" });
-    }
+export const verifyOtp = async (req, res, next) => {
+  const { email, otp } = req.body;
+  const optRecord = await OTP.findOne({ email, otp });
+  if (!optRecord) {
+    return res.status(400).json({ error: "Invalid or Expired OTP" });
+  }
 
-
-    res.json({ message: "OTP verified" });
-}
+  res.json({ message: "OTP verified" });
+};
 
 export const loginWithGoogle = async (req, res, next) => {
   const { idToken } = req.body;
-  
+
   const userData = await verifyIdToken(idToken);
-  
+
   const { name, email, picture, sub } = userData;
-  
+
   const user = await User.findOne({ email }).select("-__v");
 
   if (user) {
@@ -43,7 +42,7 @@ export const loginWithGoogle = async (req, res, next) => {
 
     if (user.picture.includes("googleusercontent.com")) {
       user.picture = picture;
-      await user.save()
+      await user.save();
     }
 
     const session = await Session.create({ userId: user._id });
@@ -53,49 +52,158 @@ export const loginWithGoogle = async (req, res, next) => {
       signed: true,
       maxAge: 60 * 1000 * 60 * 24 * 7,
     });
-    return res
-      .json({ message: "logged in" });
+    return res.json({ message: "logged in" });
   }
   console.log("user doesn't exits");
   const mongooseSession = await mongoose.startSession();
-  
+
+  try {
+    const rootDirId = new Types.ObjectId();
+    const userId = new Types.ObjectId();
+
+    mongooseSession.startTransaction();
+
+    await Directory.insertOne(
+      {
+        _id: rootDirId,
+        name: `root-${email}`,
+        parentDirId: null,
+        userId,
+      },
+      { mongooseSession }
+    );
+
+    const newUser = await User.insertOne(
+      {
+        _id: userId,
+        name,
+        email,
+        picture,
+        rootDirId,
+      },
+      { mongooseSession }
+    );
+
+    const session = await Session.create({ userId: user._id });
+    res.cookie("sid", session.id, {
+      httpOnly: true,
+      signed: true,
+      maxAge: 60 * 1000 * 60 * 24 * 7,
+    });
+    mongooseSession.commitTransaction();
+    res.status(201).json({ message: "logged in", insertedUser: newUser });
+  } catch (err) {
+    mongooseSession.abortTransaction();
+    next(err);
+  }
+};
+
+export async function githubLogin(req, res, next) {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ error: "Code is required" });
+
+  const CLIENT_ID = "Ov23lifBnGMie0EjK9Zz";
+  const CLIENT_SECRET = "fed6f373bc20e2dddc4e9b5eaf8c0101dc90c60a";
+
+  try {
+    // 1 Exchange code for access token
+    const tokenResp = await axios.post(
+      "https://github.com/login/oauth/access_token",
+      {
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        code,
+      },
+      {
+        headers: { Accept: "application/json" },
+      }
+    );
+
+    const accessToken = tokenResp.data.access_token;
+    if (!accessToken) return res.status(400).json({ error: "No access token" });
+
+    // 2️ Fetch user info
+    const userResp = await axios.get("https://api.github.com/user", {
+      headers: { Authorization: `token ${accessToken}` },
+    });
+
+    // 3️ Fetch primary email
+    let email = null;
     try {
-      const rootDirId = new Types.ObjectId();
-      const userId = new Types.ObjectId();
-  
-      mongooseSession.startTransaction();
-  
-      await Directory.insertOne(
-        {
-          _id: rootDirId,
-          name: `root-${email}`,
-          parentDirId: null,
-          userId,
-        },
-        { mongooseSession }
-      );
-  
-      const newUser = await User.insertOne(
-        {
-          _id: userId,
-          name,
-          email,
-          picture,
-          rootDirId,
-        },
-        { mongooseSession }
-      );
+      const emailsResp = await axios.get("https://api.github.com/user/emails", {
+        headers: { Authorization: `token ${accessToken}` },
+      });
+      email = emailsResp.data.find((e) => e.primary)?.email || null;
+
+    } catch (err) {
+      console.warn("Could not fetch GitHub email:", err.message);
+    }
+
+    const { name} = userResp.data;
+    const picture = userResp.data.avatar_url || "default-avatar-url";
+
+    if (!email)
+      return res.status(400).json({ error: "Email not available from GitHub" });
+
+    // 4️ Check if user exists
+    let user = await User.findOne({ email }).select("-__v");
+
+    if (user) {
+      // Manage sessions
+      const allSessions = await Session.find({ userId: user._id });
+      if (allSessions.length >= 2) await allSessions[0].deleteOne();
+
+      // Update avatar if default
+      if (user.picture.includes("avatars.githubusercontent")) {
+        user.picture = picture;
+        await user.save();
+      }
+
 
       const session = await Session.create({ userId: user._id });
       res.cookie("sid", session.id, {
         httpOnly: true,
         signed: true,
-        maxAge: 60 * 1000 * 60 * 24 * 7,
+        maxAge: 1000 * 60 * 60 * 24 * 7,
       });
-      mongooseSession.commitTransaction();
-      res.status(201).json({ message: "logged in", insertedUser: newUser });
-    } catch (err) {
-      mongooseSession.abortTransaction();
-      next(err);
+
+      return res.json({ message: "logged in", user });
     }
+
+    // 5️ If user doesn't exist, create user and root directory
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const rootDirId = new Types.ObjectId();
+      const userId = new Types.ObjectId();
+
+      const rootDir = await Directory.create(
+        [{ _id: rootDirId, name: `root-${email}`, parentDirId: null, userId }],
+        { session }
+      );
+      user = await User.create(
+        [{ _id: userId, name, email, picture, rootDirId }],
+        { session }
+      );
+
+      const userSession = await Session.create([{ userId }], { session });
+      res.cookie("sid", userSession[0].id, {
+        httpOnly: true,
+        signed: true,
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+      });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      res.status(201).json({ message: "logged in", user: user[0] });
+    } catch (err) {
+      await session.abortTransaction();
+      session.endSession();
+      throw err;
+    }
+  } catch (err) {
+    console.error("GitHub login error:", err.response?.data || err.message);
+    res.status(500).json({ error: "GitHub login failed" });
+  }
 }

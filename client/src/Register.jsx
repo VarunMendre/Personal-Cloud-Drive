@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
 import { GoogleLogin } from "@react-oauth/google";
+import { loginWithGoogle } from "../src/apis/loginWithGoogle";
+import { loginWithGitHub } from "../src/apis/loginWithGitHub";
 
 const Register = () => {
   const BASE_URL = "http://localhost:4000";
@@ -25,6 +27,14 @@ const Register = () => {
   const [countdown, setCountdown] = useState(0);
 
   const navigate = useNavigate();
+
+  // GitHub login function
+  const loginWithGitHubHandler = () => {
+    const CLIENT_ID = "Ov23lifBnGMie0EjK9Zz";
+    window.location.assign(
+      `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=http://localhost:5173/github-callback&scope=read:user user:email`
+    );
+  };
 
   // Handle input changes
   const handleChange = (e) => {
@@ -280,6 +290,15 @@ const Register = () => {
           }}
           useOneTap
         />
+      </div>
+
+      <div className="github-login">
+        <button
+          onClick={loginWithGitHubHandler}
+          className="github-button"
+        >
+          Continue with GitHub
+        </button>
       </div>
     </div>
   );

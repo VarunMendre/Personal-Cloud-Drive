@@ -126,3 +126,65 @@
   background-color: #92a6bc;
   cursor: not-allowed;
 }
+
+/* Or divider */
+.or {
+  text-align: center;
+  margin: 20px 0;
+  position: relative;
+}
+
+.or span {
+  background-color: white;
+  padding: 0 15px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.or::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #ddd;
+  z-index: -1;
+}
+
+/* Google Login */
+.google-login {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+/* GitHub Login */
+.github-login {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.github-button {
+  background-color: #24292e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.github-button:hover {
+  background-color: #1a1e22;
+}
+
+.github-button:active {
+  background-color: #0d1117;
+}

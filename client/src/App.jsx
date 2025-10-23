@@ -3,6 +3,7 @@ import DirectoryView from "./DirectoryView";
 import Register from "./Register";
 import "./App.css";
 import Login from "./Login";
+import GitHubCallbackHandler from "./GitHubCallbackHandler";
 
 const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
   {
     path: "/directory/:dirId",
     element: <DirectoryView />,
+  },
+  {
+    path: "/github-callback",
+    element: <GitHubCallbackHandler />,
   },
 ]);
 

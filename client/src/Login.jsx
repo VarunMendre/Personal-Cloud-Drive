@@ -1,9 +1,11 @@
+// In Login.jsx
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
 import { GoogleLogin } from "@react-oauth/google";
 import "./App.css";
 import { loginWithGoogle } from "../src/apis/loginWithGoogle";
+import { loginWithGitHub } from "../src/apis/loginWithGitHub";
 
 const Login = () => {
   const BASE_URL = "http://localhost:4000";
@@ -13,15 +15,20 @@ const Login = () => {
     password: "abcd",
   });
 
-  // serverError will hold the error message from the server
   const [serverError, setServerError] = useState("");
-
   const navigate = useNavigate();
+
+  // GitHub login function
+  const loginWithGitHubHandler = () => {
+    const CLIENT_ID = "Ov23lifBnGMie0EjK9Zz";
+    window.location.assign(
+      `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=http://localhost:5173/github-callback&scope=read:user user:email`
+    );
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Clear the server error as soon as the user starts typing in either field
     if (serverError) {
       setServerError("");
     }
@@ -47,11 +54,9 @@ const Login = () => {
 
       const data = await response.json();
       if (data.error) {
-        // If there's an error, set the serverError message
         setServerError(data.error);
       } else {
-        // On success, navigate to home or any other protected route
-        navigate("/");
+        navigate("/"); // Navigate to home page after successful login
       }
     } catch (error) {
       console.error("Error:", error);
@@ -59,14 +64,12 @@ const Login = () => {
     }
   };
 
-  // If there's an error, we'll add "input-error" class to both fields
   const hasError = Boolean(serverError);
 
   return (
     <div className="container">
       <h2 className="heading">Login</h2>
       <form className="form" onSubmit={handleSubmit}>
-        {/* Email */}
         <div className="form-group">
           <label htmlFor="email" className="label">
             Email
@@ -83,7 +86,6 @@ const Login = () => {
           />
         </div>
 
-        {/* Password */}
         <div className="form-group">
           <label htmlFor="password" className="label">
             Password
@@ -98,7 +100,6 @@ const Login = () => {
             placeholder="Enter your password"
             required
           />
-          {/* Absolutely-positioned error message below password field */}
           {serverError && <span className="error-msg">{serverError}</span>}
         </div>
 
@@ -107,7 +108,6 @@ const Login = () => {
         </button>
       </form>
 
-      {/* Link to the register page */}
       <p className="link-text">
         Don't have an account? <Link to="/register">Register</Link>
       </p>
@@ -116,15 +116,16 @@ const Login = () => {
         <span>Or</span>
       </div>
 
+      {/* Google login section */}
       <div className="google-login">
         <GoogleLogin
-          onSuccess={async(credentialResponse) => {
+          onSuccess={async (credentialResponse) => {
             const data = await loginWithGoogle(credentialResponse.credential);
             if (data.error) {
               console.log(data);
               return;
             }
-            navigate("/")
+            navigate("/"); // Navigate to home after Google login
           }}
           shape="pill"
           theme="filled_blue"
@@ -134,6 +135,13 @@ const Login = () => {
           }}
           useOneTap
         />
+      </div>
+
+      {/* GitHub login button */}
+      <div className="github-login">
+        <button onClick={loginWithGitHubHandler} className="github-button">
+          Continue with GitHub
+        </button>
       </div>
     </div>
   );
