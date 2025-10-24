@@ -24,7 +24,7 @@ app.use(
 
 app.use("/directory", checkAuth, directoryRoutes);
 app.use("/file", checkAuth, fileRoutes);
-app.use("/user", userRoutes);
+app.use("/", userRoutes);
 app.use("/auth", authRoutes);
 
 app.use((err, req, res, next) => {

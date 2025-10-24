@@ -4,6 +4,7 @@ import Register from "./Register";
 import "./App.css";
 import Login from "./Login";
 import GitHubCallbackHandler from "./GitHubCallbackHandler";
+import UsersPage from "./UsersPage";
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
   {
     path: "/directory/:dirId",
     element: <DirectoryView />,
+  },
+  {
+    path: "/users",
+    element: <UsersPage />,
   },
   {
     path: "/github-callback",

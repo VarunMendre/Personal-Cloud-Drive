@@ -118,3 +118,19 @@ export const logoutAll = async (req, res) => {
   res.clearCookie("sid");
   res.status(204).end();
 };
+
+export const getAllUsers = async (req, res)=> {
+  const allUsers = await User.find().lean();
+  const allSession = await Session.find().lean();
+  const allSessionsUserId = allSession.map(({ userId }) => userId.toString());
+  const allSessionsUserIdSet = new Set(allSessionsUserId)
+
+  const transformedUsers = allUsers.map(({ _id, name, email }) => ({
+    id: _id,
+    name,
+    email,
+    isLoggedIn: allSessionsUserIdSet.has(_id.toString()),
+  }));
+
+  res.status(200).json(transformedUsers);
+}
