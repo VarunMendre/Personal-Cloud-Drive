@@ -101,6 +101,7 @@ export const getCurrentUser = (req, res) => {
     name: req.user.name,
     email: req.user.email,
     picture: req.user.picture,
+    role: req.user.role,
   });
 };
 

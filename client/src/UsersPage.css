@@ -26,6 +26,7 @@
   background-color: #f3f3f3;
 }
 
+
 .logout-button {
   padding: 6px 12px;
   font-size: 14px;
@@ -37,10 +38,15 @@
   transition: background-color 0.2s;
 }
 
+.delete-button{
+  background-color: rgb(189, 24, 57);
+}
+
 .logout-button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }
+
 
 .logout-button:not(:disabled):hover {
   background-color: #0056b3;

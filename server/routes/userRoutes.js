@@ -24,6 +24,5 @@ router.get("/users", checkAuth, (req, res, next) => {
 router.post("/user/logout", logout);
 router.post("/user/logout-all", logoutAll);
 
-// router.post("/users/logout", rbacLogout);
 
 export default router;
