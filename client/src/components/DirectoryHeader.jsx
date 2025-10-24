@@ -45,7 +45,7 @@ function DirectoryHeader({
           // Set user info if logged in
           setUserName(data.name);
           setUserEmail(data.email);
-          setUserPicture(data.picture)
+          // setUserPicture(data.picture)
           setLoggedIn(true);
         } else if (response.status === 401) {
           // User not logged in

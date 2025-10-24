@@ -2,9 +2,11 @@ import { useState } from 'react';
 import './UsersPage.css';
 import { useEffect } from 'react';
 import { BASE_URL } from './components/DirectoryHeader';
+import { useNavigate } from 'react-router-dom';
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
+  const navigate = useNavigate();
 
   const logoutUser = (userId) => {
     alert(`Logging out user with ID: ${userId}`);
@@ -24,7 +26,10 @@ export default function UsersPage() {
           if (response.ok) {
             const data = await response.json();
             setUsers(data)
-          } else {
+          } else if (response.status === 403) {
+            navigate("/");
+          }
+          else {
             // Handle other error statuses if needed
             console.error("Error fetching users Data:", response.status);
           }
@@ -43,7 +48,7 @@ export default function UsersPage() {
             <th>Name</th>
             <th>Email</th>
             <th>Status</th>
-            <th></th> {/* Logout button column */}
+            <th></th>
           </tr>
         </thead>
         <tbody>

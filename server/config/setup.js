@@ -39,6 +39,10 @@ try {
           rootDirId: {
             bsonType: "objectId",
           },
+          role: {
+            bsonType: "string",
+            enum: ["Admin", "Manager", "User"],
+          },
           __v: {
             bsonType: "int",
           },
