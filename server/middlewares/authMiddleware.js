@@ -23,3 +23,8 @@ export default async function checkAuth(req, res, next) {
   req.user = user;
   next();
 }
+
+export const checkNotRegularUser = (req, res, next) => {
+  if (req.user.role !== "User") return next();
+  res.status(403).json({ error: "Users are restricted to access this page" });
+};

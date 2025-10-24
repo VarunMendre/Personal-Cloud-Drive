@@ -1,24 +1,34 @@
 import { useEffect, useState } from "react";
-import "./UsersPage.css";
 import { BASE_URL } from "./components/DirectoryHeader";
 import { useNavigate } from "react-router-dom";
+import "./UsersPage.css";
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [userName, setUserName] = useState("Guest User");
-  const [userEmail, setUserEmail] = useState("guest@example.com");
   const [userRole, setUserRole] = useState("User");
   const navigate = useNavigate();
 
-  const logoutUser = (userId) => {
-    alert(`Logging out user with ID: ${userId}`);
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === userId ? { ...user, isLoggedIn: false } : user
-      )
-    );
+  const logoutUser = async (user) => {
+    const { id, email } = user;
+    const logOutConfirmed = confirm(`Are you sure to Logout ${email} `);
+    if (!logOutConfirmed) return;
+    try {
+      const response = await fetch(`${BASE_URL}/users/${id}/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (response.ok) {
+        console.log("Logged out successfully");
+        fetchUsers();
+      } else {
+        console.error("Logout failed");
+      }
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
   };
-
+  
   useEffect(() => {
     fetchUsers();
     fetchUser();
@@ -55,10 +65,7 @@ export default function UsersPage() {
         const data = await response.json();
         // Set user info if logged in
         setUserName(data.name);
-        setUserEmail(data.email);
         setUserRole(data.role);
-        // setUserPicture(data.picture);
-        setLoggedIn(true);
       } else if (response.status === 401) {
         navigate("/login");
       } else {
@@ -95,7 +102,7 @@ export default function UsersPage() {
               <td>
                 <button
                   className="logout-button"
-                  onClick={() => logoutUser(user.id)}
+                  onClick={() => logoutUser(user)}
                   disabled={!user.isLoggedIn}
                 >
                   Logout

@@ -135,3 +135,12 @@ export const getAllUsers = async (req, res)=> {
 
   res.status(200).json(transformedUsers);
 }
+
+export const logOutById = async (req, res, next) => {
+  try {
+    await Session.deleteMany({ userId: req.params.userId });
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+}
