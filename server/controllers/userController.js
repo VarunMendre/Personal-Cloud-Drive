@@ -133,16 +133,22 @@ export const logOutById = async (req, res, next) => {
 };
 
 export const getAllUsers = async (req, res) => {
-  const allUsers = await User.find({ isDeleted: false }).lean();
+
+  const requestorRole = req.user.role;
+
+  const query = requestorRole === "Owner" ? {} : { isDeleted: false };
+
+  const allUsers = await User.find(query).lean();
   const allSession = await Session.find().lean();
   const allSessionsUserId = allSession.map(({ userId }) => userId.toString());
   const allSessionsUserIdSet = new Set(allSessionsUserId);
 
-  const transformedUsers = allUsers.map(({ _id, name, email }) => ({
+  const transformedUsers = allUsers.map(({ _id, name, email, isDeleted }) => ({
     id: _id,
     name,
     email,
     isLoggedIn: allSessionsUserIdSet.has(_id.toString()),
+    isDeleted: isDeleted || false, 
   }));
 
   res.status(200).json(transformedUsers);
@@ -201,3 +207,28 @@ export const hardDeleteUser = async (req, res, next) => {
     next(err);
   }
 };
+
+export const recoverUser = async (req, res, next) => {
+  const { userId } = req.params;
+  if (req.user._id.toString() === userId) {
+    return res.status(403).json({ error: "You cannot delete your self" });
+  }
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    await User.findByIdAndUpdate(
+      { _id: userId },
+      { isDeleted: false },
+      { session }
+    );
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json({
+      message: `User has been recovered with UID: ${userId}`,
+    });
+  } catch (err) {
+    session.endSession();
+    next(err);
+  }
+}

@@ -9,13 +9,20 @@ export default function UsersPage() {
   const [userEmail, setUserEmail] = useState("");
   const [userRole, setUserRole] = useState("User");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showRecoverModal, setShowRecoverModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showHardDeleteConfirm, setShowHardDeleteConfirm] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const navigate = useNavigate();
 
-  const logoutUser = async (user) => {
-    const { id, email } = user;
-    const logOutConfirmed = confirm(`Are you sure to Logout ${email} `);
-    if (!logOutConfirmed) return;
+  const handleLogoutClick = (user) => {
+    setSelectedUser(user);
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    if (!selectedUser) return;
+    const { id } = selectedUser;
     try {
       const response = await fetch(`${BASE_URL}/users/${id}/logout`, {
         method: "POST",
@@ -23,6 +30,8 @@ export default function UsersPage() {
       });
       if (response.ok) {
         console.log("Logged out successfully");
+        setShowLogoutModal(false);
+        setSelectedUser(null);
         fetchUsers();
       } else {
         console.error("Logout failed");
@@ -37,8 +46,37 @@ export default function UsersPage() {
     setShowDeleteModal(true);
   };
 
+  const handleRecoverClick = (user) => {
+    setSelectedUser(user);
+    setShowRecoverModal(true);
+  };
+
+  const confirmRecover = async () => {
+    if (!selectedUser) return;
+    const { id } = selectedUser;
+    try {
+      const response = await fetch(`${BASE_URL}/users/${id}/recover`, {
+        method: "PUT",
+        credentials: "include",
+      });
+      if (response.ok) {
+        console.log("User recovered successfully");
+        setShowRecoverModal(false);
+        setSelectedUser(null);
+        fetchUsers();
+      } else {
+        console.error("Recover failed");
+      }
+    } catch (err) {
+      console.error("Recover error:", err);
+    }
+  };
+
   const closeModal = () => {
     setShowDeleteModal(false);
+    setShowRecoverModal(false);
+    setShowLogoutModal(false);
+    setShowHardDeleteConfirm(false);
     setSelectedUser(null);
   };
 
@@ -59,6 +97,11 @@ export default function UsersPage() {
     } catch (err) {
       console.error("Soft delete error:", err);
     }
+  };
+
+  const handleHardDeleteClick = () => {
+    setShowDeleteModal(false);
+    setShowHardDeleteConfirm(true);
   };
 
   const handleHardDelete = async () => {
@@ -129,6 +172,13 @@ export default function UsersPage() {
     }
   }
 
+  const filteredUsers = users.filter((user) => {
+    if (userRole === "Owner") {
+      return true;
+    }
+    return !user.isDeleted;
+  });
+
   return (
     <div className="users-container">
       <h1 className="title">All Users</h1>
@@ -142,33 +192,56 @@ export default function UsersPage() {
             <th>Email</th>
             <th>Status</th>
             <th></th>
-            {userRole === "Admin" && <th></th>}
+            {(userRole === "Admin" || userRole === "Owner") && <th></th>}
+            {userRole === "Owner" && <th></th>}
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
+          {filteredUsers.map((user) => (
+            <tr key={user.id} className={user.isDeleted ? "deleted-user" : ""}>
               <td>{user.name}</td>
               <td>{user.email}</td>
-              <td>{user.isLoggedIn ? "Logged In" : "Logged Out"}</td>
+              <td>
+                {user.isDeleted
+                  ? "Deleted"
+                  : user.isLoggedIn
+                  ? "Logged In"
+                  : "Logged Out"}
+              </td>
               <td>
                 <button
                   className="logout-button"
-                  onClick={() => logoutUser(user)}
-                  disabled={!user.isLoggedIn}
+                  onClick={() => handleLogoutClick(user)}
+                  disabled={!user.isLoggedIn || user.isDeleted}
                 >
                   Logout
                 </button>
               </td>
 
-              {userRole === "Admin" && (
+              {(userRole === "Admin" || userRole === "Owner") && (
                 <td>
                   <button
                     className="logout-button delete-button"
                     onClick={() => handleDeleteClick(user)}
-                    disabled={userEmail === user.email}
+                    disabled={userEmail === user.email || user.isDeleted}
                   >
                     Delete
+                  </button>
+                </td>
+              )}
+
+              {userRole === "Owner" && (
+                <td>
+                  <button
+                    className="logout-button recover-button"
+                    onClick={() => handleRecoverClick(user)}
+                    disabled={
+                      userEmail === user.email ||
+                      user.isLoggedIn ||
+                      !user.isDeleted
+                    }
+                  >
+                    Recover
                   </button>
                 </td>
               )}
@@ -176,6 +249,69 @@ export default function UsersPage() {
           ))}
         </tbody>
       </table>
+
+      {showLogoutModal && selectedUser && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div
+            className="modal-content confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>Confirm Logout</h2>
+              <button className="modal-close" onClick={closeModal}>
+                &times;
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-user-info">
+                Are you sure you want to logout{" "}
+                <strong>{selectedUser.email}</strong>?
+              </p>
+              <div className="confirm-actions">
+                <button className="cancel-button" onClick={closeModal}>
+                  Cancel
+                </button>
+                <button className="confirm-button" onClick={confirmLogout}>
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRecoverModal && selectedUser && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div
+            className="modal-content confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>Confirm Recovery</h2>
+              <button className="modal-close" onClick={closeModal}>
+                &times;
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-user-info">
+                Are you sure you want to recover{" "}
+                <strong>{selectedUser.email}</strong>?
+              </p>
+              <div className="confirm-actions">
+                <button className="cancel-button" onClick={closeModal}>
+                  Cancel
+                </button>
+                <button
+                  className="confirm-button recover-confirm"
+                  onClick={confirmRecover}
+                >
+                  Recover
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showDeleteModal && selectedUser && (
         <div className="modal-overlay" onClick={closeModal}>
@@ -204,19 +340,46 @@ export default function UsersPage() {
 
                 <button
                   className="delete-option hard-delete"
-                  onClick={() => {
-                    const confirmed = confirm(
-                      `Are you sure you want to permanently delete this user? This action CANNOT be undone.`
-                    );
-                    if (confirmed) {
-                      handleHardDelete();
-                    }
-                  }}
+                  onClick={handleHardDeleteClick}
                 >
                   <div className="option-title">Hard Delete</div>
                   <div className="option-description">
                     Permanently remove user - cannot be undone
                   </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showHardDeleteConfirm && selectedUser && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div
+            className="modal-content confirm-modal danger-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>Confirm Hard Delete</h2>
+              <button className="modal-close" onClick={closeModal}>
+                &times;
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-user-info danger-text">
+                Are you sure you want to <strong>permanently delete</strong>{" "}
+                <strong>{selectedUser.email}</strong>?
+              </p>
+              <p className="warning-text">This action CANNOT be undone!</p>
+              <div className="confirm-actions">
+                <button className="cancel-button" onClick={closeModal}>
+                  Cancel
+                </button>
+                <button
+                  className="confirm-button danger-button"
+                  onClick={handleHardDelete}
+                >
+                  Permanently Delete
                 </button>
               </div>
             </div>

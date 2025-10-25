@@ -34,6 +34,11 @@ export const checkIsAdminUser = (req, res, next) => {
   res.status(403).json({ error: "You Cannot Delete User" });
 };
 
+export const checkIsOwner = (req, res, next) => {
+  if (req.user.role === "Owner") return next();
+  res.status(403).json({ error: "You Cannot Delete User" });
+};
+
 export const checkUserDeleted = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ error: "User not authenticated" });

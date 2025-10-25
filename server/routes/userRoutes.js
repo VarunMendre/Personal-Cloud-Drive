@@ -1,6 +1,7 @@
 import express from "express";
 import checkAuth, {
   checkIsAdminUser,
+  checkIsOwner,
   checkNotRegularUser,
   checkUserDeleted,
 } from "../middlewares/authMiddleware.js";
@@ -12,6 +13,7 @@ import {
   logout,
   logoutAll,
   logOutById,
+  recoverUser,
   register,
   softDeleteUser,
 } from "../controllers/userController.js";
@@ -32,6 +34,7 @@ router.get(
   checkNotRegularUser,
   getAllUsers
 );
+
 router.post(
   "/users/:userId/logout",
   checkAuth,
@@ -51,7 +54,10 @@ router.delete(
   "/users/:userId/hard",
   checkAuth,
   checkUserDeleted,
+  checkIsOwner,
   checkIsAdminUser,
   hardDeleteUser
 );
+
+router.put("/users/:userId/recover", checkAuth, checkIsOwner, recoverUser);
 export default router;
