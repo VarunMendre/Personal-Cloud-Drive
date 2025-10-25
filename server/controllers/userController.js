@@ -148,6 +148,9 @@ export const getAllUsers = async (req, res)=> {
 
 export const deleteUser = async (req, res, next) => {
   const { userId } = req.params
+  if (req.user._id.toString() === userId) {
+    return res.status(403).json({error: "You cannot delete your self"})
+  }
   const client = await mongoose.startSession();
   try {
     client.startTransaction()

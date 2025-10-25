@@ -6,6 +6,7 @@ import "./UsersPage.css";
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [userName, setUserName] = useState("Guest User");
+  const [userEmail, setUserEmail] = useState("");
   const [userRole, setUserRole] = useState("User");
   const navigate = useNavigate();
 
@@ -84,6 +85,7 @@ export default function UsersPage() {
         const data = await response.json();
         // Set user info if logged in
         setUserName(data.name);
+        setUserEmail(data.email)
         setUserRole(data.role);
       } else if (response.status === 401) {
         navigate("/login");
@@ -135,6 +137,7 @@ export default function UsersPage() {
                     onClick={() => {
                       deleteUser(user);
                     }}
+                    disabled={userEmail === user.email}
                   >
                     Delete
                   </button>
