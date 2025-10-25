@@ -39,3 +39,6 @@ usersDB.json
 
 # Allow storage folder itself but ignore its contents
 !server/storage/.gitkeep
+
+
+assignments-for-rbac.md
