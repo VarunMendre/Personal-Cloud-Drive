@@ -33,3 +33,12 @@ export const checkIsAdminUser = (req, res, next) => {
   if (req.user.role === "Admin") return next();
   res.status(403).json({ error: "You Cannot Delete User" });
 };
+
+export const checkUserDeleted = (req, res, next) => {
+  if (req.user.isDeleted) {
+      return res.status(403).json({
+        error: "Your account has been deleted. Contact Apps admin to recovery",
+      });
+  }
+  next();
+}
