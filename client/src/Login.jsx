@@ -16,6 +16,7 @@ const Login = () => {
   });
 
   const [serverError, setServerError] = useState("");
+  const [notification, setNotification] = useState("");
   const navigate = useNavigate();
 
   // GitHub login function
@@ -52,6 +53,16 @@ const Login = () => {
         credentials: "include",
       });
 
+      if (response.status === 403) {
+        setNotification(
+          "This account has been deleted. Please contact support for assistance."
+        );
+        setTimeout(() => {
+          setNotification("");
+        }, 5000);
+        return;
+      }
+
       const data = await response.json();
       if (data.error) {
         setServerError(data.error);
@@ -68,6 +79,25 @@ const Login = () => {
 
   return (
     <div className="container">
+      {notification && (
+        <div
+          style={{
+            position: "fixed",
+            top: "20px",
+            right: "20px",
+            backgroundColor: "#ef4444",
+            color: "white",
+            padding: "16px 24px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            zIndex: 1000,
+            maxWidth: "400px",
+            animation: "slideIn 0.3s ease-out",
+          }}
+        >
+          {notification}
+        </div>
+      )}
       <h2 className="heading">Login</h2>
       <form className="form" onSubmit={handleSubmit}>
         <div className="form-group">

@@ -8,6 +8,8 @@ export default function UsersPage() {
   const [userName, setUserName] = useState("Guest User");
   const [userEmail, setUserEmail] = useState("");
   const [userRole, setUserRole] = useState("User");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const navigate = useNavigate();
 
   const logoutUser = async (user) => {
@@ -29,26 +31,58 @@ export default function UsersPage() {
       console.error("Logout error:", err);
     }
   };
-  
-  const deleteUser = async (user) => {
-    const { id, email } = user;
-    const logOutConfirmed = confirm(`You're about to Delete: ${email}, Are you sure!`);
-    if (!logOutConfirmed) return;
+
+  const handleDeleteClick = (user) => {
+    setSelectedUser(user);
+    setShowDeleteModal(true);
+  };
+
+  const closeModal = () => {
+    setShowDeleteModal(false);
+    setSelectedUser(null);
+  };
+
+  const handleSoftDelete = async () => {
+    if (!selectedUser) return;
     try {
-      const response = await fetch(`${BASE_URL}/users/${id}`, {
+      const response = await fetch(`${BASE_URL}/users/${selectedUser.id}`, {
         method: "DELETE",
         credentials: "include",
       });
       if (response.ok) {
-        console.log("User Delete out successfully");
+        console.log("User soft deleted successfully");
+        closeModal();
         fetchUsers();
       } else {
-        console.error("Deleting failed");
+        console.error("Soft delete failed");
       }
     } catch (err) {
-      console.error("Delete error:", err);
+      console.error("Soft delete error:", err);
     }
   };
+
+  const handleHardDelete = async () => {
+    if (!selectedUser) return;
+    try {
+      const response = await fetch(
+        `${BASE_URL}/users/${selectedUser.id}/hard`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+      if (response.ok) {
+        console.log("User permanently deleted");
+        closeModal();
+        fetchUsers();
+      } else {
+        console.error("Hard delete failed");
+      }
+    } catch (err) {
+      console.error("Hard delete error:", err);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
     fetchUser();
@@ -68,7 +102,6 @@ export default function UsersPage() {
       } else if (response.status === 401) {
         navigate("/login");
       } else {
-        // Handle other error statuses if needed
         console.error("Error fetching users data", response.status);
       }
     } catch (err) {
@@ -83,14 +116,12 @@ export default function UsersPage() {
       });
       if (response.ok) {
         const data = await response.json();
-        // Set user info if logged in
         setUserName(data.name);
-        setUserEmail(data.email)
+        setUserEmail(data.email);
         setUserRole(data.role);
       } else if (response.status === 401) {
         navigate("/login");
       } else {
-        // Handle other error statuses if needed
         console.error("Error fetching user info:", response.status);
       }
     } catch (err) {
@@ -134,9 +165,7 @@ export default function UsersPage() {
                 <td>
                   <button
                     className="logout-button delete-button"
-                    onClick={() => {
-                      deleteUser(user);
-                    }}
+                    onClick={() => handleDeleteClick(user)}
                     disabled={userEmail === user.email}
                   >
                     Delete
@@ -147,6 +176,53 @@ export default function UsersPage() {
           ))}
         </tbody>
       </table>
+
+      {showDeleteModal && selectedUser && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Delete User</h2>
+              <button className="modal-close" onClick={closeModal}>
+                &times;
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-user-info">
+                Select delete type for: <strong>{selectedUser.email}</strong>
+              </p>
+
+              <div className="delete-options">
+                <button
+                  className="delete-option soft-delete"
+                  onClick={handleSoftDelete}
+                >
+                  <div className="option-title">Soft Delete</div>
+                  <div className="option-description">
+                    Mark user as deleted but allow recovery
+                  </div>
+                </button>
+
+                <button
+                  className="delete-option hard-delete"
+                  onClick={() => {
+                    const confirmed = confirm(
+                      `Are you sure you want to permanently delete this user? This action CANNOT be undone.`
+                    );
+                    if (confirmed) {
+                      handleHardDelete();
+                    }
+                  }}
+                >
+                  <div className="option-title">Hard Delete</div>
+                  <div className="option-description">
+                    Permanently remove user - cannot be undone
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

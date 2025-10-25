@@ -35,6 +35,10 @@ export const checkIsAdminUser = (req, res, next) => {
 };
 
 export const checkUserDeleted = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "User not authenticated" });
+  }
+  
   if (req.user.isDeleted) {
       return res.status(403).json({
         error: "Your account has been deleted. Contact Apps admin to recovery",

@@ -46,60 +46,70 @@ export const loginWithGoogle = async (req, res, next) => {
       await allSessions[0].deleteOne();
     }
 
-    if (user.picture.includes("googleusercontent.com")) {
+    if (user.picture && user.picture.includes("googleusercontent.com")) {
       user.picture = picture;
       await user.save();
     }
 
-    const session = await Session.create({ userId: user._id });
+    const session = await Session.create([{ userId: user._id }]);
 
-    res.cookie("sid", session.id, {
+    res.cookie("sid", session[0].id, {
       httpOnly: true,
       signed: true,
       maxAge: 60 * 1000 * 60 * 24 * 7,
     });
     return res.json({ message: "logged in" });
   }
+
   console.log("user doesn't exits");
   const mongooseSession = await mongoose.startSession();
 
   try {
+    mongooseSession.startTransaction();
+
     const rootDirId = new Types.ObjectId();
     const userId = new Types.ObjectId();
 
-    mongooseSession.startTransaction();
-
-    await Directory.insertOne(
-      {
-        _id: rootDirId,
-        name: `root-${email}`,
-        parentDirId: null,
-        userId,
-      },
-      { mongooseSession }
+    const [newUser] = await User.create(
+      [
+        {
+          _id: userId,
+          name,
+          email,
+          picture,
+          rootDirId,
+        },
+      ],
+      { session: mongooseSession }
     );
 
-    const newUser = await User.insertOne(
-      {
-        _id: userId,
-        name,
-        email,
-        picture,
-        rootDirId,
-      },
-      { mongooseSession }
+    await Directory.create(
+      [
+        {
+          _id: rootDirId,
+          name: `root-${email}`,
+          parentDirId: null,
+          userId,
+        },
+      ],
+      { session: mongooseSession }
     );
 
-    const session = await Session.create({ userId: user._id });
+    const [session] = await Session.create([{ userId: newUser._id }]);
+
     res.cookie("sid", session.id, {
       httpOnly: true,
       signed: true,
       maxAge: 60 * 1000 * 60 * 24 * 7,
     });
-    mongooseSession.commitTransaction();
+
+    await mongooseSession.commitTransaction();
+    mongooseSession.endSession();
+
     res.status(201).json({ message: "logged in", insertedUser: newUser });
   } catch (err) {
-    mongooseSession.abortTransaction();
+    await mongooseSession.abortTransaction();
+    mongooseSession.endSession();
     next(err);
   }
 };

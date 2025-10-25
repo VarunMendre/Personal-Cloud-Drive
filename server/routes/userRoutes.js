@@ -5,14 +5,15 @@ import checkAuth, {
   checkUserDeleted,
 } from "../middlewares/authMiddleware.js";
 import {
-  deleteUser,
   getAllUsers,
   getCurrentUser,
+  hardDeleteUser,
   login,
   logout,
   logoutAll,
   logOutById,
   register,
+  softDeleteUser,
 } from "../controllers/userController.js";
 
 const router = express.Router();
@@ -43,7 +44,14 @@ router.delete(
   "/users/:userId",
   checkAuth,
   checkUserDeleted,
+  softDeleteUser
+);
+
+router.delete(
+  "/users/:userId/hard",
+  checkAuth,
+  checkUserDeleted,
   checkIsAdminUser,
-  deleteUser
+  hardDeleteUser
 );
 export default router;

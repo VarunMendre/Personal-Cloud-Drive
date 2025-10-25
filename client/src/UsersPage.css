@@ -26,7 +26,6 @@
   background-color: #f3f3f3;
 }
 
-
 .logout-button {
   padding: 6px 12px;
   font-size: 14px;
@@ -38,7 +37,7 @@
   transition: background-color 0.2s;
 }
 
-.delete-button{
+.delete-button {
   background-color: rgb(189, 24, 57);
 }
 
@@ -47,11 +46,137 @@
   cursor: not-allowed;
 }
 
-
 .logout-button:not(:disabled):hover {
   background-color: #0056b3;
 }
 
 .delete-button:not(:disabled):hover {
   background-color: #d91e1e;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5em;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: #000;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-user-info {
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #333;
+}
+
+.delete-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.delete-option {
+  padding: 16px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.delete-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.soft-delete {
+  border-color: #007bff;
+}
+
+.soft-delete:hover {
+  background-color: #e7f3ff;
+  border-color: #0056b3;
+}
+
+.hard-delete {
+  border-color: #dc3545;
+}
+
+.hard-delete:hover {
+  background-color: #ffe6e6;
+  border-color: #c82333;
+}
+
+.option-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.option-description {
+  font-size: 13px;
+  color: #666;
 }

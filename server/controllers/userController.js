@@ -1,9 +1,11 @@
 import Directory from "../models/directoryModel.js";
 import File from "../models/fileModel.js";
 import User from "../models/userModel.js";
+import { rm } from "fs/promises";
 import mongoose, { Types } from "mongoose";
 import Session from "../models/sessionModel.js";
 import OTP from "../models/otpModel.js";
+import path from "path";
 
 export const register = async (req, res, next) => {
   const { name, email, password, otp } = req.body;
@@ -128,13 +130,13 @@ export const logOutById = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-}
+};
 
-export const getAllUsers = async (req, res)=> {
-  const allUsers = await User.find({isDeleted: false}).lean();
+export const getAllUsers = async (req, res) => {
+  const allUsers = await User.find({ isDeleted: false }).lean();
   const allSession = await Session.find().lean();
   const allSessionsUserId = allSession.map(({ userId }) => userId.toString());
-  const allSessionsUserIdSet = new Set(allSessionsUserId)
+  const allSessionsUserIdSet = new Set(allSessionsUserId);
 
   const transformedUsers = allUsers.map(({ _id, name, email }) => ({
     id: _id,
@@ -144,16 +146,16 @@ export const getAllUsers = async (req, res)=> {
   }));
 
   res.status(200).json(transformedUsers);
-}
+};
 
-export const deleteUser = async (req, res, next) => {
-  const { userId } = req.params
+export const softDeleteUser = async (req, res, next) => {
+  const { userId } = req.params;
   if (req.user._id.toString() === userId) {
-    return res.status(403).json({error: "You cannot delete your self"})
+    return res.status(403).json({ error: "You cannot delete your self" });
   }
   const client = await mongoose.startSession();
   try {
-    client.startTransaction()
+    client.startTransaction();
     await User.findByIdAndUpdate({ _id: userId }, { isDeleted: true });
     await Session.deleteOne({ userId });
     client.commitTransaction();
@@ -162,4 +164,40 @@ export const deleteUser = async (req, res, next) => {
     client.abortTransaction();
     next(err);
   }
-}
+};
+
+export const hardDeleteUser = async (req, res, next) => {
+  const { userId } = req.params;
+  if (req.user._id.toString() === userId) {
+    return res.status(403).json({ error: "You cannot delete your self" });
+  }
+
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+
+    const files = await File.find({ userId }).select("_id extension").lean();
+    
+    for (const { _id, extension } of files) {
+      const filePath = `./storage/${_id.toString()}${extension}`;
+      try {
+        await rm(filePath,{ force: true });
+      } catch (err) {
+        if (err.code !== "ENOENT") throw err;
+      }
+    }
+
+    await File.deleteMany({ userId }, { session });
+    await Directory.deleteMany({ userId }, { session });
+    await Session.deleteOne({ userId }, { session });
+    await User.deleteOne({ _id: userId }, { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(204).end({ message: "User and its data deleted successfully" });
+  } catch (err) {
+    session.endSession();
+    next(err);
+  }
+};
