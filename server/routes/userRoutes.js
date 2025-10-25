@@ -1,8 +1,10 @@
 import express from "express";
 import checkAuth, {
+  checkIsAdminUser,
   checkNotRegularUser,
 } from "../middlewares/authMiddleware.js";
 import {
+  deleteUser,
   getAllUsers,
   getCurrentUser,
   login,
@@ -11,20 +13,18 @@ import {
   logOutById,
   register,
 } from "../controllers/userController.js";
-import Session from "../models/sessionModel.js";
 
 const router = express.Router();
 
-router.post("/user/register", register);
-
-router.post("/user/login", login);
-
 router.get("/user", checkAuth, getCurrentUser);
-router.get("/users", checkAuth, checkNotRegularUser, getAllUsers);
+router.post("/user/register", register);
+router.post("/user/login", login);
 
 router.post("/user/logout", logout);
 router.post("/user/logout-all", logoutAll);
 
+router.get("/users", checkAuth, checkNotRegularUser, getAllUsers);
 router.post("/users/:userId/logout", checkAuth, checkNotRegularUser, logOutById);
 
+router.delete("/users/:userId", checkAuth, checkIsAdminUser , deleteUser);
 export default router;

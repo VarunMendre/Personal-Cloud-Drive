@@ -34,6 +34,12 @@ export const loginWithGoogle = async (req, res, next) => {
   const user = await User.findOne({ email }).select("-__v");
 
   if (user) {
+    if (user.isDeleted) {
+      return res.status(403).json({
+        error: "Your account has been deleted. Contact Apps admin to recovery",
+      });
+    }
+
     const allSessions = await Session.find({ userId: user.id });
 
     if (allSessions.length >= 2) {
@@ -134,12 +140,11 @@ export async function githubLogin(req, res, next) {
         headers: { Authorization: `token ${accessToken}` },
       });
       email = emailsResp.data.find((e) => e.primary)?.email || null;
-
     } catch (err) {
       console.warn("Could not fetch GitHub email:", err.message);
     }
 
-    const { name} = userResp.data;
+    const { name } = userResp.data;
     const picture = userResp.data.avatar_url || "default-avatar-url";
 
     if (!email)
@@ -158,7 +163,6 @@ export async function githubLogin(req, res, next) {
         user.picture = picture;
         await user.save();
       }
-
 
       const session = await Session.create({ userId: user._id });
       res.cookie("sid", session.id, {

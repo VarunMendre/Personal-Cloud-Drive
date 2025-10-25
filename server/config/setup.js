@@ -43,6 +43,9 @@ try {
             bsonType: "string",
             enum: ["Admin", "Manager", "User"],
           },
+          isDeleted: {
+            bsonType: "bool",
+          },
           __v: {
             bsonType: "int",
           },

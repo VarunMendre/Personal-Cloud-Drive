@@ -1,4 +1,5 @@
 import Directory from "../models/directoryModel.js";
+import File from "../models/fileModel.js";
 import User from "../models/userModel.js";
 import mongoose, { Types } from "mongoose";
 import Session from "../models/sessionModel.js";
@@ -120,8 +121,17 @@ export const logoutAll = async (req, res) => {
   res.status(204).end();
 };
 
+export const logOutById = async (req, res, next) => {
+  try {
+    await Session.deleteMany({ userId: req.params.userId });
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+}
+
 export const getAllUsers = async (req, res)=> {
-  const allUsers = await User.find().lean();
+  const allUsers = await User.find({isDeleted: false}).lean();
   const allSession = await Session.find().lean();
   const allSessionsUserId = allSession.map(({ userId }) => userId.toString());
   const allSessionsUserIdSet = new Set(allSessionsUserId)
@@ -136,11 +146,17 @@ export const getAllUsers = async (req, res)=> {
   res.status(200).json(transformedUsers);
 }
 
-export const logOutById = async (req, res, next) => {
+export const deleteUser = async (req, res, next) => {
+  const { userId } = req.params
+  const client = await mongoose.startSession();
   try {
-    await Session.deleteMany({ userId: req.params.userId });
+    client.startTransaction()
+    await User.findByIdAndUpdate({ _id: userId }, { isDeleted: true });
+    await Session.deleteOne({ userId });
+    client.commitTransaction();
     res.status(204).end();
   } catch (err) {
+    client.abortTransaction();
     next(err);
   }
 }
