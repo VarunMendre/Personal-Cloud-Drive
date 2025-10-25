@@ -5,7 +5,7 @@ import { rm } from "fs/promises";
 import mongoose, { Types } from "mongoose";
 import Session from "../models/sessionModel.js";
 import OTP from "../models/otpModel.js";
-import path from "path";
+import { getEditableRoles } from "../utils/permissions.js";
 
 export const register = async (req, res, next) => {
   const { name, email, password, otp } = req.body;
@@ -133,10 +133,17 @@ export const logOutById = async (req, res, next) => {
 };
 
 export const getAllUsers = async (req, res) => {
-
   const requestorRole = req.user.role;
 
-  const query = requestorRole === "Owner" ? {} : { isDeleted: false };
+  let query = { isDeleted: false };
+
+  if (requestorRole === "Owner") {
+    query = {};
+  }
+
+  if (requestorRole !== "Owner") {
+    query.role = {$ne: "Owner"}
+  }
 
   const allUsers = await User.find(query).lean();
   const allSession = await Session.find().lean();
@@ -148,7 +155,7 @@ export const getAllUsers = async (req, res) => {
     name,
     email,
     isLoggedIn: allSessionsUserIdSet.has(_id.toString()),
-    isDeleted: isDeleted || false, 
+    isDeleted: isDeleted || false,
   }));
 
   res.status(200).json(transformedUsers);
@@ -178,16 +185,22 @@ export const hardDeleteUser = async (req, res, next) => {
     return res.status(403).json({ error: "You cannot delete your self" });
   }
 
+  if (req.user.role !== "Owner" && req.user.role !== "Admin") {
+    return res
+      .status(403)
+      .json({ error: "You don't have permission to hard delete users" });
+  }
+
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
 
     const files = await File.find({ userId }).select("_id extension").lean();
-    
+
     for (const { _id, extension } of files) {
       const filePath = `./storage/${_id.toString()}${extension}`;
       try {
-        await rm(filePath,{ force: true });
+        await rm(filePath, { force: true });
       } catch (err) {
         if (err.code !== "ENOENT") throw err;
       }
@@ -231,4 +244,72 @@ export const recoverUser = async (req, res, next) => {
     session.endSession();
     next(err);
   }
-}
+};
+
+export const permissionPage = async (req, res, next) => {
+  const loggedInUser = req.user;
+
+  if (loggedInUser.role === "User") {
+    return res
+      .status(403)
+      .json({ error: "Access denied: inSufficient permission" });
+  }
+
+  const editableRoles = getEditableRoles(loggedInUser.role);
+  try {
+    const users = await User.find({
+      _id: { $ne: loggedInUser._id },
+      role: { $in: editableRoles },
+    }).select("name email role");
+
+    res.status(200).json({
+      success: true,
+      editableRoles,
+      users,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateUserRole = async (req, res, next) => {
+  const { userId } = req.params;
+  const {role} = req.body;
+  const currentUserId = req.user.id;
+  const currentUserRole = req.user.role;
+
+  if (currentUserId === userId) {
+    return res.status(403).json({ error: "Cannot change you're own role!" });
+  }
+
+  try {
+    const targetedUser = await User.findById( userId );
+
+    if (!targetedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const editableRoles = getEditableRoles(currentUserRole);
+
+    if (!editableRoles.includes(role)) {
+      return res.status(403).json({
+        error: `You can only assign these roles: ${editableRoles.join(", ")}`,
+      });
+    }
+
+    targetedUser.role = role;
+    await targetedUser.save();
+
+    res.json({
+      message: "Role updated successfully",
+      user: {
+        id: targetedUser._id,
+        name: targetedUser.name,
+        email: targetedUser.email,
+        role: targetedUser.role,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};

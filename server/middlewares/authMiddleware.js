@@ -29,13 +29,10 @@ export const checkNotRegularUser = (req, res, next) => {
   res.status(403).json({ error: "Users are restricted to access this page" });
 };
 
-export const checkIsAdminUser = (req, res, next) => {
-  if (req.user.role === "Admin") return next();
-  res.status(403).json({ error: "You Cannot Delete User" });
-};
-
-export const checkIsOwner = (req, res, next) => {
-  if (req.user.role === "Owner") return next();
+export const checkIsOwnerOrAdmin = (req, res, next) => {
+  if (req.user.role === "Owner" || req.user.role === "Admin") {
+    return next();
+  }
   res.status(403).json({ error: "You Cannot Delete User" });
 };
 
