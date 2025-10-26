@@ -11,6 +11,7 @@ import {
   getCurrentUser,
   getUserFiles,
   getUserFileView,
+  getUserPassword,
   hardDeleteUser,
   login,
   logout,
@@ -19,6 +20,7 @@ import {
   permissionPage,
   recoverUser,
   register,
+  setUserPassword,
   softDeleteUser,
   updateUserFile,
   updateUserRole,
@@ -26,13 +28,16 @@ import {
 
 const router = express.Router();
 
-// User related Operation: Register, Login, logout, logout-all
-router.get("/user", checkAuth, checkUserDeleted, getCurrentUser);
-router.post("/user/register", checkUserDeleted, register);
-router.post("/user/login", checkUserDeleted, login);
+// Public routes (no authentication needed)
+router.post("/user/register", register); 
+router.post("/user/login", login); 
 
-router.post("/user/logout", logout);
-router.post("/user/logout-all", logoutAll);
+// Protected routes (authentication required)
+router.get("/user", checkAuth, checkUserDeleted, getCurrentUser);
+router.get("/user/has-password", checkAuth, checkUserDeleted, getUserPassword);
+router.post("/user/set-password", checkAuth, checkUserDeleted, setUserPassword);
+router.post("/user/logout", checkAuth, logout);
+router.post("/user/logout-all", checkAuth, logoutAll);
 
 // Role Based User Operations : Shows All Users, Logout, Soft Delete, Hard Delete
 router.get(

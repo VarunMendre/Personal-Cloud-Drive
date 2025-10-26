@@ -71,10 +71,24 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
+
+  if (!email || !password) {
+    return res.status(400).json({
+      message: "Email and password are required",
+    });
+  }
+  const user = await User.findOne({ email, isDeleted: false });
 
   if (!user) {
     return res.status(404).json({ error: "Invalid Credentials" });
+  }
+
+  // CHECK: If user doesn't have a password (OAuth user who hasn't set password)
+  if (!user.password || user.password.length === 0) {
+    return res.status(401).json({
+      error:
+        "No password set. Please login with Google/GitHub or set a password in settings.",
+    });
   }
 
   const isPasswordValid = await user.comparePassword(password);
@@ -129,6 +143,54 @@ export const logOutById = async (req, res, next) => {
     res.status(204).end();
   } catch (err) {
     next(err);
+  }
+};
+
+export const getUserPassword = async (req, res, next) => {
+  try {
+    console.log("=== GET USER PASSWORD ===");
+    console.log("req.user:", req.user);
+
+    // req.user is already populated by checkAuth middleware
+    const hasPassword = req.user.password && req.user.password.length > 0;
+
+    res.json({ hasPassword });
+  } catch (err) {
+    console.error("Error checking password:", err);
+    res.status(500).json({ message: "Error checking password status" });
+  }
+};
+
+export const setUserPassword = async (req, res, next) => {
+  const { newPassword } = req.body;
+
+  if (!newPassword || newPassword < 4) {
+    return res.status(400).json({
+      message: "Password must be at least 4 characters long",
+    });
+  }
+
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not Found" });
+    }
+
+    if (user.password && user.password.length > 0) {
+      return res.status(400).json({
+        message: "Password already set. Use change password instead.",
+      });
+    }
+    user.password = newPassword;
+    await user.save();
+
+    return res.json({
+      message: "Password Set Successfully, You may now login with credentials",
+    });
+  } catch (err) {
+     console.error("Error setting password:", err);
+     res.status(500).json({ message: "Error setting password" });
   }
 };
 
@@ -383,7 +445,6 @@ export const getUserFileView = async (req, res, next) => {
   }
 };
 
-
 export const updateUserFile = async (req, res, next) => {
   const { userId, fileId } = req.params;
   const { name } = req.body;
@@ -411,4 +472,4 @@ export const updateUserFile = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-}
+};

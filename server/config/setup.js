@@ -31,7 +31,6 @@ try {
           },
           password: {
             bsonType: "string",
-            minLength: 4,
           },
           picture: {
             bsonType: "string",

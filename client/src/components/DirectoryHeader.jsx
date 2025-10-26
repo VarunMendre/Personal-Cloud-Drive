@@ -6,11 +6,12 @@ import {
   FaUser,
   FaSignOutAlt,
   FaSignInAlt,
+  FaCog, // Settings icon
 } from "react-icons/fa";
 
 // Use a constant for the API base URL
 export const BASE_URL = "http://localhost:4000";
-  
+
 function DirectoryHeader({
   directoryName,
   onCreateFolderClick,
@@ -19,9 +20,6 @@ function DirectoryHeader({
   handleFileSelect,
   disabled = false,
 }) {
-  
-
-
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [userName, setUserName] = useState("Guest User");
@@ -120,7 +118,15 @@ function DirectoryHeader({
   };
 
   // -------------------------------------------
-  // 4. Close menu on outside click
+  // 4. Navigate to settings
+  // -------------------------------------------
+  const handleSettings = () => {
+    navigate("/settings");
+    setShowUserMenu(false);
+  };
+
+  // -------------------------------------------
+  // 5. Close menu on outside click
   // -------------------------------------------
   useEffect(() => {
     function handleDocumentClick(e) {
@@ -158,6 +164,17 @@ function DirectoryHeader({
           <FaUpload />
         </button>
 
+        {/* Settings Icon - Only show when logged in */}
+        {loggedIn && (
+          <button
+            className="icon-button"
+            title="Settings"
+            onClick={handleSettings}
+          >
+            <FaCog />
+          </button>
+        )}
+
         {/* Hidden file input */}
         <input
           ref={fileInputRef}
@@ -175,7 +192,11 @@ function DirectoryHeader({
             title="User Menu"
             onClick={handleUserIconClick}
           >
-            {userPicture?  <img className="userPicture" src={userPicture} alt={userName} />:<FaUser />}
+            {userPicture ? (
+              <img className="userPicture" src={userPicture} alt={userName} />
+            ) : (
+              <FaUser />
+            )}
           </button>
 
           {showUserMenu && (

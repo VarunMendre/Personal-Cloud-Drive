@@ -6,6 +6,7 @@ import Login from "./Login";
 import GitHubCallbackHandler from "./GitHubCallbackHandler";
 import UsersPage from "./UsersPage";
 import UserPermission from "./UserPermission";
+import UserSettings from "./UserSettings";
 
 const router = createBrowserRouter([
   {
@@ -31,6 +32,10 @@ const router = createBrowserRouter([
   {
     path: "/users/permission",
     element: <UserPermission />,
+  },
+  {
+    path: "/settings",
+    element: <UserSettings />,
   },
   {
     path: "/github-callback",
