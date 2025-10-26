@@ -1,12 +1,16 @@
 import express from "express";
 import checkAuth, {
+  checkIsOwner,
   checkIsOwnerOrAdmin,
   checkNotRegularUser,
   checkUserDeleted,
 } from "../middlewares/authMiddleware.js";
 import {
+  deleteUserFiles,
   getAllUsers,
   getCurrentUser,
+  getUserFiles,
+  getUserFileView,
   hardDeleteUser,
   login,
   logout,
@@ -16,6 +20,7 @@ import {
   recoverUser,
   register,
   softDeleteUser,
+  updateUserFile,
   updateUserRole,
 } from "../controllers/userController.js";
 
@@ -28,7 +33,6 @@ router.post("/user/login", checkUserDeleted, login);
 
 router.post("/user/logout", logout);
 router.post("/user/logout-all", logoutAll);
-
 
 // Role Based User Operations : Shows All Users, Logout, Soft Delete, Hard Delete
 router.get(
@@ -62,6 +66,35 @@ router.put(
   checkAuth,
   checkIsOwnerOrAdmin,
   recoverUser
+);
+
+// Owner : CRUD on users files, Admin: View,
+router.get(
+  "/users/:userId/files",
+  checkAuth,
+  checkIsOwnerOrAdmin,
+  getUserFiles
+);
+
+router.delete(
+  "/users/:userId/files/:fileId",
+  checkAuth,
+  checkIsOwnerOrAdmin,
+  deleteUserFiles
+);
+
+router.get(
+  "/users/:userId/files/:fileId/view",
+  checkAuth,
+  checkIsOwnerOrAdmin,
+  getUserFileView
+);
+
+router.put(
+  "/users/:userId/files/:fileId",
+  checkAuth,
+  checkIsOwner, // Only Owner can rename files
+  updateUserFile
 );
 
 // Permissions Page & Changing Roles

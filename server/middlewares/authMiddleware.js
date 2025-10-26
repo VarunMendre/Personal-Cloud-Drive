@@ -48,3 +48,8 @@ export const checkUserDeleted = (req, res, next) => {
   }
   next();
 }
+
+export const checkIsOwner = (req, res, next) => {
+  if (req.user && req.user.role === "Owner") return next();
+  return res.status(403).json({ error: "Access denied. Owner role required." });
+}

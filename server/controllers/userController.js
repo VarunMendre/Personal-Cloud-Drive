@@ -142,7 +142,7 @@ export const getAllUsers = async (req, res) => {
   }
 
   if (requestorRole !== "Owner") {
-    query.role = {$ne: "Owner"}
+    query.role = { $ne: "Owner" };
   }
 
   const allUsers = await User.find(query).lean();
@@ -274,7 +274,7 @@ export const permissionPage = async (req, res, next) => {
 
 export const updateUserRole = async (req, res, next) => {
   const { userId } = req.params;
-  const {role} = req.body;
+  const { role } = req.body;
   const currentUserId = req.user.id;
   const currentUserRole = req.user.role;
 
@@ -283,7 +283,7 @@ export const updateUserRole = async (req, res, next) => {
   }
 
   try {
-    const targetedUser = await User.findById( userId );
+    const targetedUser = await User.findById(userId);
 
     if (!targetedUser) {
       return res.status(404).json({ error: "User not found" });
@@ -313,3 +313,102 @@ export const updateUserRole = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getUserFiles = async (req, res, next) => {
+  const { userId } = req.params;
+  const loggedInUser = req.user;
+
+  if (!["Owner", "Admin"].includes(loggedInUser.role)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+
+  try {
+    const files = await File.find({ userId }).lean();
+
+    res.status(200).json(files);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteUserFiles = async (req, res, next) => {
+  const { userId, fileId } = req.params;
+  const loggedInUser = req.user;
+
+  if (loggedInUser.role !== "Owner") {
+    return res.status(403).json({ error: "Only Owner can delete files" });
+  }
+
+  try {
+    const file = await File.findOneAndDelete({ _id: fileId, userId });
+
+    if (!file) {
+      return res.status(404).json({ error: "File not found" });
+    }
+    console.log("File deleted:", file);
+
+    res.status(200).json({ message: "File deleted successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getUserFileView = async (req, res, next) => {
+  const { userId, fileId } = req.params;
+  const loggedInUser = req.user;
+
+  if (!["Owner", "Admin"].includes(loggedInUser.role)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+
+  try {
+    const fileData = await File.findOne({
+      _id: fileId,
+      userId: userId,
+    }).lean();
+
+    if (!fileData) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    const filePath = `${process.cwd()}/storage/${fileId}${fileData.extension}`;
+
+    return res.sendFile(filePath, (err) => {
+      if (!res.headersSent && err) {
+        return res.status(404).json({ error: "File not found!" });
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+export const updateUserFile = async (req, res, next) => {
+  const { userId, fileId } = req.params;
+  const { name } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: "File name is required" });
+  }
+
+  try {
+    const file = await File.findOne({
+      _id: fileId,
+      userId: userId,
+    });
+
+    if (!file) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    file.name = name.trim();
+    await file.save();
+
+    return res.status(200).json({
+      message: "File renamed successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+}
