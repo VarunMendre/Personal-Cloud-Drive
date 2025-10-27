@@ -6,6 +6,7 @@ import fileRoutes from "./routes/fileRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import checkAuth from "./middlewares/authMiddleware.js";
+import sharingRoutes from "./routes/sharingRoutes.js"
 import { connectDB } from "./config/db.js";
 
 const mySecretKey = "ProCodrr-storageApp-123$#";
@@ -26,6 +27,7 @@ app.use("/directory", checkAuth, directoryRoutes);
 app.use("/file", checkAuth, fileRoutes);
 app.use("/", userRoutes);
 app.use("/auth", authRoutes);
+app.use("/share", sharingRoutes);
 
 app.use((err, req, res, next) => {
   console.log(err);
