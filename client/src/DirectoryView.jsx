@@ -4,6 +4,7 @@ import DirectoryHeader from "./components/DirectoryHeader";
 import CreateDirectoryModal from "./components/CreateDirectoryModal";
 import RenameModal from "./components/RenameModal";
 import DirectoryList from "./components/DirectoryList";
+import ShareModal from "./components/ShareModal";
 import "./DirectoryView.css";
 
 function DirectoryView() {
@@ -26,16 +27,22 @@ function DirectoryView() {
   const [newDirname, setNewDirname] = useState("New Folder");
 
   const [showRenameModal, setShowRenameModal] = useState(false);
-  const [renameType, setRenameType] = useState(null); // "directory" or "file"
+  const [renameType, setRenameType] = useState(null);
   const [renameId, setRenameId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
 
+  // Share modal state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareResourceType, setShareResourceType] = useState(null);
+  const [shareResourceId, setShareResourceId] = useState(null);
+  const [shareResourceName, setShareResourceName] = useState("");
+
   // Uploading states
   const fileInputRef = useRef(null);
-  const [uploadQueue, setUploadQueue] = useState([]); // queued items to upload
-  const [uploadXhrMap, setUploadXhrMap] = useState({}); // track XHR per item
-  const [progressMap, setProgressMap] = useState({}); // track progress per item
-  const [isUploading, setIsUploading] = useState(false); // indicates if an upload is in progress
+  const [uploadQueue, setUploadQueue] = useState([]);
+  const [uploadXhrMap, setUploadXhrMap] = useState({});
+  const [progressMap, setProgressMap] = useState({});
+  const [isUploading, setIsUploading] = useState(false);
 
   // Context menu
   const [activeContextMenu, setActiveContextMenu] = useState(null);
@@ -62,7 +69,7 @@ function DirectoryView() {
    * Fetch directory contents
    */
   async function getDirectoryItems() {
-    setErrorMessage(""); // clear any existing error
+    setErrorMessage("");
     try {
       const response = await fetch(`${BASE_URL}/directory/${dirId || ""}`, {
         credentials: "include",
@@ -76,10 +83,7 @@ function DirectoryView() {
       await handleFetchErrors(response);
       const data = await response.json();
 
-      // Set directory name
       setDirectoryName(dirId ? data.name : "My Drive");
-
-      // Reverse directories and files so new items show on top
       setDirectoriesList([...data.directories].reverse());
       setFilesList([...data.files].reverse());
     } catch (error) {
@@ -89,7 +93,6 @@ function DirectoryView() {
 
   useEffect(() => {
     getDirectoryItems();
-    // Reset context menu
     setActiveContextMenu(null);
   }, [dirId]);
 
@@ -141,13 +144,23 @@ function DirectoryView() {
   }
 
   /**
+   * Handle Share
+   */
+  function handleShare(type, id, name) {
+    setShareResourceType(type);
+    setShareResourceId(id);
+    setShareResourceName(name);
+    setShowShareModal(true);
+    setActiveContextMenu(null);
+  }
+
+  /**
    * Select multiple files
    */
   function handleFileSelect(e) {
     const selectedFiles = Array.from(e.target.files);
     if (selectedFiles.length === 0) return;
 
-    // Build a list of "temp" items
     const newItems = selectedFiles.map((file) => {
       const tempId = `temp-${Date.now()}-${Math.random()}`;
       return {
@@ -158,24 +171,18 @@ function DirectoryView() {
       };
     });
 
-    // Put them at the top of the existing list
     setFilesList((prev) => [...newItems, ...prev]);
 
-    // Initialize progress=0 for each
     newItems.forEach((item) => {
       setProgressMap((prev) => ({ ...prev, [item.id]: 0 }));
     });
 
-    // Add them to the uploadQueue
     setUploadQueue((prev) => [...prev, ...newItems]);
 
-    // Clear file input so the same file can be chosen again if needed
     e.target.value = "";
 
-    // Start uploading queue if not already uploading
     if (!isUploading) {
       setIsUploading(true);
-      // begin the queue process
       processUploadQueue([...uploadQueue, ...newItems.reverse()]);
     }
   }
@@ -185,7 +192,6 @@ function DirectoryView() {
    */
   function processUploadQueue(queue) {
     if (queue.length === 0) {
-      // No more items to upload
       setIsUploading(false);
       setUploadQueue([]);
       setTimeout(() => {
@@ -194,17 +200,14 @@ function DirectoryView() {
       return;
     }
 
-    // Take first item
     const [currentItem, ...restQueue] = queue;
 
-    // Mark it as isUploading: true
     setFilesList((prev) =>
       prev.map((f) =>
         f.id === currentItem.id ? { ...f, isUploading: true } : f
       )
     );
 
-    // Start upload
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${BASE_URL}/file/${dirId || ""}`, true);
     xhr.withCredentials = true;
@@ -218,11 +221,9 @@ function DirectoryView() {
     });
 
     xhr.addEventListener("load", () => {
-      // Move on to the next item
       processUploadQueue(restQueue);
     });
 
-    // If user cancels, remove from the queue
     setUploadXhrMap((prev) => ({ ...prev, [currentItem.id]: xhr }));
     xhr.send(currentItem.file);
   }
@@ -235,19 +236,12 @@ function DirectoryView() {
     if (xhr) {
       xhr.abort();
     }
-    // Remove it from queue if still there
     setUploadQueue((prev) => prev.filter((item) => item.id !== tempId));
-
-    // Remove from filesList
     setFilesList((prev) => prev.filter((f) => f.id !== tempId));
-
-    // Remove from progressMap
     setProgressMap((prev) => {
       const { [tempId]: _, ...rest } = prev;
       return rest;
     });
-
-    // Remove from Xhr map
     setUploadXhrMap((prev) => {
       const copy = { ...prev };
       delete copy[tempId];
@@ -376,14 +370,13 @@ function DirectoryView() {
     return () => document.removeEventListener("click", handleDocumentClick);
   }, []);
 
-  // Combine directories & files into one list for rendering
   const combinedItems = [
     ...directoriesList.map((d) => ({ ...d, isDirectory: true })),
     ...filesList.map((f) => ({ ...f, isDirectory: false })),
   ];
+
   return (
     <div className="directory-view">
-      {/* Top error message for general errors */}
       {errorMessage &&
         errorMessage !==
           "Directory not found or you do not have access to it!" && (
@@ -396,14 +389,12 @@ function DirectoryView() {
         onUploadFilesClick={() => fileInputRef.current.click()}
         fileInputRef={fileInputRef}
         handleFileSelect={handleFileSelect}
-        // Disable if the user doesn't have access
         disabled={
           errorMessage ===
           "Directory not found or you do not have access to it!"
         }
       />
 
-      {/* Create Directory Modal */}
       {showCreateDirModal && (
         <CreateDirectoryModal
           newDirname={newDirname}
@@ -413,7 +404,6 @@ function DirectoryView() {
         />
       )}
 
-      {/* Rename Modal */}
       {showRenameModal && (
         <RenameModal
           renameType={renameType}
@@ -424,8 +414,21 @@ function DirectoryView() {
         />
       )}
 
+      {showShareModal && (
+        <ShareModal
+          resourceType={shareResourceType}
+          resourceId={shareResourceId}
+          resourceName={shareResourceName}
+          onClose={() => {
+            setShowShareModal(false);
+            setShareResourceType(null);
+            setShareResourceId(null);
+            setShareResourceName("");
+          }}
+        />
+      )}
+
       {combinedItems.length === 0 ? (
-        // Check if the error is specifically the "no access" error
         errorMessage ===
         "Directory not found or you do not have access to it!" ? (
           <p className="no-data-message">
@@ -451,6 +454,7 @@ function DirectoryView() {
           handleDeleteFile={handleDeleteFile}
           handleDeleteDirectory={handleDeleteDirectory}
           openRenameModal={openRenameModal}
+          handleShare={handleShare}
           BASE_URL={BASE_URL}
         />
       )}

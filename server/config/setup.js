@@ -6,58 +6,10 @@ const client = mongoose.connection.getClient();
 
 try {
   const db = mongoose.connection.db;
-  const command = "collMod";
 
+  // Update directories validator
   await db.command({
-    [command]: "users",
-    validator: {
-      $jsonSchema: {
-        bsonType: "object",
-        required: ["_id", "name", "email", "rootDirId"],
-        properties: {
-          _id: {
-            bsonType: "objectId",
-          },
-          name: {
-            bsonType: "string",
-            minLength: 3,
-            description:
-              "name field should a string with at least three characters",
-          },
-          email: {
-            bsonType: "string",
-            description: "please enter a valid email",
-            pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$",
-          },
-          password: {
-            bsonType: "string",
-          },
-          picture: {
-            bsonType: "string",
-          },
-          rootDirId: {
-            bsonType: "objectId",
-          },
-          role: {
-            bsonType: "string",
-            enum: ["Owner","Admin", "Manager", "User"],
-          },
-          isDeleted: {
-            bsonType: "bool",
-          },
-          __v: {
-            bsonType: "int",
-          },
-        },
-        additionalProperties: false,
-      },
-    },
-    validationAction: "error",
-    validationLevel: "strict",
-  });
-
-  await db.command({
-    [command]: "directories",
+    collMod: "directories",
     validator: {
       $jsonSchema: {
         bsonType: "object",
@@ -75,8 +27,63 @@ try {
           parentDirId: {
             bsonType: ["objectId", "null"],
           },
+
+          // ✅ sharedWith KEEPS _id (useful for array operations)
+          sharedWith: {
+            bsonType: ["array"],
+            items: {
+              bsonType: "object",
+              required: ["userId", "role"],
+              properties: {
+                userId: {
+                  bsonType: "objectId",
+                },
+                role: {
+                  bsonType: "string",
+                  enum: ["viewer", "editor"],
+                },
+                sharedAt: {
+                  bsonType: ["date", "null"],
+                },
+                _id: {
+                  // ✅ Keep this
+                  bsonType: "objectId",
+                },
+              },
+              additionalProperties: false,
+            },
+          },
+
+          // ❌ shareLink NO LONGER has _id
+          shareLink: {
+            bsonType: ["object"],
+            properties: {
+              enabled: {
+                bsonType: ["bool", "null"],
+              },
+              token: {
+                bsonType: ["string", "null"],
+              },
+              role: {
+                bsonType: ["string", "null"],
+                enum: ["viewer", "editor", null],
+              },
+              createdAt: {
+                bsonType: ["date", "null"],
+              },
+              // ❌ REMOVED: _id field
+            },
+            additionalProperties: false,
+          },
+
+          createdAt: {
+            bsonType: ["date", "null"],
+          },
+          updatedAt: {
+            bsonType: ["date", "null"],
+          },
           __v: {
-            bsonType: "int",
+            bsonType: ["int", "null"],
           },
         },
         additionalProperties: false,
@@ -86,8 +93,9 @@ try {
     validationLevel: "strict",
   });
 
+  // Update files validator (same changes)
   await db.command({
-    [command]: "files",
+    collMod: "files",
     validator: {
       $jsonSchema: {
         bsonType: "object",
@@ -108,8 +116,59 @@ try {
           parentDirId: {
             bsonType: "objectId",
           },
+
+          sharedWith: {
+            bsonType: ["array"],
+            items: {
+              bsonType: "object",
+              required: ["userId", "role"],
+              properties: {
+                userId: {
+                  bsonType: "objectId",
+                },
+                role: {
+                  bsonType: "string",
+                  enum: ["viewer", "editor"],
+                },
+                sharedAt: {
+                  bsonType: ["date", "null"],
+                },
+                _id: {
+                  bsonType: "objectId",
+                },
+              },
+              additionalProperties: false,
+            },
+          },
+
+          shareLink: {
+            bsonType: ["object"],
+            properties: {
+              enabled: {
+                bsonType: ["bool", "null"],
+              },
+              token: {
+                bsonType: ["string", "null"],
+              },
+              role: {
+                bsonType: ["string", "null"],
+                enum: ["viewer", "editor", null],
+              },
+              createdAt: {
+                bsonType: ["date", "null"],
+              },
+            },
+            additionalProperties: false,
+          },
+
+          createdAt: {
+            bsonType: ["date", "null"],
+          },
+          updatedAt: {
+            bsonType: ["date", "null"],
+          },
           __v: {
-            bsonType: "int",
+            bsonType: ["int", "null"],
           },
         },
         additionalProperties: false,
@@ -118,8 +177,10 @@ try {
     validationAction: "error",
     validationLevel: "strict",
   });
+
+  console.log("✅ Validators updated - shareLink._id removed!");
 } catch (err) {
-  console.log("Error setting up the database", err);
+  console.error("❌ Error updating validators:", err);
 } finally {
   await client.close();
 }

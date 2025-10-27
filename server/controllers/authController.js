@@ -90,6 +90,13 @@ export const loginWithGoogle = async (req, res, next) => {
           name: `root-${email}`,
           parentDirId: null,
           userId,
+          sharedWith: [],
+          shareLink: {
+            enabled: false,
+            token: null,
+            role: "viewer",
+            createdAt: null,
+          },
         },
       ],
       { session: mongooseSession }
@@ -185,16 +192,34 @@ export async function githubLogin(req, res, next) {
     }
 
     // 5️ If user doesn't exist, create user and root directory
+    console.log("user doesn't exist");
     const session = await mongoose.startSession();
     session.startTransaction();
+
     try {
       const rootDirId = new Types.ObjectId();
       const userId = new Types.ObjectId();
 
+      //  Include sharedWith and shareLink fields
       const rootDir = await Directory.create(
-        [{ _id: rootDirId, name: `root-${email}`, parentDirId: null, userId }],
+        [
+          {
+            _id: rootDirId,
+            name: `root-${email}`,
+            parentDirId: null,
+            userId,
+            sharedWith: [], 
+            shareLink: {
+              enabled: false,
+              token: null,
+              role: "viewer",
+              createdAt: null,
+            },
+          },
+        ],
         { session }
       );
+
       user = await User.create(
         [{ _id: userId, name, email, picture, rootDirId }],
         { session }
@@ -210,8 +235,17 @@ export async function githubLogin(req, res, next) {
       await session.commitTransaction();
       session.endSession();
 
+      console.log("✅ User and root directory created successfully");
       res.status(201).json({ message: "logged in", user: user[0] });
     } catch (err) {
+      console.error("Transaction error:", err.message);
+
+      // ✅ ADDED: Detailed error logging
+      if (err.code === 121 && err.errInfo) {
+        console.error("Validation error details:");
+        console.error(JSON.stringify(err.errInfo.details, null, 2));
+      }
+
       await session.abortTransaction();
       session.endSession();
       throw err;

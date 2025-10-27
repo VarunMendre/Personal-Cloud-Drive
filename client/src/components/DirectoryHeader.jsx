@@ -6,7 +6,8 @@ import {
   FaUser,
   FaSignOutAlt,
   FaSignInAlt,
-  FaCog, // Settings icon
+  FaCog,
+  FaUserFriends, // Shared with me icon
 } from "react-icons/fa";
 
 // Use a constant for the API base URL
@@ -172,6 +173,17 @@ function DirectoryHeader({
             onClick={handleSettings}
           >
             <FaCog />
+          </button>
+        )}
+
+        {/* Shared with Me - Only show when logged in */}
+        {loggedIn && (
+          <button
+            className="icon-button"
+            title="Shared with Me"
+            onClick={() => navigate("/shared-with-me")}
+          >
+            <FaUserFriends />
           </button>
         )}
 

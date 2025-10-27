@@ -1,0 +1,259 @@
+.shared-with-me-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.shared-header {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 6px;
+  color: #666;
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 16px;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.shared-header h1 {
+  font-size: 32px;
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.shared-header .subtitle {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: white;
+  font-size: 18px;
+}
+
+.error-message {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 8px;
+  color: #c33;
+  border-left: 4px solid #c33;
+  margin-bottom: 20px;
+}
+
+.empty-state {
+  background: white;
+  padding: 60px 20px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.empty-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+}
+
+.empty-state h2 {
+  font-size: 24px;
+  color: #333;
+  margin: 0 0 12px 0;
+}
+
+.empty-state p {
+  color: #666;
+  font-size: 16px;
+  margin: 0;
+}
+
+.shared-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.shared-section {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.shared-section h2 {
+  font-size: 20px;
+  color: #333;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.shared-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  border: 2px solid #f0f0f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.shared-item:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  transform: translateY(-2px);
+}
+
+.item-icon {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.folder-icon {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.file-icon {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.item-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.item-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #666;
+}
+
+.owner {
+  color: #666;
+}
+
+.shared-date {
+  color: #999;
+  font-size: 12px;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  width: fit-content;
+  margin-top: auto;
+}
+
+.role-badge.viewer {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.role-badge.editor {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .shared-with-me-container {
+    padding: 12px;
+  }
+
+  .shared-header {
+    padding: 20px;
+  }
+
+  .shared-header h1 {
+    font-size: 24px;
+  }
+
+  .items-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shared-item {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .item-details {
+    align-items: center;
+  }
+
+  .item-meta {
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .shared-header h1 {
+    font-size: 20px;
+  }
+
+  .empty-icon {
+    font-size: 60px;
+  }
+
+  .empty-state h2 {
+    font-size: 20px;
+  }
+
+  .empty-state p {
+    font-size: 14px;
+  }
+}
