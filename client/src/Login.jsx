@@ -11,8 +11,8 @@ const Login = () => {
   const BASE_URL = "http://localhost:4000";
 
   const [formData, setFormData] = useState({
-    email: "anuragprocodrr@gmail.com",
-    password: "abcd",
+    email: "varunmm0404@gmail.com",
+    password: "Varun@786",
   });
 
   const [serverError, setServerError] = useState("");

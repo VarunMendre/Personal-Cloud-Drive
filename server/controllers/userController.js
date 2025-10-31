@@ -6,6 +6,7 @@ import mongoose, { Types } from "mongoose";
 import Session from "../models/sessionModel.js";
 import OTP from "../models/otpModel.js";
 import { getEditableRoles } from "../utils/permissions.js";
+import redisClient from "../config/redis.js";
 
 export const register = async (req, res, next) => {
   const { name, email, password, otp } = req.body;
@@ -97,15 +98,23 @@ export const login = async (req, res, next) => {
     return res.status(404).json({ error: "Invalid Credentials" });
   }
 
-  const allSessions = await Session.find({ userId: user.id });
+  // const allSessions = await Session.find({ userId: user.id });
 
-  if (allSessions.length >= 2) {
-    await allSessions[0].deleteOne();
-  }
+  // if (allSessions.length >= 2) {
+  //   await allSessions[0].deleteOne();
+  // }
 
-  const session = await Session.create({ userId: user._id });
+  const sessionId = crypto.randomUUID();
+  const redisKey = `session:${sessionId}`;
 
-  res.cookie("sid", session.id, {
+   await redisClient.json.set(redisKey, "$", {
+     userId: user._id,
+     rootDirId: user.rootDirId,
+   });
+
+  await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
+
+  res.cookie("sid", sessionId, {
     httpOnly: true,
     signed: true,
     maxAge: 60 * 1000 * 60 * 24 * 7,
@@ -113,18 +122,20 @@ export const login = async (req, res, next) => {
   res.json({ message: "logged in" });
 };
 
-export const getCurrentUser = (req, res) => {
+export const getCurrentUser = async(req, res) => {
+  const user = await User.findById(req.user._id);
+
   res.status(200).json({
-    name: req.user.name,
-    email: req.user.email,
-    picture: req.user.picture,
-    role: req.user.role,
+    name: user.name,
+    email: user.email,
+    picture: user.picture,
+    role: user.role,
   });
 };
 
 export const logout = async (req, res) => {
   const { sid } = req.signedCookies;
-  await Session.findByIdAndDelete(sid);
+  await redisClient.del(`session:${sid}`);
   res.clearCookie("sid");
   res.status(204).end();
 };
@@ -148,9 +159,6 @@ export const logOutById = async (req, res, next) => {
 
 export const getUserPassword = async (req, res, next) => {
   try {
-    console.log("=== GET USER PASSWORD ===");
-    console.log("req.user:", req.user);
-
     // req.user is already populated by checkAuth middleware
     const hasPassword = req.user.password && req.user.password.length > 0;
 
@@ -189,8 +197,8 @@ export const setUserPassword = async (req, res, next) => {
       message: "Password Set Successfully, You may now login with credentials",
     });
   } catch (err) {
-     console.error("Error setting password:", err);
-     res.status(500).json({ message: "Error setting password" });
+    console.error("Error setting password:", err);
+    res.status(500).json({ message: "Error setting password" });
   }
 };
 
