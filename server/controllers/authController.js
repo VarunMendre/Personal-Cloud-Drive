@@ -6,6 +6,7 @@ import mongoose, { Types } from "mongoose";
 import Directory from "../models/directoryModel.js";
 import Session from "../models/sessionModel.js";
 import axios from "axios";
+import redisClient from "../config/redis.js";
 
 export const sendOtp = async (req, res, next) => {
   const { email } = req.body;
@@ -40,20 +41,27 @@ export const loginWithGoogle = async (req, res, next) => {
       });
     }
 
-    const allSessions = await Session.find({ userId: user.id });
+    // const allSessions = await Session.find({ userId: user.id });
 
-    if (allSessions.length >= 2) {
-      await allSessions[0].deleteOne();
-    }
+    // if (allSessions.length >= 2) {
+    //   await allSessions[0].deleteOne();
+    // }
 
     if (user.picture && user.picture.includes("googleusercontent.com")) {
       user.picture = picture;
       await user.save();
     }
 
-    const session = await Session.create([{ userId: user._id }]);
+    const sessionId = crypto.randomUUID();
+    const redisKey = `session:${sessionId}`;
 
-    res.cookie("sid", session[0].id, {
+    await redisClient.json.set(redisKey, "$", {
+      userId: user._id,
+      rootDirId: user.rootDirId,
+    });
+
+    await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
+    res.cookie("sid",sessionId, {
       httpOnly: true,
       signed: true,
       maxAge: 60 * 1000 * 60 * 24 * 7,
@@ -102,9 +110,16 @@ export const loginWithGoogle = async (req, res, next) => {
       { session: mongooseSession }
     );
 
-    const [session] = await Session.create([{ userId: newUser._id }]);
+    const sessionId = crypto.randomUUID();
+    const redisKey = `session:${sessionId}`;
 
-    res.cookie("sid", session.id, {
+    await redisClient.json.set(redisKey, "$", {
+      userId: user._id,
+      rootDirId: user.rootDirId,
+    });
+
+    await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
+    res.cookie("sid", sessionId, {
       httpOnly: true,
       signed: true,
       maxAge: 60 * 1000 * 60 * 24 * 7,
@@ -181,8 +196,16 @@ export async function githubLogin(req, res, next) {
         await user.save();
       }
 
-      const session = await Session.create({ userId: user._id });
-      res.cookie("sid", session.id, {
+      const sessionId = crypto.randomUUID();
+      const redisKey = `session:${sessionId}`;
+
+      await redisClient.json.set(redisKey, "$", {
+        userId: user._id,
+        rootDirId: user.rootDirId,
+      });
+
+      await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
+      res.cookie("sid", sessionId, {
         httpOnly: true,
         signed: true,
         maxAge: 1000 * 60 * 60 * 24 * 7,
@@ -208,7 +231,7 @@ export async function githubLogin(req, res, next) {
             name: `root-${email}`,
             parentDirId: null,
             userId,
-            sharedWith: [], 
+            sharedWith: [],
             shareLink: {
               enabled: false,
               token: null,
@@ -225,8 +248,17 @@ export async function githubLogin(req, res, next) {
         { session }
       );
 
-      const userSession = await Session.create([{ userId }], { session });
-      res.cookie("sid", userSession[0].id, {
+      const sessionId = crypto.randomUUID();
+      const redisKey = `session:${sessionId}`;
+
+      await redisClient.json.set(redisKey, "$", {
+        userId: user._id,
+        rootDirId: user.rootDirId,
+      });
+
+      await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
+
+      res.cookie("sid", sessionId, {
         httpOnly: true,
         signed: true,
         maxAge: 1000 * 60 * 60 * 24 * 7,
