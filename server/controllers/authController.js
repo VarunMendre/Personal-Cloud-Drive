@@ -5,7 +5,7 @@ import User from "../models/userModel.js";
 import mongoose, { Types } from "mongoose";
 import Directory from "../models/directoryModel.js";
 import Session from "../models/sessionModel.js";
-import axios from "axios";
+import axios, { all } from "axios";
 import redisClient from "../config/redis.js";
 
 export const sendOtp = async (req, res, next) => {
@@ -41,11 +41,17 @@ export const loginWithGoogle = async (req, res, next) => {
       });
     }
 
-    // const allSessions = await Session.find({ userId: user.id });
+    const allSession = await redisClient.ft.search(
+      "userIdInx",
+      `@userId:{${user.id}}`,
+      {
+        RETURN: [],
+      }
+    );
 
-    // if (allSessions.length >= 2) {
-    //   await allSessions[0].deleteOne();
-    // }
+    if (allSession.total >= 2) {
+      await redisClient.del(allSession.documents[0].id);
+    }
 
     if (user.picture && user.picture.includes("googleusercontent.com")) {
       user.picture = picture;
@@ -61,7 +67,7 @@ export const loginWithGoogle = async (req, res, next) => {
     });
 
     await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
-    res.cookie("sid",sessionId, {
+    res.cookie("sid", sessionId, {
       httpOnly: true,
       signed: true,
       maxAge: 60 * 1000 * 60 * 24 * 7,
@@ -109,6 +115,18 @@ export const loginWithGoogle = async (req, res, next) => {
       ],
       { session: mongooseSession }
     );
+
+    const allSession = await redisClient.ft.search(
+      "userIdInx",
+      `@userId:{${user.id}}`,
+      {
+        RETURN: [],
+      }
+    );
+
+    if (allSession.total >= 2) {
+      await redisClient.del(allSession.documents[0].id);
+    }
 
     const sessionId = crypto.randomUUID();
     const redisKey = `session:${sessionId}`;
@@ -187,8 +205,17 @@ export async function githubLogin(req, res, next) {
 
     if (user) {
       // Manage sessions
-      const allSessions = await Session.find({ userId: user._id });
-      if (allSessions.length >= 2) await allSessions[0].deleteOne();
+      const allSession = await redisClient.ft.search(
+        "userIdInx",
+        `@userId:{${user.id}}`,
+        {
+          RETURN: [],
+        }
+      );
+
+      if (allSession.total >= 2) {
+        await redisClient.del(allSession.documents[0].id);
+      }
 
       // Update avatar if default
       if (user.picture.includes("avatars.githubusercontent")) {
@@ -247,7 +274,17 @@ export async function githubLogin(req, res, next) {
         [{ _id: userId, name, email, picture, rootDirId }],
         { session }
       );
+      const allSession = await redisClient.ft.search(
+        "userIdInx",
+        `@userId:{${user.id}}`,
+        {
+          RETURN: [],
+        }
+      );
 
+      if (allSession.total >= 2) {
+        await redisClient.del(allSession.documents[0].id);
+      }
       const sessionId = crypto.randomUUID();
       const redisKey = `session:${sessionId}`;
 
