@@ -30,14 +30,22 @@ export default function UsersPage() {
     setShowFilesModal(true);
     setLoadingFiles(true);
 
+    const userId = user._id || user.id; // ✅ Fix: ensure correct ID is used
+
     try {
-      const response = await fetch(`${BASE_URL}/users/${user.id}/files`, {
+      const response = await fetch(`${BASE_URL}/users/${userId}/files`, {
         credentials: "include",
       });
 
       if (response.ok) {
         const data = await response.json();
         setUserFiles(data.files || data);
+      } else if (response.status === 403) {
+        console.warn(
+          "Access forbidden: you don’t have permission to view these files"
+        );
+        alert("You don't have permission to view these files.");
+        setShowFilesModal(false);
       } else {
         console.error("Failed to fetch user files");
         setUserFiles([]);
@@ -49,6 +57,7 @@ export default function UsersPage() {
       setLoadingFiles(false);
     }
   };
+
 
   // Handle file click to open/view
   const handleFileClick = (file) => {
@@ -368,8 +377,19 @@ export default function UsersPage() {
       });
       if (response.ok) {
         const data = await response.json();
-        setUsers(data);
-        console.log(data);
+
+        // ✅ Fix: ensure each user has correct boolean `isLoggedIn`
+        const normalized = data.map((u) => ({
+          ...u,
+          isLoggedIn:
+            u.isLoggedIn === true ||
+            u.isLoggedIn === "true" ||
+            u.status === "online" ||
+            u.active === true,
+        }));
+
+        setUsers(normalized);
+        console.log("Fetched users:", normalized);
       } else if (response.status === 403) {
         navigate("/");
       } else if (response.status === 401) {

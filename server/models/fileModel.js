@@ -21,32 +21,6 @@ const fileSchema = new Schema(
       ref: "Directory",
     },
 
-    // NEW: Sharing configuration
-    sharedWith: {
-      type: [
-        {
-          userId: { type: Schema.Types.ObjectId, ref: "User" },
-          role: { type: String, enum: ["viewer", "editor"], default: "viewer" },
-          sharedAt: { type: Date, default: Date.now },
-        },
-      ],
-      default: [],
-    },
-
-    shareLink: {
-      type: {
-        enabled: { type: Boolean, default: false },
-        token: { type: String, unique: true, sparse: true },
-        role: { type: String, enum: ["viewer", "editor"], default: "viewer" },
-        createdAt: { type: Date },
-      },
-      _id: false,
-      default: () => ({
-        enabled: false,
-        role: "viewer",
-        createdAt: null,
-      }),
-    },
   },
   {
     strict: "throw",

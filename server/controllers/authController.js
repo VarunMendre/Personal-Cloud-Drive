@@ -27,26 +27,23 @@ export const verifyOtp = async (req, res, next) => {
 
 export const loginWithGoogle = async (req, res, next) => {
   const { idToken } = req.body;
-
   const userData = await verifyIdToken(idToken);
+  const { name, email, picture } = userData;
 
-  const { name, email, picture, sub } = userData;
+  let user = await User.findOne({ email }).select("-__v");
 
-  const user = await User.findOne({ email }).select("-__v");
-
+  // ✅ If user exists
   if (user) {
     if (user.isDeleted) {
       return res.status(403).json({
-        error: "Your account has been deleted. Contact Apps admin to recovery",
+        error: "Your account has been deleted. Contact admin to recover it.",
       });
     }
 
     const allSession = await redisClient.ft.search(
       "userIdInx",
       `@userId:{${user.id}}`,
-      {
-        RETURN: [],
-      }
+      { RETURN: [] }
     );
 
     if (allSession.total >= 2) {
@@ -64,20 +61,23 @@ export const loginWithGoogle = async (req, res, next) => {
     await redisClient.json.set(redisKey, "$", {
       userId: user._id,
       rootDirId: user.rootDirId,
+      role: user.role,
     });
 
     await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
     res.cookie("sid", sessionId, {
       httpOnly: true,
       signed: true,
-      maxAge: 60 * 1000 * 60 * 24 * 7,
+      maxAge: 60 * 60 * 24 * 7 * 1000,
     });
+
     return res.json({ message: "logged in" });
   }
 
-  console.log("user doesn't exits");
-  const mongooseSession = await mongoose.startSession();
+  // ✅ If user doesn't exist
+  console.log("user doesn't exist");
 
+  const mongooseSession = await mongoose.startSession();
   try {
     mongooseSession.startTransaction();
 
@@ -104,24 +104,16 @@ export const loginWithGoogle = async (req, res, next) => {
           name: `root-${email}`,
           parentDirId: null,
           userId,
-          sharedWith: [],
-          shareLink: {
-            enabled: false,
-            token: null,
-            role: "viewer",
-            createdAt: null,
-          },
         },
       ],
       { session: mongooseSession }
     );
 
+    // ✅ Use newUser.id instead of user.id
     const allSession = await redisClient.ft.search(
       "userIdInx",
-      `@userId:{${user.id}}`,
-      {
-        RETURN: [],
-      }
+      `@userId:{${newUser.id}}`,
+      { RETURN: [] }
     );
 
     if (allSession.total >= 2) {
@@ -132,21 +124,24 @@ export const loginWithGoogle = async (req, res, next) => {
     const redisKey = `session:${sessionId}`;
 
     await redisClient.json.set(redisKey, "$", {
-      userId: user._id,
-      rootDirId: user.rootDirId,
+      userId: newUser._id,
+      rootDirId: newUser.rootDirId,
+      role: "User",
     });
 
     await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
     res.cookie("sid", sessionId, {
       httpOnly: true,
       signed: true,
-      maxAge: 60 * 1000 * 60 * 24 * 7,
+      maxAge: 60 * 60 * 24 * 7 * 1000,
     });
 
     await mongooseSession.commitTransaction();
     mongooseSession.endSession();
 
-    res.status(201).json({ message: "logged in", insertedUser: newUser });
+    return res
+      .status(201)
+      .json({ message: "logged in", insertedUser: newUser });
   } catch (err) {
     await mongooseSession.abortTransaction();
     mongooseSession.endSession();
@@ -229,6 +224,7 @@ export async function githubLogin(req, res, next) {
       await redisClient.json.set(redisKey, "$", {
         userId: user._id,
         rootDirId: user.rootDirId,
+        role: user.role,
       });
 
       await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
@@ -258,13 +254,6 @@ export async function githubLogin(req, res, next) {
             name: `root-${email}`,
             parentDirId: null,
             userId,
-            sharedWith: [],
-            shareLink: {
-              enabled: false,
-              token: null,
-              role: "viewer",
-              createdAt: null,
-            },
           },
         ],
         { session }
@@ -291,6 +280,7 @@ export async function githubLogin(req, res, next) {
       await redisClient.json.set(redisKey, "$", {
         userId: user._id,
         rootDirId: user.rootDirId,
+        role: user.role,
       });
 
       await redisClient.expire(redisKey, 60 * 60 * 24 * 7);

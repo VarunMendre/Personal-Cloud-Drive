@@ -4,7 +4,19 @@ import File from "../models/fileModel.js";
 
 export const getDirectory = async (req, res) => {
   const user = req.user;
+   if (!user) {
+     return res
+       .status(401)
+       .json({ error: "Unauthorized. Please log in first." });
+   }
   const _id = req.params.id || user.rootDirId.toString();
+
+  if (!_id) {
+    return res
+      .status(400)
+      .json({ error: "Invalid request. Directory ID not found." });
+  } 
+
   const directoryData = await Directory.findOne({ _id }).lean();
   if (!directoryData) {
     return res
