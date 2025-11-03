@@ -158,8 +158,8 @@ export async function githubLogin(req, res, next) {
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: "Code is required" });
 
-  const CLIENT_ID = "Ov23lifBnGMie0EjK9Zz";
-  const CLIENT_SECRET = "fed6f373bc20e2dddc4e9b5eaf8c0101dc90c60a";
+  const CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+  const CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
   try {
     // 1 Exchange code for access token

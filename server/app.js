@@ -9,16 +9,17 @@ import checkAuth from "./middlewares/authMiddleware.js";
 import sharingRoutes from "./routes/sharingRoutes.js"
 import { connectDB } from "./config/db.js";
 
-const mySecretKey = "ProCodrr-storageApp-123$#";
+const mySecretKey = process.env.MY_SECRET_KEY;
 
 await connectDB();
 
 const app = express();
-app.use(cookieParser(mySecretKey));
+const PORT = process.env.PORT || 4000
+app.use(cookieParser(process.env.MY_SECRET_KEY));
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_ORIGIN,
     credentials: true,
   })
 );
@@ -35,6 +36,6 @@ app.use((err, req, res, next) => {
   res.json(err)
 });
 
-app.listen(4000, () => {
+app.listen(PORT, () => {
   console.log(`Server Started`);
 });
