@@ -7,6 +7,7 @@ import Directory from "../models/directoryModel.js";
 import Session from "../models/sessionModel.js";
 import axios, { all } from "axios";
 import redisClient from "../config/redis.js";
+import { otpSchema } from "../validators/authSchema.js";
 
 export const sendOtp = async (req, res, next) => {
   const { email } = req.body;
@@ -16,7 +17,13 @@ export const sendOtp = async (req, res, next) => {
 };
 
 export const verifyOtp = async (req, res, next) => {
-  const { email, otp } = req.body;
+  const { success, data } = otpSchema.safeParse(req.body);
+
+  if (!success) {
+    return res.status(400).json({ error: "Invalid or Expired OTP" });
+  }
+
+  const { email, otp } = data;
   const optRecord = await OTP.findOne({ email, otp });
   if (!optRecord) {
     return res.status(400).json({ error: "Invalid or Expired OTP" });

@@ -7,10 +7,18 @@ import Session from "../models/sessionModel.js";
 import OTP from "../models/otpModel.js";
 import { getEditableRoles } from "../utils/permissions.js";
 import redisClient from "../config/redis.js";
+import { loginSchema, registerSchema } from "../validators/authSchema.js";
+import z from "zod";
 
 export const register = async (req, res, next) => {
-  const { name, email, password, otp } = req.body;
+  const { success, data, error } = registerSchema.safeParse(req.body);
 
+  if (!success) {
+    return res.status(400).json({ error: z.flattenError(error).fieldErrors });
+  }
+
+  const { name, email, password, otp } = data;
+  console.log(otp);
   const optRecord = await OTP.findOne({ email, otp });
   if (!optRecord) {
     return res.status(400).json({ error: "Invalid or Expired OTP" });
@@ -71,7 +79,12 @@ export const register = async (req, res, next) => {
 };
 
 export const login = async (req, res, next) => {
-  const { email, password } = req.body;
+  const { success, data, error } = loginSchema.safeParse(req.body);
+  if (!success) {
+     return res.status(404).json({ error: "Invalid Credentials" });
+  }
+
+  const { email, password } = data;
 
   if (!email || !password) {
     return res.status(400).json({
@@ -100,7 +113,8 @@ export const login = async (req, res, next) => {
 
   const allSessions = await redisClient.ft.search(
     "userIdInx",
-    `@userId:{${user.id}}`, {
+    `@userId:{${user.id}}`,
+    {
       RETURN: [],
     }
   );
@@ -112,11 +126,11 @@ export const login = async (req, res, next) => {
   const sessionId = crypto.randomUUID();
   const redisKey = `session:${sessionId}`;
 
-   await redisClient.json.set(redisKey, "$", {
-     userId: user._id,
-     rootDirId: user.rootDirId,
-     role: user.role
-   });
+  await redisClient.json.set(redisKey, "$", {
+    userId: user._id,
+    rootDirId: user.rootDirId,
+    role: user.role,
+  });
 
   await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
 
@@ -128,7 +142,7 @@ export const login = async (req, res, next) => {
   res.json({ message: "logged in" });
 };
 
-export const getCurrentUser = async(req, res) => {
+export const getCurrentUser = async (req, res) => {
   const user = await User.findById(req.user._id);
 
   res.status(200).json({

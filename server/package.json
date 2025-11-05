@@ -20,7 +20,8 @@
     "mime-types": "^2.1.35",
     "mongoose": "^8.12.1",
     "redis": "^5.9.0",
-    "resend": "^6.2.0"
+    "resend": "^6.2.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "prettier": "^3.4.2"
