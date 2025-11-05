@@ -1,23 +1,34 @@
 import { rm } from "fs/promises";
 import Directory from "../models/directoryModel.js";
 import File from "../models/fileModel.js";
+import { getDirectorySchema } from "../validators/directorySchema.js";
 
 export const getDirectory = async (req, res) => {
   const user = req.user;
-   if (!user) {
-     return res
-       .status(401)
-       .json({ error: "Unauthorized. Please log in first." });
-   }
+  if (!user) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized. Please log in first." });
+  }
   const _id = req.params.id || user.rootDirId.toString();
 
   if (!_id) {
     return res
       .status(400)
       .json({ error: "Invalid request. Directory ID not found." });
-  } 
+  }
 
-  const directoryData = await Directory.findOne({ _id }).lean();
+  const validateResult = getDirectorySchema.safeParse({id: _id});
+
+  if (!validateResult.success) {
+    return res.status(400).json({
+      success: false,
+      message: validateResult.error.errors[0].message,
+    });
+  }
+
+  const {id} = validateResult.data
+  const directoryData = await Directory.findById(id).lean();
   if (!directoryData) {
     return res
       .status(404)
