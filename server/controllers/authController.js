@@ -4,10 +4,13 @@ import { verifyIdToken } from "../services/googleAuthService.js";
 import User from "../models/userModel.js";
 import mongoose, { Types } from "mongoose";
 import Directory from "../models/directoryModel.js";
-import Session from "../models/sessionModel.js";
 import axios, { all } from "axios";
 import redisClient from "../config/redis.js";
-import { otpSchema } from "../validators/authSchema.js";
+import {
+  githubLoginSchema,
+  googleLoginSchema,
+  otpSchema,
+} from "../validators/authSchema.js";
 
 export const sendOtp = async (req, res, next) => {
   const { email } = req.body;
@@ -34,8 +37,23 @@ export const verifyOtp = async (req, res, next) => {
 
 export const loginWithGoogle = async (req, res, next) => {
   const { idToken } = req.body;
+
+  if (!idToken) {
+    return res.status(400).json({ error: "Id Token not generated" });
+  }
+
   const userData = await verifyIdToken(idToken);
   const { name, email, picture } = userData;
+
+  const { success } = googleLoginSchema.safeParse({
+    name,
+    email,
+    picture,
+  });
+
+  if (!success) {
+    return res.status(400).json({ error: "Invalid credentials" });
+  }
 
   let user = await User.findOne({ email }).select("-__v");
 
@@ -198,6 +216,16 @@ export async function githubLogin(req, res, next) {
 
     const { name } = userResp.data;
     const picture = userResp.data.avatar_url || "default-avatar-url";
+
+    const { success } = githubLoginSchema.safeParse({
+      name,
+      email,
+      picture,
+    });
+
+    if (!success) {
+      return res.status(400).json({ error: "Invalid Credentials" });
+    }
 
     if (!email)
       return res.status(400).json({ error: "Email not available from GitHub" });

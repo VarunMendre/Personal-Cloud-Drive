@@ -31,3 +31,41 @@ export const otpSchema = z.object({
     .string("Please Enter a valid 4 digit OTP")
     .regex(/^\d{4}$/, "OTP must be exactly 4 digits and contain only numbers"),
 });
+
+export const googleLoginSchema = z.object({
+  name: z.string({
+    required_error: "Name is required",
+    invalid_type_error: "Name must be a string",
+  }),
+  email: z
+    .string({
+      required_error: "Email is required",
+      invalid_type_error: "Email must be a string",
+    })
+    .email("Please enter a valid email address")
+    .max(100),
+
+  picture: z.string({
+    required_error: "Picture URL is required",
+    invalid_type_error: "Picture must be a string",
+  }),
+});
+
+export const githubLoginSchema = z.object({
+  name: z.string({
+    required_error: "Name is required",
+    invalid_type_error: "Name must be a string",
+  }),
+  email: z
+    .string({
+      required_error: "Email is required",
+      invalid_type_error: "Email must be a string",
+    })
+    .email("Please enter a valid email address")
+    .max(100),
+
+  picture: z.string({
+    required_error: "Picture URL is required",
+    invalid_type_error: "Picture must be a string",
+  }),
+});
