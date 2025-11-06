@@ -7,6 +7,6 @@ export const objectIdSchema = z
     message: "Invalid ObjectId",
   });
 
-export const stringSchema = z.object({
+export const stringSchema = z.string({
   name: z.string().min(5, "Should contain at least 5 characters").max(100),
 });

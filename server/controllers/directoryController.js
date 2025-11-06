@@ -1,7 +1,8 @@
 import { rm } from "fs/promises";
 import Directory from "../models/directoryModel.js";
 import File from "../models/fileModel.js";
-import { getDirectorySchema } from "../validators/directorySchema.js";
+import { createDirectorySchema, deleteDirectorySchema, getDirectorySchema, renameDirectorySchema } from "../validators/directorySchema.js";
+
 
 export const getDirectory = async (req, res) => {
   const user = req.user;
@@ -49,6 +50,16 @@ export const createDirectory = async (req, res, next) => {
 
   const parentDirId = req.params.parentDirId || user.rootDirId.toString();
   const dirname = req.headers.dirname || "New Folder";
+
+  const validateResult = createDirectorySchema.safeParse({
+    parentDirId: parentDirId,
+    dirname: dirname,
+  });
+  
+  if (!validateResult.success) {
+    return res.status(400).json({ error: "Invalid Directory details while creation" });
+  }
+
   try {
     const parentDir = await Directory.findOne({
       _id: parentDirId,
@@ -79,12 +90,22 @@ export const createDirectory = async (req, res, next) => {
 
 export const renameDirectory = async (req, res, next) => {
   const user = req.user;
-  const { id } = req.params;
-  const { newDirName } = req.body;
+
+  const validateResult = renameDirectorySchema.safeParse({
+    dirId: req.params.id, 
+    newDirName: req.body.newDirName,
+  });
+
+  if (!validateResult.success) {
+    return res.status(400).json({ error: "Invalid Details of Directory while rename" });
+  }
+
+  const { dirId, newDirName } = validateResult.data;
+
   try {
     await Directory.findOneAndUpdate(
       {
-        _id: id,
+        _id: dirId,
         userId: user._id,
       },
       { name: newDirName }
@@ -96,11 +117,19 @@ export const renameDirectory = async (req, res, next) => {
 };
 
 export const deleteDirectory = async (req, res, next) => {
-  const { id } = req.params;
+
+  const validateResult = deleteDirectorySchema.safeParse({
+    dirId: req.params.id,
+  });
+
+  if (!validateResult.success) {
+    return res.status(400).json({error: "Directory Id not found"})
+  }
+  const { dirId } = validateResult.data;
 
   try {
     const directoryData = await Directory.findOne({
-      _id: id,
+      _id: dirId,
       userId: req.user._id,
     })
       .select("_id")
@@ -129,7 +158,7 @@ export const deleteDirectory = async (req, res, next) => {
       return { files, directories };
     }
 
-    const { files, directories } = await getDirectoryContents(id);
+    const { files, directories } = await getDirectoryContents(dirId);
 
     for (const { _id, extension } of files) {
       await rm(`./storage/${_id.toString()}${extension}`);
@@ -140,7 +169,7 @@ export const deleteDirectory = async (req, res, next) => {
     });
 
     await Directory.deleteMany({
-      _id: { $in: [...directories.map(({ _id }) => _id), id] },
+      _id: { $in: [...directories.map(({ _id }) => _id), dirId] },
     });
   } catch (err) {
     next(err);

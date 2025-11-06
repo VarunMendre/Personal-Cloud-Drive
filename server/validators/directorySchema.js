@@ -9,3 +9,12 @@ export const createDirectorySchema = z.object({
   parentDirId: objectIdSchema,
   dirname: stringSchema,
 });
+
+export const renameDirectorySchema = z.object({
+  dirId: objectIdSchema,
+  newDirName: stringSchema,
+});
+
+export const deleteDirectorySchema = z.object({
+  dirId: objectIdSchema,
+});
