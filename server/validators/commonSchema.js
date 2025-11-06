@@ -10,3 +10,9 @@ export const objectIdSchema = z
 export const stringSchema = z.string({
   name: z.string().min(5, "Should contain at least 5 characters").max(100),
 });
+
+export const filenameSchema = z
+  .string()
+  .min(1, "Filename cannot be empty")
+  .max(255, "Filename is too long")
+  .regex(/^[a-zA-Z0-9._\- ]+$/, "Invalid characters in filename");
