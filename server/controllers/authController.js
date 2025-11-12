@@ -92,6 +92,7 @@ export const loginWithGoogle = async (req, res, next) => {
     await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
     res.cookie("sid", sessionId, {
       httpOnly: true,
+      sameSite: "lax",
       signed: true,
       maxAge: 60 * 60 * 24 * 7 * 1000,
     });
@@ -157,6 +158,7 @@ export const loginWithGoogle = async (req, res, next) => {
     await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
     res.cookie("sid", sessionId, {
       httpOnly: true,
+      sameSite: "lax",
       signed: true,
       maxAge: 60 * 60 * 24 * 7 * 1000,
     });
@@ -265,6 +267,7 @@ export async function githubLogin(req, res, next) {
       await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
       res.cookie("sid", sessionId, {
         httpOnly: true,
+        sameSite: "lax",
         signed: true,
         maxAge: 1000 * 60 * 60 * 24 * 7,
       });
@@ -322,6 +325,7 @@ export async function githubLogin(req, res, next) {
 
       res.cookie("sid", sessionId, {
         httpOnly: true,
+        sameSite: "lax",
         signed: true,
         maxAge: 1000 * 60 * 60 * 24 * 7,
       });
