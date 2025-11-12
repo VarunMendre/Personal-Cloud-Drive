@@ -1,154 +1,477 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import "./Auth.css";
-import { GoogleLogin } from "@react-oauth/google";
-import { loginWithGoogle } from "../src/apis/loginWithGoogle";
-import { loginWithGitHub } from "../src/apis/loginWithGitHub";
+// import React, { useState, useEffect } from "react";
+// import { useNavigate, Link } from "react-router-dom";
+// import "./Auth.css";
+// import { GoogleLogin } from "@react-oauth/google";
+// import { loginWithGoogle } from "../src/apis/loginWithGoogle";
+// import { loginWithGitHub } from "../src/apis/loginWithGitHub";
+
+// const Register = () => {
+//   const BASE_URL = "http://localhost:4000";
+
+//   const [formData, setFormData] = useState({
+//     name: "Anurag Singh",
+//     email: "anuragprocodrr@gmail.com",
+//     password: "abcd",
+//   });
+
+//   const [serverError, setServerError] = useState("");
+//   const [isSuccess, setIsSuccess] = useState(false);
+
+//   // OTP state
+//   const [otp, setOtp] = useState("");
+//   const [otpSent, setOtpSent] = useState(false);
+//   const [otpVerified, setOtpVerified] = useState(false);
+//   const [otpError, setOtpError] = useState("");
+//   const [isSending, setIsSending] = useState(false);
+//   const [isVerifying, setIsVerifying] = useState(false);
+//   const [countdown, setCountdown] = useState(0);
+
+//   const navigate = useNavigate();
+
+//   // GitHub login function
+//   const loginWithGitHubHandler = () => {
+//     const CLIENT_ID = "Ov23lifBnGMie0EjK9Zz";
+//     window.location.assign(
+//       `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=http://localhost:5173/github-callback&scope=read:user user:email`
+//     );
+//   };
+
+//   // Handle input changes
+//   const handleChange = (e) => {
+//     const { name, value } = e.target;
+//     if (name === "email") {
+//       setServerError("");
+//       setOtpError("");
+//       setOtpSent(false);
+//       setOtpVerified(false);
+//       setCountdown(0);
+//     }
+//     setFormData((prev) => ({ ...prev, [name]: value }));
+//   };
+
+//   // Countdown timer for resend
+//   useEffect(() => {
+//     if (countdown <= 0) return;
+//     const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+//     return () => clearTimeout(timer);
+//   }, [countdown]);
+
+//   // Send OTP handler
+//   const handleSendOtp = async () => {
+//     const { email } = formData;
+//     if (!email) {
+//       setOtpError("Please enter your email first.");
+//       return;
+//     }
+
+//     try {
+//       setIsSending(true);
+//       const res = await fetch(`${BASE_URL}/auth/send-otp`, {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ email }),
+//       });
+//       const data = await res.json();
+
+//       if (res.ok) {
+//         setOtpSent(true);
+//         setCountdown(60); // allow resend after 60s
+//         setOtpError("");
+//       } else {
+//         setOtpError(data.error || "Failed to send OTP.");
+//       }
+//     } catch (err) {
+//       console.error(err);
+//       setOtpError("Something went wrong sending OTP.");
+//     } finally {
+//       setIsSending(false);
+//     }
+//   };
+
+//   // Verify OTP handler
+//   const handleVerifyOtp = async () => {
+//     const { email } = formData;
+//     if (!otp) {
+//       setOtpError("Please enter OTP.");
+//       return;
+//     }
+
+//     try {
+//       setIsVerifying(true);
+//       const res = await fetch(`${BASE_URL}/auth/verify-otp`, {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ email, otp }),
+//       });
+//       const data = await res.json();
+
+//       if (res.ok) {
+//         setOtpVerified(true);
+//         setOtpError("");
+//       } else {
+//         setOtpError(data.error || "Invalid or expired OTP.");
+//       }
+//     } catch (err) {
+//       console.error(err);
+//       setOtpError("Something went wrong verifying OTP.");
+//     } finally {
+//       setIsVerifying(false);
+//     }
+//   };
+
+//   // Final form submit
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     setServerError("");
+//     setIsSuccess(false);
+
+//     if (!otpVerified) {
+//       setOtpError("Please verify your email with OTP before registering.");
+//       return;
+//     }
+
+//     try {
+//       const response = await fetch(`${BASE_URL}/user/register`, {
+//         method: "POST",
+//         body: JSON.stringify({ ...formData, otp }),
+//         headers: { "Content-Type": "application/json" },
+//       });
+//       const data = await response.json();
+
+//       if (data.error || !response.ok) {
+//         setServerError(
+//           typeof data.error === "string"
+//             ? data.error
+//             : "Registration failed. Please try again."
+//         );
+//       } else {
+//         setIsSuccess(true);
+//         setTimeout(() => navigate("/"), 2000);
+//       }
+//     } catch (error) {
+//       console.error(error);
+//       setServerError("Something went wrong. Please try again.");
+//     }
+//   };
+
+//   return (
+//     <div className="container">
+//       <h2 className="heading">Register</h2>
+//       <form className="form" onSubmit={handleSubmit}>
+//         {/* Name */}
+//         <div className="form-group">
+//           <label htmlFor="name" className="label">
+//             Name
+//           </label>
+//           <input
+//             className="input"
+//             type="text"
+//             id="name"
+//             name="name"
+//             value={formData.name}
+//             onChange={handleChange}
+//             placeholder="Enter your name"
+//             required
+//           />
+//         </div>
+
+//         {/* Email + Send OTP */}
+//         <div className="form-group">
+//           <label htmlFor="email" className="label">
+//             Email
+//           </label>
+//           <div className="otp-wrapper">
+//             <input
+//               className={`input ${serverError ? "input-error" : ""}`}
+//               type="email"
+//               id="email"
+//               name="email"
+//               value={formData.email}
+//               onChange={handleChange}
+//               placeholder="Enter your email"
+//               required
+//             />
+//             <button
+//               type="button"
+//               className="otp-button"
+//               onClick={handleSendOtp}
+//               disabled={isSending || countdown > 0}
+//             >
+//               {isSending
+//                 ? "Sending..."
+//                 : countdown > 0
+//                 ? `${countdown}s`
+//                 : "Send OTP"}
+//             </button>
+//           </div>
+//           {serverError && <span className="error-msg">{serverError}</span>}
+//         </div>
+
+//         {/* OTP Input + Verify */}
+//         {otpSent && (
+//           <div className="form-group">
+//             <label htmlFor="otp" className="label">
+//               Enter OTP
+//             </label>
+//             <div className="otp-wrapper">
+//               <input
+//                 className="input"
+//                 type="text"
+//                 id="otp"
+//                 name="otp"
+//                 value={otp}
+//                 onChange={(e) => setOtp(e.target.value)}
+//                 placeholder="4-digit OTP"
+//                 maxLength={4}
+//                 required
+//               />
+//               <button
+//                 type="button"
+//                 className="otp-button"
+//                 onClick={handleVerifyOtp}
+//                 disabled={isVerifying || otpVerified}
+//               >
+//                 {isVerifying
+//                   ? "Verifying..."
+//                   : otpVerified
+//                   ? "Verified"
+//                   : "Verify OTP"}
+//               </button>
+//             </div>
+//             {otpError && <span className="error-msg">{otpError}</span>}
+//           </div>
+//         )}
+
+//         {/* Password */}
+//         <div className="form-group">
+//           <label htmlFor="password" className="label">
+//             Password
+//           </label>
+//           <input
+//             className="input"
+//             type="password"
+//             id="password"
+//             name="password"
+//             value={formData.password}
+//             onChange={handleChange}
+//             placeholder="Enter your password"
+//             required
+//           />
+//         </div>
+
+//         <button
+//           type="submit"
+//           className={`submit-button ${isSuccess ? "success" : ""}`}
+//           disabled={!otpVerified || isSuccess}
+//         >
+//           {isSuccess ? "Registration Successful" : "Register"}
+//         </button>
+//       </form>
+
+//       <p className="link-text">
+//         Already have an account? <Link to="/login">Login</Link>
+//       </p>
+
+//       <div className="or">
+//         <span>Or</span>
+//       </div>
+
+//       <div className="google-login">
+//         <GoogleLogin
+//           onSuccess={async(credentialResponse) => {
+//             const data = await loginWithGoogle(credentialResponse.credential);
+//             if (data.error) {
+//               console.log(data);
+//               return;
+//             }
+//             navigate("/");
+//           }}
+//           shape="pill"
+//           theme="filled_blue"
+//           text="continue_with"
+//           onError={() => {
+//             console.log("Login Failed");
+//           }}
+//           useOneTap
+//         />
+//       </div>
+
+//       <div className="github-login">
+//         <button
+//           onClick={loginWithGitHubHandler}
+//           className="github-button"
+//         >
+//           Continue with GitHub
+//         </button>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default Register;
+
+"use client"
+
+import { useState, useEffect } from "react"
+import { useNavigate, Link } from "react-router-dom"
+import "./Auth.css"
+import { GoogleLogin } from "@react-oauth/google"
+import DOMPurify from "dompurify"
+import { loginWithGoogle } from "../src/apis/loginWithGoogle"
 
 const Register = () => {
-  const BASE_URL = "http://localhost:4000";
+  const BASE_URL = "http://localhost:4000"
 
   const [formData, setFormData] = useState({
     name: "Anurag Singh",
     email: "anuragprocodrr@gmail.com",
     password: "abcd",
-  });
+  })
 
-  const [serverError, setServerError] = useState("");
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [serverError, setServerError] = useState("")
+  const [isSuccess, setIsSuccess] = useState(false)
 
   // OTP state
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
-  const [otpError, setOtpError] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [countdown, setCountdown] = useState(0);
+  const [otp, setOtp] = useState("")
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpVerified, setOtpVerified] = useState(false)
+  const [otpError, setOtpError] = useState("")
+  const [isSending, setIsSending] = useState(false)
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [countdown, setCountdown] = useState(0)
 
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   // GitHub login function
   const loginWithGitHubHandler = () => {
-    const CLIENT_ID = "Ov23lifBnGMie0EjK9Zz";
+    const CLIENT_ID = "Ov23lifBnGMie0EjK9Zz"
     window.location.assign(
-      `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=http://localhost:5173/github-callback&scope=read:user user:email`
-    );
-  };
+      `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=http://localhost:5173/github-callback&scope=read:user user:email`,
+    )
+  }
 
   // Handle input changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     if (name === "email") {
-      setServerError("");
-      setOtpError("");
-      setOtpSent(false);
-      setOtpVerified(false);
-      setCountdown(0);
+      setServerError("")
+      setOtpError("")
+      setOtpSent(false)
+      setOtpVerified(false)
+      setCountdown(0)
     }
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
 
   // Countdown timer for resend
   useEffect(() => {
-    if (countdown <= 0) return;
-    const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [countdown]);
+    if (countdown <= 0) return
+    const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [countdown])
 
   // Send OTP handler
   const handleSendOtp = async () => {
-    const { email } = formData;
+    const { email } = formData
     if (!email) {
-      setOtpError("Please enter your email first.");
-      return;
+      setOtpError("Please enter your email first.")
+      return
     }
 
     try {
-      setIsSending(true);
+      setIsSending(true)
       const res = await fetch(`${BASE_URL}/auth/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
+      })
+      const data = await res.json()
 
       if (res.ok) {
-        setOtpSent(true);
-        setCountdown(60); // allow resend after 60s
-        setOtpError("");
+        setOtpSent(true)
+        setCountdown(60) // allow resend after 60s
+        setOtpError("")
       } else {
-        setOtpError(data.error || "Failed to send OTP.");
+        setOtpError(data.error || "Failed to send OTP.")
       }
     } catch (err) {
-      console.error(err);
-      setOtpError("Something went wrong sending OTP.");
+      console.error(err)
+      setOtpError("Something went wrong sending OTP.")
     } finally {
-      setIsSending(false);
+      setIsSending(false)
     }
-  };
+  }
 
   // Verify OTP handler
   const handleVerifyOtp = async () => {
-    const { email } = formData;
+    const { email } = formData
     if (!otp) {
-      setOtpError("Please enter OTP.");
-      return;
+      setOtpError("Please enter OTP.")
+      return
     }
 
     try {
-      setIsVerifying(true);
+      setIsVerifying(true)
+      const sanitizedOtp = DOMPurify.sanitize(otp)
+
       const res = await fetch(`${BASE_URL}/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp }),
-      });
-      const data = await res.json();
+        body: JSON.stringify({ email, otp: sanitizedOtp }),
+      })
+      const data = await res.json()
 
       if (res.ok) {
-        setOtpVerified(true);
-        setOtpError("");
+        setOtpVerified(true)
+        setOtpError("")
       } else {
-        setOtpError(data.error || "Invalid or expired OTP.");
+        setOtpError(data.error || "Invalid or expired OTP.")
       }
     } catch (err) {
-      console.error(err);
-      setOtpError("Something went wrong verifying OTP.");
+      console.error(err)
+      setOtpError("Something went wrong verifying OTP.")
     } finally {
-      setIsVerifying(false);
+      setIsVerifying(false)
     }
-  };
+  }
 
   // Final form submit
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setServerError("");
-    setIsSuccess(false);
+    e.preventDefault()
+    setServerError("")
+    setIsSuccess(false)
 
     if (!otpVerified) {
-      setOtpError("Please verify your email with OTP before registering.");
-      return;
+      setOtpError("Please verify your email with OTP before registering.")
+      return
     }
 
     try {
+      const sanitizedData = {
+        name: DOMPurify.sanitize(formData.name),
+        email: DOMPurify.sanitize(formData.email),
+        password: DOMPurify.sanitize(formData.password),
+        otp: DOMPurify.sanitize(otp),
+      }
+
       const response = await fetch(`${BASE_URL}/user/register`, {
         method: "POST",
-        body: JSON.stringify({ ...formData, otp }),
+        body: JSON.stringify(sanitizedData),
         headers: { "Content-Type": "application/json" },
-      });
-      const data = await response.json();
+      })
+      const data = await response.json()
 
-      if (data.error) {
-        setServerError(data.error);
+      if (data.error || !response.ok) {
+        setServerError(typeof data.error === "string" ? data.error : "Registration failed. Please try again.")
       } else {
-        setIsSuccess(true);
-        setTimeout(() => navigate("/"), 2000);
+        setIsSuccess(true)
+        setTimeout(() => navigate("/"), 2000)
       }
     } catch (error) {
-      console.error(error);
-      setServerError("Something went wrong. Please try again.");
+      console.error(error)
+      setServerError("Something went wrong. Please try again.")
     }
-  };
+  }
 
   return (
     <div className="container">
@@ -187,17 +510,8 @@ const Register = () => {
               placeholder="Enter your email"
               required
             />
-            <button
-              type="button"
-              className="otp-button"
-              onClick={handleSendOtp}
-              disabled={isSending || countdown > 0}
-            >
-              {isSending
-                ? "Sending..."
-                : countdown > 0
-                ? `${countdown}s`
-                : "Send OTP"}
+            <button type="button" className="otp-button" onClick={handleSendOtp} disabled={isSending || countdown > 0}>
+              {isSending ? "Sending..." : countdown > 0 ? `${countdown}s` : "Send OTP"}
             </button>
           </div>
           {serverError && <span className="error-msg">{serverError}</span>}
@@ -227,11 +541,7 @@ const Register = () => {
                 onClick={handleVerifyOtp}
                 disabled={isVerifying || otpVerified}
               >
-                {isVerifying
-                  ? "Verifying..."
-                  : otpVerified
-                  ? "Verified"
-                  : "Verify OTP"}
+                {isVerifying ? "Verifying..." : otpVerified ? "Verified" : "Verify OTP"}
               </button>
             </div>
             {otpError && <span className="error-msg">{otpError}</span>}
@@ -274,34 +584,34 @@ const Register = () => {
 
       <div className="google-login">
         <GoogleLogin
-          onSuccess={async(credentialResponse) => {
-            const data = await loginWithGoogle(credentialResponse.credential);
-            if (data.error) {
-              console.log(data);
-              return;
+          onSuccess={async (credentialResponse) => {
+            const data = await loginWithGoogle(credentialResponse.credential)
+            if (data && data.error) {
+              console.error("Google login error:", data.error)
+              setServerError(typeof data.error === "string" ? data.error : "Google login failed")
+              return
             }
-            navigate("/");
+            if (data && data.success) {
+              navigate("/")
+            }
           }}
           shape="pill"
           theme="filled_blue"
           text="continue_with"
           onError={() => {
-            console.log("Login Failed");
+            console.log("Login Failed")
           }}
           useOneTap
         />
       </div>
 
       <div className="github-login">
-        <button
-          onClick={loginWithGitHubHandler}
-          className="github-button"
-        >
+        <button onClick={loginWithGitHubHandler} className="github-button">
           Continue with GitHub
         </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Register;
+export default Register

@@ -9,16 +9,31 @@ import { getEditableRoles } from "../utils/permissions.js";
 import redisClient from "../config/redis.js";
 import { loginSchema, registerSchema } from "../validators/authSchema.js";
 import z from "zod";
+import { JSDOM } from "jsdom";
+import createDOMPurify from "dompurify";
+
+const window = new JSDOM("").window;
+const DOMPurify = createDOMPurify(window);
 
 export const register = async (req, res, next) => {
-  const { success, data, error } = registerSchema.safeParse(req.body);
+  const sanitizedBody ={
+    name: DOMPurify.sanitize(req.body.name),
+    email: DOMPurify.sanitize(req.body.email),
+    password: DOMPurify.sanitize(req.body.password),
+    otp: DOMPurify.sanitize(req.body.otp),
+  };
+  
+  const {
+    success,
+    data = content,
+    error,
+  } = registerSchema.safeParse(sanitizedBody);
 
   if (!success) {
     return res.status(400).json({ error: z.flattenError(error).fieldErrors });
   }
 
   const { name, email, password, otp } = data;
-  console.log(otp);
   const optRecord = await OTP.findOne({ email, otp });
   if (!optRecord) {
     return res.status(400).json({ error: "Invalid or Expired OTP" });
@@ -81,7 +96,7 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   const { success, data, error } = loginSchema.safeParse(req.body);
   if (!success) {
-     return res.status(404).json({ error: "Invalid Credentials" });
+    return res.status(404).json({ error: "Invalid Credentials" });
   }
 
   const { email, password } = data;
