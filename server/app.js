@@ -6,6 +6,7 @@ import fileRoutes from "./routes/fileRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import checkAuth from "./middlewares/authMiddleware.js";
+import helmet from "helmet";
 import { connectDB } from "./config/db.js";
 
 const mySecretKey = process.env.MY_SECRET_KEY;
@@ -22,6 +23,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(helmet());
 
 app.use("/directory", checkAuth, directoryRoutes);
 app.use("/file", checkAuth, fileRoutes);
