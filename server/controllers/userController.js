@@ -94,7 +94,13 @@ export const register = async (req, res, next) => {
 };
 
 export const login = async (req, res, next) => {
-  const { success, data, error } = loginSchema.safeParse(req.body);
+  const sanitizedBody = {
+    email: DOMPurify.sanitize(req.body.email),
+    password: DOMPurify.sanitize(req.body.password),
+  };
+
+  const { success, data, error } = loginSchema.safeParse(sanitizedBody);
+  
   if (!success) {
     return res.status(404).json({ error: "Invalid Credentials" });
   }

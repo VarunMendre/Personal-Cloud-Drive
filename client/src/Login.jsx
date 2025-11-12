@@ -1,11 +1,13 @@
+"use client";
+
 // In Login.jsx
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
 import { GoogleLogin } from "@react-oauth/google";
 import "./App.css";
 import { loginWithGoogle } from "../src/apis/loginWithGoogle";
-import { loginWithGitHub } from "../src/apis/loginWithGitHub";
+import DOMPurify from "dompurify"; // Import DOMPurify for input sanitization
 
 const Login = () => {
   const BASE_URL = "http://localhost:4000";
@@ -44,9 +46,14 @@ const Login = () => {
     e.preventDefault();
 
     try {
+      const sanitizedBody = {
+        email: DOMPurify.sanitize(formData.email),
+        password: DOMPurify.sanitize(formData.password),
+      };
+
       const response = await fetch(`${BASE_URL}/user/login`, {
         method: "POST",
-        body: JSON.stringify(formData),
+        body: JSON.stringify(sanitizedBody),
         headers: {
           "Content-Type": "application/json",
         },
