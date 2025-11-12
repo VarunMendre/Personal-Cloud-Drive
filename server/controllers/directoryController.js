@@ -1,8 +1,12 @@
 import { rm } from "fs/promises";
 import Directory from "../models/directoryModel.js";
 import File from "../models/fileModel.js";
-import { createDirectorySchema, deleteDirectorySchema, getDirectorySchema, renameDirectorySchema } from "../validators/directorySchema.js";
-
+import {
+  createDirectorySchema,
+  deleteDirectorySchema,
+  getDirectorySchema,
+  renameDirectorySchema,
+} from "../validators/directorySchema.js";
 
 export const getDirectory = async (req, res) => {
   const user = req.user;
@@ -19,7 +23,7 @@ export const getDirectory = async (req, res) => {
       .json({ error: "Invalid request. Directory ID not found." });
   }
 
-  const validateResult = getDirectorySchema.safeParse({id: _id});
+  const validateResult = getDirectorySchema.safeParse({ id: _id });
 
   if (!validateResult.success) {
     return res.status(400).json({
@@ -28,8 +32,12 @@ export const getDirectory = async (req, res) => {
     });
   }
 
-  const {id} = validateResult.data
-  const directoryData = await Directory.findById(id).lean();
+  const { id } = validateResult.data;
+  const directoryData = await Directory.findOne({
+    _id: id,
+    userId: req.user._id,
+  }).lean();
+  
   if (!directoryData) {
     return res
       .status(404)
@@ -55,9 +63,11 @@ export const createDirectory = async (req, res, next) => {
     parentDirId: parentDirId,
     dirname: dirname,
   });
-  
+
   if (!validateResult.success) {
-    return res.status(400).json({ error: "Invalid Directory details while creation" });
+    return res
+      .status(400)
+      .json({ error: "Invalid Directory details while creation" });
   }
 
   try {
@@ -92,12 +102,14 @@ export const renameDirectory = async (req, res, next) => {
   const user = req.user;
 
   const validateResult = renameDirectorySchema.safeParse({
-    dirId: req.params.id, 
+    dirId: req.params.id,
     newDirName: req.body.newDirName,
   });
 
   if (!validateResult.success) {
-    return res.status(400).json({ error: "Invalid Details of Directory while rename" });
+    return res
+      .status(400)
+      .json({ error: "Invalid Details of Directory while rename" });
   }
 
   const { dirId, newDirName } = validateResult.data;
@@ -117,13 +129,12 @@ export const renameDirectory = async (req, res, next) => {
 };
 
 export const deleteDirectory = async (req, res, next) => {
-
   const validateResult = deleteDirectorySchema.safeParse({
     dirId: req.params.id,
   });
 
   if (!validateResult.success) {
-    return res.status(400).json({error: "Directory Id not found"})
+    return res.status(400).json({ error: "Directory Id not found" });
   }
   const { dirId } = validateResult.data;
 
