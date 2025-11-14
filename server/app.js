@@ -7,6 +7,7 @@ import userRoutes from "./routes/userRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import checkAuth from "./middlewares/authMiddleware.js";
 import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
 import { connectDB } from "./config/db.js";
 
 const mySecretKey = process.env.MY_SECRET_KEY;
@@ -14,16 +15,26 @@ const mySecretKey = process.env.MY_SECRET_KEY;
 await connectDB();
 
 const app = express();
-const PORT = process.env.PORT || 4000
+const PORT = process.env.PORT || 4000;
+
 app.use(cookieParser(process.env.MY_SECRET_KEY));
 app.use(express.json());
+app.use(helmet());
+
 app.use(
   cors({
     origin: process.env.CLIENT_ORIGIN,
     credentials: true,
   })
 );
-app.use(helmet());
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+  })
+);
 
 app.use("/directory", checkAuth, directoryRoutes);
 app.use("/file", checkAuth, fileRoutes);
@@ -33,7 +44,7 @@ app.use("/auth", authRoutes);
 app.use((err, req, res, next) => {
   console.log(err);
   // res.status(err.status || 500).json({ error: "Something went wrong!" });
-  res.json(err)
+  res.json(err);
 });
 
 app.listen(PORT, () => {

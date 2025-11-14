@@ -1,14 +1,17 @@
 import express from "express";
-import { githubLogin, loginWithGoogle, sendOtp, verifyOtp } from "../controllers/authController.js";
+import {
+  githubLogin,
+  loginWithGoogle,
+  sendOtp,
+  verifyOtp,
+} from "../controllers/authController.js";
+import { rateLimiters } from "../utils/rateLimiting.js";
 
 const router = express.Router();
 
-router.post("/send-otp", sendOtp);
-
-router.post("/verify-otp", verifyOtp);
-
-router.post("/google", loginWithGoogle);
-
-router.post("/github", githubLogin);
+router.post("/send-otp", rateLimiters.sendOtp, sendOtp);
+router.post("/verify-otp", rateLimiters.verifyOtp, verifyOtp);
+router.post("/google", rateLimiters.googleLogin, loginWithGoogle);
+router.post("/github", rateLimiters.githubLogin, githubLogin);
 
 export default router;

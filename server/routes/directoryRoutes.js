@@ -7,18 +7,19 @@ import {
   getDirectory,
   renameDirectory,
 } from "../controllers/directoryController.js";
+import { rateLimiters } from "../utils/rateLimiting.js";
 
 const router = express.Router();
 
 router.param("parentDirId", validateIdMiddleware);
 router.param("id", validateIdMiddleware);
 
-router.get("/:id?", getDirectory);
+router.get("/:id?", rateLimiters.getDirectory, getDirectory);
 
-router.post("/:parentDirId?", createDirectory);
+router.post("/:parentDirId?", rateLimiters.createDirectory, createDirectory);
 
-router.patch("/:id", renameDirectory);
+router.patch("/:id", rateLimiters.renameDirectory, renameDirectory);
 
-router.delete("/:id", deleteDirectory);
+router.delete("/:id", rateLimiters.deleteDirectory, deleteDirectory);
 
 export default router;

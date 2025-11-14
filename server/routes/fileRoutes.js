@@ -6,18 +6,19 @@ import {
   renameFile,
   uploadFile,
 } from "../controllers/fileController.js";
+import { rateLimiters } from "../utils/rateLimiting.js";
 
 const router = express.Router();
 
 router.param("parentDirId", validateIdMiddleware);
 router.param("id", validateIdMiddleware);
 
-router.post("/:parentDirId?", uploadFile);
+router.post("/:parentDirId?", rateLimiters.uploadFile, uploadFile);
 
-router.get("/:id", getFile);
+router.get("/:id", rateLimiters.getFile, getFile);
 
-router.patch("/:id", renameFile);
+router.patch("/:id", rateLimiters.renameFile, renameFile);
 
-router.delete("/:id", deleteFile);
+router.delete("/:id", rateLimiters.deleteFile, deleteFile);
 
 export default router;
