@@ -172,7 +172,7 @@ export const deleteDirectory = async (req, res, next) => {
     const { files, directories } = await getDirectoryContents(dirId);
 
     for (const { _id, extension } of files) {
-      await rm(`./storage/${_id.toString()}${extension}`);
+      await rm(`${import.meta.dirname}/../storage/${_id.toString()}${extension}`);
     }
 
     await File.deleteMany({

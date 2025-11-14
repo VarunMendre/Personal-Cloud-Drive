@@ -310,7 +310,7 @@ export const hardDeleteUser = async (req, res, next) => {
     const files = await File.find({ userId }).select("_id extension").lean();
 
     for (const { _id, extension } of files) {
-      const filePath = `./storage/${_id.toString()}${extension}`;
+      const filePath = `${import.meta.dirname}/../storage/${_id.toString()}${extension}`;
       try {
         await rm(filePath, { force: true });
       } catch (err) {
