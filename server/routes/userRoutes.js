@@ -26,26 +26,58 @@ import {
   updateUserRole,
 } from "../controllers/userController.js";
 import { rateLimiters } from "../utils/rateLimiting.js";
+import { throttlers } from "../utils/throttler.js";
 
 const router = express.Router();
 
 // Public routes (no authentication needed)
-router.post("/user/register", rateLimiters.register, register);
-router.post("/user/login", rateLimiters.login, login);
+router.post(
+  "/user/register",
+  rateLimiters.register,
+  throttlers.register,
+  register
+);
+
+router.post("/user/login", rateLimiters.login, throttlers.login, login);
 
 // Protected routes (authentication required)
-router.get("/user", checkAuth, checkUserDeleted, getCurrentUser);
-router.get("/user/has-password", checkAuth, checkUserDeleted, getUserPassword);
+router.get(
+  "/user",
+  checkAuth,
+  checkUserDeleted,
+  throttlers.getCurrentUser,
+  getCurrentUser
+);
+router.get(
+  "/user/has-password",
+  checkAuth,
+  checkUserDeleted,
+  throttlers.getUserPassword,
+  getUserPassword
+);
 router.post(
   "/user/set-password",
   checkAuth,
   checkUserDeleted,
   rateLimiters.setPassword,
+  throttlers.setPassword,
   setUserPassword
 );
 
-router.post("/user/logout", checkAuth, rateLimiters.logout, logout);
-router.post("/user/logout-all", checkAuth, rateLimiters.logoutAll, logoutAll);
+router.post(
+  "/user/logout",
+  checkAuth,
+  rateLimiters.logout,
+  throttlers.logout,
+  logout
+);
+router.post(
+  "/user/logout-all",
+  checkAuth,
+  rateLimiters.logoutAll,
+  throttlers.logoutAll,
+  logoutAll
+);
 
 // Role Based User Operations : Shows All Users, Logout, Soft Delete, Hard Delete
 router.get(
@@ -54,6 +86,7 @@ router.get(
   checkUserDeleted,
   checkNotRegularUser,
   rateLimiters.getAllUsers,
+  throttlers.getAllUsers,
   getAllUsers
 );
 
@@ -63,6 +96,7 @@ router.post(
   checkUserDeleted,
   checkNotRegularUser,
   rateLimiters.logoutById,
+  throttlers.logoutById,
   logOutById
 );
 
@@ -71,6 +105,7 @@ router.delete(
   checkAuth,
   checkUserDeleted,
   rateLimiters.deleteUser,
+  throttlers.deleteUser,
   softDeleteUser
 );
 router.delete(
@@ -79,6 +114,7 @@ router.delete(
   checkUserDeleted,
   checkIsOwnerOrAdmin,
   rateLimiters.hardDeleteUser,
+  throttlers.hardDeleteUser,
   hardDeleteUser
 );
 
@@ -87,6 +123,7 @@ router.put(
   checkAuth,
   checkIsOwnerOrAdmin,
   rateLimiters.recoverUser,
+  throttlers.recoverUser,
   recoverUser
 );
 
@@ -96,6 +133,7 @@ router.get(
   checkAuth,
   checkIsOwnerOrAdmin,
   rateLimiters.getUserFiles,
+  throttlers.getUserFiles,
   getUserFiles
 );
 
@@ -104,6 +142,7 @@ router.delete(
   checkAuth,
   checkIsOwnerOrAdmin,
   rateLimiters.deleteUserFiles,
+  throttlers.deleteUserFiles,
   deleteUserFiles
 );
 
@@ -112,6 +151,7 @@ router.get(
   checkAuth,
   checkIsOwnerOrAdmin,
   rateLimiters.getUserFileView,
+  throttlers.getUserFileView,
   getUserFileView
 );
 
@@ -120,6 +160,7 @@ router.put(
   checkAuth,
   checkIsOwner,
   rateLimiters.updateUserFile,
+  throttlers.updateUserFile,
   updateUserFile
 );
 
@@ -129,6 +170,7 @@ router.get(
   checkAuth,
   checkNotRegularUser,
   checkUserDeleted,
+  throttlers.permissionPage,
   permissionPage
 );
 
@@ -137,6 +179,7 @@ router.put(
   checkAuth,
   checkNotRegularUser,
   rateLimiters.updateUserRole,
+  throttlers.updateUserRole,
   updateUserRole
 );
 

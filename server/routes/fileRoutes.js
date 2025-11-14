@@ -7,18 +7,34 @@ import {
   uploadFile,
 } from "../controllers/fileController.js";
 import { rateLimiters } from "../utils/rateLimiting.js";
+import { throttlers } from "../utils/throttler.js";
 
 const router = express.Router();
 
 router.param("parentDirId", validateIdMiddleware);
 router.param("id", validateIdMiddleware);
 
-router.post("/:parentDirId?", rateLimiters.uploadFile, uploadFile);
+router.post(
+  "/:parentDirId?",
+  rateLimiters.uploadFile,
+  throttlers.uploadFile,
+  uploadFile
+);
 
-router.get("/:id", rateLimiters.getFile, getFile);
+router.get("/:id", rateLimiters.getFile, throttlers.getFile, getFile);
 
-router.patch("/:id", rateLimiters.renameFile, renameFile);
+router.patch(
+  "/:id",
+  rateLimiters.renameFile,
+  throttlers.renameFile,
+  renameFile
+);
 
-router.delete("/:id", rateLimiters.deleteFile, deleteFile);
+router.delete(
+  "/:id",
+  rateLimiters.deleteFile,
+  throttlers.deleteFile,
+  deleteFile
+);
 
 export default router;

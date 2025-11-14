@@ -8,18 +8,39 @@ import {
   renameDirectory,
 } from "../controllers/directoryController.js";
 import { rateLimiters } from "../utils/rateLimiting.js";
+import { throttlers } from "../utils/throttler.js";
 
 const router = express.Router();
 
 router.param("parentDirId", validateIdMiddleware);
 router.param("id", validateIdMiddleware);
 
-router.get("/:id?", rateLimiters.getDirectory, getDirectory);
+router.get(
+  "/:id?",
+  rateLimiters.getDirectory,
+  throttlers.getDirectory,
+  getDirectory
+);
 
-router.post("/:parentDirId?", rateLimiters.createDirectory, createDirectory);
+router.post(
+  "/:parentDirId?",
+  rateLimiters.createDirectory,
+  throttlers.createDirectory,
+  createDirectory
+);
 
-router.patch("/:id", rateLimiters.renameDirectory, renameDirectory);
+router.patch(
+  "/:id",
+  rateLimiters.renameDirectory,
+  throttlers.renameDirectory,
+  renameDirectory
+);
 
-router.delete("/:id", rateLimiters.deleteDirectory, deleteDirectory);
+router.delete(
+  "/:id",
+  rateLimiters.deleteDirectory,
+  throttlers.deleteDirectory,
+  deleteDirectory
+);
 
 export default router;
