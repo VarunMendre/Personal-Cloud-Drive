@@ -13,7 +13,8 @@ function DirectoryList({
   handleDeleteFile,
   handleDeleteDirectory,
   openRenameModal,
-  handleShare, // NEW PROP - Add this
+  handleShare,
+  openDetailsPopup, // ✅ Receiving the prop
   BASE_URL,
 }) {
   return (
@@ -36,7 +37,8 @@ function DirectoryList({
             handleDeleteFile={handleDeleteFile}
             handleDeleteDirectory={handleDeleteDirectory}
             openRenameModal={openRenameModal}
-            handleShare={handleShare} 
+            handleShare={handleShare}
+            openDetailsPopup={openDetailsPopup} // ✅ ADDED - Pass to DirectoryItem
             BASE_URL={BASE_URL}
           />
         );

@@ -19,6 +19,9 @@ export const uploadFile = async (req, res, next) => {
     }
 
     const filename = req.headers.filename || "untitled";
+    const filesize = req.headers.filesize;
+    console.log(filesize);
+
     const extension = path.extname(filename);
 
     const insertedFile = await File.insertOne({

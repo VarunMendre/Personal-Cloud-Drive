@@ -5,6 +5,7 @@ import CreateDirectoryModal from "./components/CreateDirectoryModal";
 import RenameModal from "./components/RenameModal";
 import DirectoryList from "./components/DirectoryList";
 import ShareModal from "./components/ShareModal";
+import DetailsPopup from "./components/DetailsPopup";
 import "./DirectoryView.css";
 
 function DirectoryView() {
@@ -37,6 +38,9 @@ function DirectoryView() {
   const [shareResourceId, setShareResourceId] = useState(null);
   const [shareResourceName, setShareResourceName] = useState("");
 
+  // Details modal state - ADDED
+  const [detailsItem, setDetailsItem] = useState(null);
+
   // Uploading states
   const fileInputRef = useRef(null);
   const [uploadQueue, setUploadQueue] = useState([]);
@@ -47,6 +51,15 @@ function DirectoryView() {
   // Context menu
   const [activeContextMenu, setActiveContextMenu] = useState(null);
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
+
+  // Details functions - UPDATED
+  const openDetailsPopup = (item) => {
+    console.log("Opening details for:", item);
+    setDetailsItem(item);
+    setActiveContextMenu(null); // Close context menu when opening details
+  };
+
+  const closeDetailsPopup = () => setDetailsItem(null);
 
   /**
    * Utility: handle fetch errors
@@ -161,11 +174,14 @@ function DirectoryView() {
     const selectedFiles = Array.from(e.target.files);
     if (selectedFiles.length === 0) return;
 
+    console.log(selectedFiles);
+
     const newItems = selectedFiles.map((file) => {
       const tempId = `temp-${Date.now()}-${Math.random()}`;
       return {
         file,
         name: file.name,
+        size: file.size,
         id: tempId,
         isUploading: false,
       };
@@ -212,6 +228,7 @@ function DirectoryView() {
     xhr.open("POST", `${BASE_URL}/file/${dirId || ""}`, true);
     xhr.withCredentials = true;
     xhr.setRequestHeader("filename", currentItem.name);
+    xhr.setRequestHeader("filesize", currentItem.size);
 
     xhr.upload.addEventListener("progress", (evt) => {
       if (evt.lengthComputable) {
@@ -428,6 +445,11 @@ function DirectoryView() {
         />
       )}
 
+      {/* ADDED - Details Popup */}
+      {detailsItem && (
+        <DetailsPopup item={detailsItem} onClose={closeDetailsPopup} />
+      )}
+
       {combinedItems.length === 0 ? (
         errorMessage ===
         "Directory not found or you do not have access to it!" ? (
@@ -454,6 +476,7 @@ function DirectoryView() {
           handleDeleteFile={handleDeleteFile}
           handleDeleteDirectory={handleDeleteDirectory}
           openRenameModal={openRenameModal}
+          openDetailsPopup={openDetailsPopup} // ADDED - Pass to DirectoryList
           handleShare={handleShare}
           BASE_URL={BASE_URL}
         />

@@ -6,9 +6,13 @@ function ContextMenu({
   handleDeleteFile,
   handleDeleteDirectory,
   openRenameModal,
-  handleShare, // NEW - Add this prop
+  openDetailsPopup,
+  handleShare,
   BASE_URL,
 }) {
+  // FIXED - Define the missing itemClass
+  const itemClass = "context-menu-item";
+
   // Directory context menu
   if (item.isDirectory) {
     return (
@@ -16,24 +20,27 @@ function ContextMenu({
         className="context-menu"
         style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
       >
-        {/* NEW - Share option */}
+        {/* Share option */}
         <div
-          className="context-menu-item"
+          className={itemClass}
           onClick={() => handleShare("directory", item.id, item.name)}
         >
           Share
         </div>
         <div
-          className="context-menu-item"
+          className={itemClass}
           onClick={() => openRenameModal("directory", item.id, item.name)}
         >
           Rename
         </div>
         <div
-          className="context-menu-item"
+          className={itemClass}
           onClick={() => handleDeleteDirectory(item.id)}
         >
           Delete
+        </div>
+        <div className={itemClass} onClick={() => openDetailsPopup(item)}>
+          Details
         </div>
       </div>
     );
@@ -47,7 +54,7 @@ function ContextMenu({
           style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
         >
           <div
-            className="context-menu-item"
+            className={itemClass}
             onClick={() => handleCancelUpload(item.id)}
           >
             Cancel
@@ -61,15 +68,15 @@ function ContextMenu({
           className="context-menu"
           style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
         >
-          {/* NEW - Share option */}
+          {/* Share option */}
           <div
-            className="context-menu-item"
+            className={itemClass}
             onClick={() => handleShare("file", item.id, item.name)}
           >
             Share
           </div>
           <div
-            className="context-menu-item"
+            className={itemClass}
             onClick={() =>
               (window.location.href = `${BASE_URL}/file/${item.id}?action=download`)
             }
@@ -77,16 +84,19 @@ function ContextMenu({
             Download
           </div>
           <div
-            className="context-menu-item"
+            className={itemClass}
             onClick={() => openRenameModal("file", item.id, item.name)}
           >
             Rename
           </div>
           <div
-            className="context-menu-item"
+            className={itemClass}
             onClick={() => handleDeleteFile(item.id)}
           >
             Delete
+          </div>
+          <div className={itemClass} onClick={() => openDetailsPopup(item)}>
+            Details
           </div>
         </div>
       );
