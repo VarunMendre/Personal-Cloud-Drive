@@ -230,6 +230,7 @@ function DirectoryView() {
     xhr.setRequestHeader("filename", currentItem.name);
     xhr.setRequestHeader("filesize", currentItem.size);
 
+    // Progress update
     xhr.upload.addEventListener("progress", (evt) => {
       if (evt.lengthComputable) {
         const progress = (evt.loaded / evt.total) * 100;
@@ -237,9 +238,65 @@ function DirectoryView() {
       }
     });
 
+    // -----------------------
+    // MAIN UPDATE STARTS HERE
+    // -----------------------
+
+    // Handle server response
     xhr.addEventListener("load", () => {
+      // If file too large → backend sends 413
+      if (xhr.status === 413) {
+        // Remove rejected file from UI
+        setFilesList((prev) => prev.filter((f) => f.id !== currentItem.id));
+
+        setProgressMap((prev) => {
+          const { [currentItem.id]: _, ...rest } = prev;
+          return rest;
+        });
+
+        setUploadXhrMap((prev) => {
+          const copy = { ...prev };
+          delete copy[currentItem.id];
+          return copy;
+        });
+
+        return processUploadQueue(restQueue);
+      }
+
+      // normal success
       processUploadQueue(restQueue);
     });
+
+    // Handle abrupt network error (socket close, abort, etc)
+    xhr.addEventListener("error", () => {
+      console.log("Upload failed due to network or server closing connection");
+
+      // Clean rejected file
+      setFilesList((prev) => prev.filter((f) => f.id !== currentItem.id));
+
+      setProgressMap((prev) => {
+        const { [currentItem.id]: _, ...rest } = prev;
+        return rest;
+      });
+
+      setUploadXhrMap((prev) => {
+        const copy = { ...prev };
+        delete copy[currentItem.id];
+        return copy;
+      });
+
+      processUploadQueue(restQueue);
+    });
+
+    // Handle manual cancel
+    xhr.addEventListener("abort", () => {
+      console.log("Upload aborted by user");
+      processUploadQueue(restQueue);
+    });
+
+    // -----------------------
+    // MAIN UPDATE ENDS HERE
+    // -----------------------
 
     setUploadXhrMap((prev) => ({ ...prev, [currentItem.id]: xhr }));
     xhr.send(currentItem.file);
@@ -264,6 +321,8 @@ function DirectoryView() {
       delete copy[tempId];
       return copy;
     });
+
+    getDirectoryItems();
   }
 
   /**

@@ -24,8 +24,8 @@ export const uploadFile = async (req, res, next) => {
     const filesize = Number(req.headers.filesize);
 
     const uploadingLimit = 100 * 1024 * 1024 // 100 mb
-    if(filesize > uploadingLimit) {
-      return res.status(413).json({ error: "File much be under 100MB" });
+    if (filesize > uploadingLimit) {
+      return req.socket.destroy();
     }
 
     const extension = path.extname(filename);
