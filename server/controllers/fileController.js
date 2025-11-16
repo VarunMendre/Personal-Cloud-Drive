@@ -20,10 +20,13 @@ export const uploadFile = async (req, res, next) => {
     }
 
     const filename = req.headers.filename || "untitled";
-    const filesize = req.headers.filesize;
     
-    console.log(typeof filesize);
-    console.log(filesize);
+    const filesize = Number(req.headers.filesize);
+
+    const uploadingLimit = 100 * 1024 * 1024 // 100 mb
+    if(filesize > uploadingLimit) {
+      return res.status(413).json({ error: "File much be under 100MB" });
+    }
 
     const extension = path.extname(filename);
 
