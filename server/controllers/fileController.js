@@ -4,6 +4,7 @@ import path from "path";
 import Directory from "../models/directoryModel.js";
 import File from "../models/fileModel.js";
 import { deleteFileSchema, getFileSchema, renameFileSchema } from "../validators/fileSchema.js";
+import { type } from "os";
 
 export const uploadFile = async (req, res, next) => {
   const parentDirId = req.params.parentDirId || req.user.rootDirId;
@@ -20,6 +21,8 @@ export const uploadFile = async (req, res, next) => {
 
     const filename = req.headers.filename || "untitled";
     const filesize = req.headers.filesize;
+    
+    console.log(typeof filesize);
     console.log(filesize);
 
     const extension = path.extname(filename);
@@ -27,6 +30,7 @@ export const uploadFile = async (req, res, next) => {
     const insertedFile = await File.insertOne({
       extension,
       name: filename,
+      size: filesize,
       parentDirId: parentDirData._id,
       userId: req.user._id,
     });
