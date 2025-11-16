@@ -12,8 +12,8 @@ function DetailsPopup({ item, onClose }) {
     numberOfFolders: 0,
   });
 
-  const { id, name, isDirectory } = item;
-  const { path, size, createdAt, updatedAt, numberOfFiles, numberOfFolders } =
+  const { id, name, isDirectory, size, createdAt, updatedAt } = item;
+  const { path, numberOfFiles, numberOfFolders } =
     details;
 
   useEffect(() => {
@@ -24,6 +24,18 @@ function DetailsPopup({ item, onClose }) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
+
+  const formatSize = (bytes) => {
+    const KB = 1024;
+    const MB = KB * 1024;
+    const GB = MB * 1024;
+
+    if (bytes >= GB) return (bytes / GB).toFixed(2) + " GB";
+    if (bytes >= MB) return (bytes / MB).toFixed(2) + " MB";
+    if (bytes >= KB) return (bytes / KB).toFixed() + " KB";
+    return bytes + " B"
+     
+  }
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
@@ -42,13 +54,15 @@ function DetailsPopup({ item, onClose }) {
             <span className="font-semibold">Path:</span> {path}
           </div>
           <div>
-            <span className="font-semibold">Size:</span> {size}
+            <span className="font-semibold">Size:</span> {formatSize(size)}
           </div>
           <div>
-            <span className="font-semibold">Created At:</span> {createdAt}
+            <span className="font-semibold">Created At:</span>{" "}
+            {new Date(createdAt).toLocaleString()}
           </div>
           <div>
-            <span className="font-semibold">Updated At:</span> {updatedAt}
+            <span className="font-semibold">Updated At:</span>{" "}
+            {new Date(updatedAt).toLocaleString()}
           </div>
           {isDirectory && (
             <>
