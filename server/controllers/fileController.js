@@ -3,8 +3,11 @@ import { rm } from "fs/promises";
 import path from "path";
 import Directory from "../models/directoryModel.js";
 import File from "../models/fileModel.js";
-import { deleteFileSchema, getFileSchema, renameFileSchema } from "../validators/fileSchema.js";
-import { type } from "os";
+import {
+  deleteFileSchema,
+  getFileSchema,
+  renameFileSchema,
+} from "../validators/fileSchema.js";
 
 export const uploadFile = async (req, res, next) => {
   const parentDirId = req.params.parentDirId || req.user.rootDirId;
@@ -20,10 +23,10 @@ export const uploadFile = async (req, res, next) => {
     }
 
     const filename = req.headers.filename || "untitled";
-    
+
     const filesize = Number(req.headers.filesize);
 
-    const uploadingLimit = 100 * 1024 * 1024 // 100 mb
+    const uploadingLimit = 100 * 1024 * 1024; // 100 mb
     if (filesize > uploadingLimit) {
       return req.socket.destroy();
     }
@@ -41,9 +44,24 @@ export const uploadFile = async (req, res, next) => {
     const fileId = insertedFile.id;
 
     const fullFileName = `${fileId}${extension}`;
+    const filePath = `${import.meta.dirname}/../storage/${fullFileName}`;
 
-    const writeStream = createWriteStream(`${import.meta.dirname}/../storage/${fullFileName}`);
-    req.pipe(writeStream);
+    const writeStream = createWriteStream(filePath);
+
+    let totalStreamSize = 0;
+    let aborted = false;
+    req.on("data", async (chunk) => {
+      if (aborted) return;
+      totalStreamSize += chunk.length;
+      if (totalStreamSize > filesize) {
+        aborted = true;
+        writeStream.close();
+        await rm(filePath);
+        await insertedFile.deleteOne();
+        return req.socket.destroy();
+      }
+      writeStream.write(chunk);
+    });
 
     req.on("end", async () => {
       return res.status(201).json({ message: "File Uploaded" });
@@ -60,7 +78,6 @@ export const uploadFile = async (req, res, next) => {
 };
 
 export const getFile = async (req, res) => {
-  
   const validateData = getFileSchema.safeParse({
     fileId: req.params.id,
   });
@@ -97,14 +114,13 @@ export const getFile = async (req, res) => {
 };
 
 export const renameFile = async (req, res, next) => {
-  
   const validateData = renameFileSchema.safeParse({
     fileId: req.params.id,
     newFilename: req.body.newFilename,
     userId: req.user._id.toString(),
   });
   if (!validateData.success) {
-    return res.status(400).json({error: "Invalid Id's"})
+    return res.status(400).json({ error: "Invalid Id's" });
   }
   const { fileId, newFilename, userId } = validateData.data;
 
@@ -131,14 +147,13 @@ export const renameFile = async (req, res, next) => {
 };
 
 export const deleteFile = async (req, res, next) => {
-
   const validateData = deleteFileSchema.safeParse({
     fileId: req.params.id,
     userId: req.user._id.toString(),
   });
 
   if (!validateData.success) {
-      return res.status(400).json({ error: "Invalid Id's" });
+    return res.status(400).json({ error: "Invalid Id's" });
   }
 
   const { fileId, userId } = validateData.data;
