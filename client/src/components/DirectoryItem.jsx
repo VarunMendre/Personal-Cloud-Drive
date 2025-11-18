@@ -9,6 +9,7 @@ import {
 } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import ContextMenu from "../components/ContextMenu";
+import { formatSize } from "./DetailsPopup";
 
 function DirectoryItem({
   item,
@@ -58,7 +59,12 @@ function DirectoryItem({
       }
       onContextMenu={(e) => handleContextMenu(e, item.id)}
     >
-      <div className="item-left-container">
+      <div
+        className="item-left-container"
+        title={`Size: ${formatSize(
+          item.size
+        )}\nCreatedAt: ${new Date(item.createdAt).toLocaleString()}`}
+      >
         <div className="item-left">
           {item.isDirectory ? (
             <FaFolder className="folder-icon" />

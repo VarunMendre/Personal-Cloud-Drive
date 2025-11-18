@@ -7,6 +7,7 @@ import {
   getDirectorySchema,
   renameDirectorySchema,
 } from "../validators/directorySchema.js";
+import { updateDirectorySize } from "../utils/updateDirectorySize.js";
 
 export const getDirectory = async (req, res) => {
   const user = req.user;
@@ -37,7 +38,7 @@ export const getDirectory = async (req, res) => {
     _id: id,
     userId: req.user._id,
   }).lean();
-  
+
   if (!directoryData) {
     return res
       .status(404)
@@ -142,9 +143,7 @@ export const deleteDirectory = async (req, res, next) => {
     const directoryData = await Directory.findOne({
       _id: dirId,
       userId: req.user._id,
-    })
-      .select("_id")
-      .lean();
+    }).lean();
 
     if (!directoryData) {
       return res.status(404).json({ error: "Directory not found!" });
@@ -172,7 +171,9 @@ export const deleteDirectory = async (req, res, next) => {
     const { files, directories } = await getDirectoryContents(dirId);
 
     for (const { _id, extension } of files) {
-      await rm(`${import.meta.dirname}/../storage/${_id.toString()}${extension}`);
+      await rm(
+        `${import.meta.dirname}/../storage/${_id.toString()}${extension}`
+      );
     }
 
     await File.deleteMany({
@@ -182,6 +183,8 @@ export const deleteDirectory = async (req, res, next) => {
     await Directory.deleteMany({
       _id: { $in: [...directories.map(({ _id }) => _id), dirId] },
     });
+
+    await updateDirectorySize(directoryData.parentDirId, -directoryData.size);
   } catch (err) {
     next(err);
   }

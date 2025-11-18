@@ -21,6 +21,9 @@ try {
           name: {
             bsonType: "string",
           },
+          size: {
+            bsonType: "int",
+          },
           userId: {
             bsonType: "objectId",
           },
@@ -87,7 +90,6 @@ try {
     validationAction: "error",
     validationLevel: "strict",
   });
-
 } catch (err) {
   console.error("❌ Error", err);
 } finally {

@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
 
+export const formatSize = (bytes) => {
+  const KB = 1024;
+  const MB = KB * 1024;
+  const GB = MB * 1024;
+
+  if (bytes >= GB) return (bytes / GB).toFixed(2) + " GB";
+  if (bytes >= MB) return (bytes / MB).toFixed(2) + " MB";
+  if (bytes >= KB) return (bytes / KB).toFixed() + " KB";
+  return bytes + " B";
+};
+
 function DetailsPopup({ item, onClose }) {
   if (!item) return null;
 
@@ -13,8 +24,7 @@ function DetailsPopup({ item, onClose }) {
   });
 
   const { id, name, isDirectory, size, createdAt, updatedAt } = item;
-  const { path, numberOfFiles, numberOfFolders } =
-    details;
+  const { path, numberOfFiles, numberOfFolders } = details;
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -24,18 +34,6 @@ function DetailsPopup({ item, onClose }) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-
-  const formatSize = (bytes) => {
-    const KB = 1024;
-    const MB = KB * 1024;
-    const GB = MB * 1024;
-
-    if (bytes >= GB) return (bytes / GB).toFixed(2) + " GB";
-    if (bytes >= MB) return (bytes / MB).toFixed(2) + " MB";
-    if (bytes >= KB) return (bytes / KB).toFixed() + " KB";
-    return bytes + " B"
-     
-  }
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"

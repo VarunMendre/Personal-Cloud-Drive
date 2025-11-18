@@ -8,6 +8,7 @@ import {
   getFileSchema,
   renameFileSchema,
 } from "../validators/fileSchema.js";
+import { updateDirectorySize } from "../utils/updateDirectorySize.js";
 
 export const uploadFile = async (req, res, next) => {
   const parentDirId = req.params.parentDirId || req.user.rootDirId;
@@ -64,6 +65,7 @@ export const uploadFile = async (req, res, next) => {
     });
 
     req.on("end", async () => {
+      await updateDirectorySize(parentDirId, totalStreamSize);
       return res.status(201).json({ message: "File Uploaded" });
     });
 
@@ -161,7 +163,7 @@ export const deleteFile = async (req, res, next) => {
   const file = await File.findOne({
     _id: fileId,
     userId: userId,
-  }).select("extension");
+  });
 
   if (!file) {
     return res.status(404).json({ error: "File not found!" });
@@ -170,6 +172,8 @@ export const deleteFile = async (req, res, next) => {
   try {
     await rm(`${import.meta.dirname}/../storage/${fileId}${file.extension}`);
     await file.deleteOne();
+
+    await updateDirectorySize(file.parentDirId, -file.size);
     return res.status(200).json({ message: "File Deleted Successfully" });
   } catch (err) {
     next(err);
