@@ -90,6 +90,57 @@ try {
     validationAction: "error",
     validationLevel: "strict",
   });
+
+  await db.command({
+    collMod: "users",
+    validator: {
+      $jsonSchema: {
+        bsonType: "object",
+        required: ["_id", "name", "email", "rootDirId"],
+        properties: {
+          _id: {
+            bsonType: "objectId",
+          },
+          name: {
+            bsonType: "string",
+            minLength: 3,
+            description:
+              "name field should a string with at least three characters",
+          },
+          email: {
+            bsonType: "string",
+            description: "please enter a valid email",
+            pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$",
+          },
+          password: {
+            bsonType: "string",
+          },
+          picture: {
+            bsonType: "string",
+          },
+          rootDirId: {
+            bsonType: "objectId",
+          },
+          maxStorageLimit: {
+            bsonType: "long",
+          },
+          role: {
+            bsonType: "string",
+            enum: ["Owner", "Admin", "Manager", "User"],
+          },
+          isDeleted: {
+            bsonType: "bool",
+          },
+          __v: {
+            bsonType: "int",
+          },
+        },
+        additionalProperties: false,
+      },
+    },
+    validationAction: "error",
+    validationLevel: "strict",
+  });
 } catch (err) {
   console.error("❌ Error", err);
 } finally {

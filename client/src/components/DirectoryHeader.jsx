@@ -26,6 +26,12 @@ function DirectoryHeader({
   const [userName, setUserName] = useState("Guest User");
   const [userEmail, setUserEmail] = useState("guest@example.com");
   const [userPicture, setUserPicture] = useState("");
+  const [maxStorageLimit, setMaxStorageLimit] = useState(1073741824);
+  const [usedStorageInBytes, setUsedStorageInBytes] = useState(0);
+
+  // Storage stats
+  const usedGB = usedStorageInBytes / 1024 ** 3;
+  const totalGB = maxStorageLimit / 1024 ** 3;
 
   const userMenuRef = useRef(null);
   const navigate = useNavigate();
@@ -44,7 +50,9 @@ function DirectoryHeader({
           // Set user info if logged in
           setUserName(data.name);
           setUserEmail(data.email);
-          // setUserPicture(data.picture)
+          setMaxStorageLimit(data.maxStorageLimit);
+          setUserPicture(data.picture)
+          setUsedStorageInBytes(data.usedStorageInBytes);
           setLoggedIn(true);
         } else if (response.status === 401) {
           // User not logged in
@@ -220,6 +228,36 @@ function DirectoryHeader({
                     <span className="user-name">{userName}</span>
                     <span className="user-email">{userEmail}</span>
                   </div>
+
+                  {/* Storage Usage Progress Bar */}
+                  <div
+                    className="user-menu-item storage-info"
+                    style={{ padding: "8px 16px", cursor: "default" }}
+                  >
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "6px",
+                        backgroundColor: "#e5e7eb",
+                        borderRadius: "9999px",
+                        overflow: "hidden",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${(usedGB / totalGB) * 100}%`,
+                          height: "100%",
+                          backgroundColor: "#3b82f6",
+                          borderRadius: "9999px",
+                        }}
+                      ></div>
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                      {usedGB.toFixed(2)} GB of {totalGB} GB used
+                    </div>
+                  </div>
+
                   <div className="user-menu-divider" />
                   <div
                     className="user-menu-item login-btn"

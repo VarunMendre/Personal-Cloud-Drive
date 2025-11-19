@@ -27,7 +27,7 @@ export const uploadFile = async (req, res, next) => {
 
     const filesize = Number(req.headers.filesize);
 
-    const uploadingLimit = 100 * 1024 * 1024; // 100 mb
+    const uploadingLimit = 2000 * 1024 * 1024; // 100 mb
     if (filesize > uploadingLimit) {
       return req.socket.destroy();
     }

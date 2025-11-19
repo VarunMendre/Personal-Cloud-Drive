@@ -33,6 +33,11 @@ const userSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Directory",
     },
+    maxStorageLimit: {
+      type: Number,
+      required: true,
+      default: 1 * 1024 ** 3,
+    },
     role: {
       type: String,
       enum: ["Owner", "Admin", "Manager", "User"],
