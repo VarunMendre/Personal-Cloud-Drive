@@ -15,6 +15,7 @@ export const BASE_URL = "http://localhost:4000";
 
 function DirectoryHeader({
   directoryName,
+  path,
   onCreateFolderClick,
   onUploadFilesClick,
   fileInputRef,
@@ -151,7 +152,30 @@ function DirectoryHeader({
 
   return (
     <header className="directory-header">
-      <h1>{directoryName}</h1>
+      <div className="breadcrumb">
+        {path && path.length > 0 ? (
+          path.map((dir, index) => (
+            <span key={dir._id}>
+              <span
+                className="breadcrumb-item"
+                onClick={() => navigate(`/directory/${dir._id}`)}
+                style={{ cursor: "pointer", color: "#3b82f6" }}
+              >
+                {index === 0 ? "My Drive" : dir.name}
+              </span>
+              {index < path.length - 1 && <span style={{ margin: "0 5px" }}>/</span>}
+            </span>
+          ))
+        ) : (
+          <h1>My Drive</h1>
+        )}
+        {path && path.length > 0 && (
+             <>
+                <span style={{ margin: "0 5px" }}>/</span>
+                <span>{directoryName}</span>
+             </>
+        )}
+      </div>
       <div className="header-links">
         {/* Create Folder (icon button) */}
         <button

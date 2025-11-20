@@ -9,6 +9,7 @@ import {
   renameFileSchema,
 } from "../validators/fileSchema.js";
 import { updateDirectorySize } from "../utils/updateDirectorySize.js";
+import { resolveFilePath } from "../utils/resolveFilePath.js";
 
 export const uploadFile = async (req, res, next) => {
   const parentDirId = req.params.parentDirId || req.user.rootDirId;
@@ -179,3 +180,13 @@ export const deleteFile = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getFileDetails = async (req, res, next) => {
+  const result = await resolveFilePath(req.params.id);
+  console.log(result);
+  if (!result) {
+    return res.status(404).json({ message: "File not found" });
+     
+  }
+  res.json(result);
+}

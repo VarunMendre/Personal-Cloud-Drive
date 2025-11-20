@@ -21,10 +21,15 @@ const directorySchema = new Schema(
       default: null,
       ref: "Directory",
     },
+    path: {
+      type: [Schema.Types.ObjectId],
+      ref: "Directory",
+      required: true,
+    },
   },
   {
     strict: "throw",
-    timestamps: true, 
+    timestamps: true,
   }
 );
 

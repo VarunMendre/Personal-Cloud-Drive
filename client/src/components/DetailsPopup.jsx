@@ -11,11 +11,11 @@ export const formatSize = (bytes) => {
   return bytes + " B";
 };
 
-function DetailsPopup({ item, onClose }) {
+function DetailsPopup({ item, onClose, BASE_URL }) {
   if (!item) return null;
 
   const [details, setDetails] = useState({
-    path: "/",
+    path: "Loading...",
     size: 0,
     createdAt: new Date().toLocaleString(),
     updatedAt: new Date().toLocaleString(),
@@ -33,6 +33,61 @@ function DetailsPopup({ item, onClose }) {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
+
+  useEffect(() => {
+    async function fetchDetails() {
+      try {
+        let url;
+        if (isDirectory) {
+           url = `${BASE_URL}/directory/${id}`;
+        } else {
+           url = `${BASE_URL}/file/details/${id}`;
+        }
+
+        const response = await fetch(url, { credentials: "include" });
+        if (response.ok) {
+            const data = await response.json();
+            // Construct path string
+            const pathArray = data.path || [];
+            // For directory, append itself to path for display? User said "path : <path>"
+            // Usually path means location.
+            // If I am in /A/B and click details of B, path is /A/B.
+            // If I click details of file.txt in B, path is /A/B/file.txt
+            // Let's follow the user's example: resolvedPath.map...
+            // But here we need a string or a list.
+            // Let's make it a string: /Root/FolderA/FolderB
+            
+            let pathStr = "";
+            if (pathArray.length > 0) {
+                // Replace first item name with "My Drive"
+                const displayPath = [...pathArray];
+                if (displayPath[0]) displayPath[0].name = "My Drive";
+                
+                pathStr = displayPath.map(p => p.name).join(" / ");
+            } else {
+                pathStr = "My Drive"; 
+            }
+            
+            // Append current item name
+            pathStr += ` / ${name}`;
+
+            setDetails(prev => ({
+                ...prev,
+                path: pathStr,
+                // For directory, we might get size/counts if the endpoint provides it.
+                // The current getDirectory endpoint returns files and directories lists.
+                // We can calculate counts.
+                numberOfFiles: data.files ? data.files.length : 0,
+                numberOfFolders: data.directories ? data.directories.length : 0,
+            }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch details", err);
+        setDetails(prev => ({ ...prev, path: "Error fetching path" }));
+      }
+    }
+    fetchDetails();
+  }, [id, isDirectory, BASE_URL, name]);
 
   return (
     <div

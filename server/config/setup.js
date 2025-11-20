@@ -30,7 +30,12 @@ try {
           parentDirId: {
             bsonType: ["objectId", "null"],
           },
-
+          path: {
+            bsonType: "array",
+            items: {
+              bsonType: "objectId",
+            },
+          },
           createdAt: {
             bsonType: ["date", "null"],
           },

@@ -37,7 +37,9 @@ export const getDirectory = async (req, res) => {
   const directoryData = await Directory.findOne({
     _id: id,
     userId: req.user._id,
-  }).lean();
+  })
+    .populate("path", "name")
+    .lean();
 
   if (!directoryData) {
     return res
@@ -81,10 +83,13 @@ export const createDirectory = async (req, res, next) => {
         .status(404)
         .json({ message: "Parent Directory Does not exist!" });
 
-    await Directory.insertOne({
+     const newPath = [...(parentDir.path || []), parentDir._id];
+     
+    await Directory.create({
       name: dirname,
       parentDirId,
       userId: user._id,
+      path: newPath,
     });
 
     return res.status(201).json({ message: "Directory Created!" });

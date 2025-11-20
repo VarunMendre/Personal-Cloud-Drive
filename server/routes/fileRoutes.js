@@ -3,6 +3,7 @@ import validateIdMiddleware from "../middlewares/validateIdMiddleware.js";
 import {
   deleteFile,
   getFile,
+  getFileDetails,
   renameFile,
   uploadFile,
 } from "../controllers/fileController.js";
@@ -22,6 +23,7 @@ router.post(
 );
 
 router.get("/:id", rateLimiters.getFile, throttlers.getFile, getFile);
+router.get("/details/:id", getFileDetails);
 
 router.patch(
   "/:id",
