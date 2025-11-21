@@ -19,7 +19,15 @@ const PORT = process.env.PORT || 4000;
 
 app.use(cookieParser(process.env.MY_SECRET_KEY));
 app.use(express.json());
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        "frame-ancestors": ["'self'", process.env.CLIENT_ORIGIN],
+      },
+    },
+  })
+);
 
 app.use(
   cors({

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./UserPermission.css";
 
-const BASE_URL = "http://localhost:4000";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 export default function UserPermission() {
   const [users, setUsers] = useState([]);

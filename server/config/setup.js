@@ -127,7 +127,7 @@ try {
             bsonType: "objectId",
           },
           maxStorageLimit: {
-            bsonType: "long",
+            bsonType: ["long", "int", "double"],
           },
           role: {
             bsonType: "string",

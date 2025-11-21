@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaFolder, FaFile, FaEye, FaEdit, FaArrowLeft } from "react-icons/fa";
 import "./SharedWithMe.css";
 
-const BASE_URL = "http://localhost:4000";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 function SharedWithMe() {
   const navigate = useNavigate();

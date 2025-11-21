@@ -10,7 +10,7 @@ import { loginWithGoogle } from "../src/apis/loginWithGoogle";
 import DOMPurify from "dompurify"; // Import DOMPurify for input sanitization
 
 const Login = () => {
-  const BASE_URL = "http://localhost:4000";
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const [formData, setFormData] = useState({
     email: "varunmm0404@gmail.com",

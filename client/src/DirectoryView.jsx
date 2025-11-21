@@ -9,7 +9,7 @@ import DetailsPopup from "./components/DetailsPopup";
 import "./DirectoryView.css";
 
 function DirectoryView() {
-  const BASE_URL = "http://localhost:4000";
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
   const { dirId } = useParams();
   const navigate = useNavigate();
 

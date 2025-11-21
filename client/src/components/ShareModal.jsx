@@ -10,7 +10,7 @@ import {
 } from "react-icons/fa";
 import "./ShareModal.css";
 
-const BASE_URL = "http://localhost:4000";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
   const [email, setEmail] = useState("");
