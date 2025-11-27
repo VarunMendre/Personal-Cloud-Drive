@@ -65,9 +65,23 @@ export const uploadFile = async (req, res, next) => {
       writeStream.write(chunk);
     });
 
+    let fileUploadCompleted = false;
     req.on("end", async () => {
+      fileUploadCompleted = true;
       await updateDirectorySize(parentDirId, totalStreamSize);
       return res.status(201).json({ message: "File Uploaded" });
+    });
+
+    req.on("close", async () => {
+      if (!fileUploadCompleted) {
+        try {
+          await insertedFile.deleteOne();
+          await rm(filePath);
+          console.log("file cleaned");
+        } catch (err) {
+          console.log("Error to cleaning up upload abort: ", err);
+        }
+      }
     });
 
     req.on("error", async () => {
@@ -186,7 +200,6 @@ export const getFileDetails = async (req, res, next) => {
   console.log(result);
   if (!result) {
     return res.status(404).json({ message: "File not found" });
-     
   }
   res.json(result);
-}
+};
