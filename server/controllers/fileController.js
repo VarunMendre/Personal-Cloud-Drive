@@ -191,10 +191,9 @@ export const deleteFile = async (req, res, next) => {
   }
 
   try {
-    await rm(`${import.meta.dirname}/../storage/${fileId}${file.extension}`);
     await file.deleteOne();
-
     await updateDirectorySize(file.parentDirId, -file.size);
+     await rm(`${import.meta.dirname}/../storage/${fileId}${file.extension}`);
     return res.status(200).json({ message: "File Deleted Successfully" });
   } catch (err) {
     next(err);
