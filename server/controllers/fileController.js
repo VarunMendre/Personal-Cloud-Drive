@@ -3,6 +3,8 @@ import { rm } from "fs/promises";
 import path from "path";
 import Directory from "../models/directoryModel.js";
 import File from "../models/fileModel.js";
+import User from "../models/userModel.js";
+
 import {
   deleteFileSchema,
   getFileSchema,
@@ -25,12 +27,16 @@ export const uploadFile = async (req, res, next) => {
     }
 
     const filename = req.headers.filename || "untitled";
-
     const filesize = Number(req.headers.filesize);
 
-    const uploadingLimit = 2000 * 1024 * 1024; // 100 mb
-    if (filesize > uploadingLimit) {
-      return req.socket.destroy();
+    const user = await User.findById(req.user._id);
+    const rootDir = await Directory.findById(req.user.rootDirId);
+
+    const remainingSpace = user.maxStorageLimit - rootDir.size;
+
+    if (filesize > remainingSpace)  {
+      console.log("File is too Large");
+      return res.destroy();
     }
 
     const extension = path.extname(filename);
