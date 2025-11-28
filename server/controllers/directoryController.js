@@ -51,10 +51,34 @@ export const getDirectory = async (req, res) => {
 
   const files = await File.find({ parentDirId: directoryData._id }).lean();
   const directories = await Directory.find({ parentDirId: _id }).lean();
+  
+  // Recursive function to count all nested files and folders
+  async function getRecursiveCounts(dirId) {
+    const filesInDir = await File.find({ parentDirId: dirId }).lean();
+    const subdirsInDir = await Directory.find({ parentDirId: dirId }).lean();
+    
+    let totalFiles = filesInDir.length;
+    let totalFolders = subdirsInDir.length;
+    
+    // Recursively count in each subdirectory
+    for (const subdir of subdirsInDir) {
+      const counts = await getRecursiveCounts(subdir._id);
+      totalFiles += counts.totalFiles;
+      totalFolders += counts.totalFolders;
+    }
+    
+    return { totalFiles, totalFolders };
+  }
+  
+  // Get recursive counts for this directory
+  const { totalFiles, totalFolders } = await getRecursiveCounts(directoryData._id);
+  
   return res.status(200).json({
     ...directoryData,
     files: files.map((dir) => ({ ...dir, id: dir._id })),
     directories: directories.map((dir) => ({ ...dir, id: dir._id })),
+    totalFiles,
+    totalFolders,
   });
 };
 

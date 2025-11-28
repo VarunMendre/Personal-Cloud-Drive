@@ -74,11 +74,10 @@ function DetailsPopup({ item, onClose, BASE_URL }) {
             setDetails(prev => ({
                 ...prev,
                 path: pathStr,
-                // For directory, we might get size/counts if the endpoint provides it.
-                // The current getDirectory endpoint returns files and directories lists.
-                // We can calculate counts.
-                numberOfFiles: data.files ? data.files.length : 0,
-                numberOfFolders: data.directories ? data.directories.length : 0,
+                // Use recursive counts from backend (totalFiles/totalFolders)
+                // These include all nested files and folders, not just direct children
+                numberOfFiles: data.totalFiles || 0,
+                numberOfFolders: data.totalFolders || 0,
             }));
         }
       } catch (err) {
