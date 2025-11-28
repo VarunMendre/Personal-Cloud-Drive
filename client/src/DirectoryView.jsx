@@ -6,12 +6,19 @@ import RenameModal from "./components/RenameModal";
 import DirectoryList from "./components/DirectoryList";
 import ShareModal from "./components/ShareModal";
 import DetailsPopup from "./components/DetailsPopup";
+import ImportFromDrive from "./components/ImportFromDrive";
+import { FaUpload, FaFolderPlus, FaFileImport } from "react-icons/fa";
 import "./DirectoryView.css";
 
 function DirectoryView() {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
   const { dirId } = useParams();
   const navigate = useNavigate();
+
+  // User info for header
+  const [userName, setUserName] = useState("Guest User");
+  const [userEmail, setUserEmail] = useState("guest@example.com");
+  const [userPicture, setUserPicture] = useState("");
 
   // Displayed directory name
   const [directoryName, setDirectoryName] = useState("My Drive");
@@ -42,11 +49,11 @@ function DirectoryView() {
   // Details modal state
   const [detailsItem, setDetailsItem] = useState(null);
 
-  // Uploading states - UPDATED for S3
+  // Uploading states
   const fileInputRef = useRef(null);
   const [uploadQueue, setUploadQueue] = useState([]);
-  const uploadQueueRef = useRef([]); // Added Ref for synchronous queue access
-  const [uploadXhrMap, setUploadXhrMap] = useState({}); // Keep this for compatibility
+  const uploadQueueRef = useRef([]);
+  const [uploadXhrMap, setUploadXhrMap] = useState({});
   const [progressMap, setProgressMap] = useState({});
   const [isUploading, setIsUploading] = useState(false);
   const [abortControllers, setAbortControllers] = useState({});
@@ -57,6 +64,30 @@ function DirectoryView() {
   // Context menu
   const [activeContextMenu, setActiveContextMenu] = useState(null);
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
+
+  // Fetch user info
+  const fetchUser = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/user`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUserName(data.name);
+        setUserEmail(data.email);
+        setUserPicture(data.picture);
+      } else if (response.status === 401) {
+        setUserName("Guest User");
+        setUserEmail("guest@example.com");
+      }
+    } catch (err) {
+      console.error("Error fetching user info:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
   // Details functions
   const openDetailsPopup = (item) => {
@@ -175,6 +206,56 @@ function DirectoryView() {
   }
 
   /**
+   * Handle Import from Drive
+   */
+  // Import state
+  const [isImporting, setIsImporting] = useState(false);
+
+  /**
+   * Handle Import from Drive
+   */
+  async function handleDriveFileImport(file, token) {
+    try {
+      console.log("Importing file from Drive:", file);
+      setIsImporting(true);
+      
+      const response = await fetch(`${BASE_URL}/import/google-drive`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          fileId: file.id,
+          accessToken: token,
+          parentDirId: dirId,
+        }),
+      });
+
+      if (response.status === 401) {
+        navigate("/login");
+        return;
+      }
+
+      await handleFetchErrors(response);
+      const data = await response.json();
+      console.log("Import success:", data);
+      
+      // Refresh directory items
+      getDirectoryItems();
+      if (refreshStorageRef.current) {
+        refreshStorageRef.current();
+      }
+      
+    } catch (error) {
+      console.error("Import from Drive failed:", error);
+      setErrorMessage("Failed to import file from Google Drive: " + error.message);
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
+  /**
    * S3 DIRECT UPLOAD - Step 1: Initiate upload
    */
   async function initiateUpload(file, parentDirId) {
@@ -200,7 +281,7 @@ function DirectoryView() {
 
       await handleFetchErrors(response);
       const data = await response.json();
-      return data; // { fileId, uploadUrl }
+      return data;
     } catch (error) {
       console.error("Failed to initiate upload:", error);
       throw error;
@@ -213,12 +294,10 @@ function DirectoryView() {
   async function uploadToS3(uploadUrl, file, fileId, onProgress) {
     const xhr = new XMLHttpRequest();
 
-    // Store XHR for cancellation (compatible with existing cancel logic)
     setUploadXhrMap((prev) => ({ ...prev, [fileId]: xhr }));
 
     try {
       return new Promise((resolve, reject) => {
-        // Track progress
         xhr.upload.addEventListener("progress", (evt) => {
           if (evt.lengthComputable) {
             const progress = (evt.loaded / evt.total) * 100;
@@ -226,7 +305,6 @@ function DirectoryView() {
           }
         });
 
-        // Handle completion
         xhr.addEventListener("load", () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve();
@@ -235,17 +313,14 @@ function DirectoryView() {
           }
         });
 
-        // Handle errors
         xhr.addEventListener("error", () => {
           reject(new Error("S3 upload failed due to network error"));
         });
 
-        // Handle abort
         xhr.addEventListener("abort", () => {
           reject(new Error("Upload cancelled"));
         });
 
-        // Send to S3
         xhr.open("PUT", uploadUrl);
         xhr.setRequestHeader(
           "Content-Type",
@@ -256,7 +331,6 @@ function DirectoryView() {
     } catch (error) {
       throw error;
     } finally {
-      // Clean up XHR map
       setUploadXhrMap((prev) => {
         const copy = { ...prev };
         delete copy[fileId];
@@ -322,7 +396,7 @@ function DirectoryView() {
     });
 
     setUploadQueue((prev) => [...prev, ...newItems]);
-    uploadQueueRef.current = [...uploadQueueRef.current, ...newItems]; // Update ref
+    uploadQueueRef.current = [...uploadQueueRef.current, ...newItems];
 
     e.target.value = "";
 
@@ -335,16 +409,12 @@ function DirectoryView() {
   /**
    * Process upload queue with S3 direct upload
    */
-  /**
-   * Process upload queue with S3 direct upload
-   */
   async function processUploadQueue() {
     if (uploadQueueRef.current.length === 0) {
       setIsUploading(false);
       setUploadQueue([]);
       setTimeout(() => {
         getDirectoryItems();
-        // Refresh storage info after uploads complete
         if (refreshStorageRef.current) {
           refreshStorageRef.current();
         }
@@ -353,51 +423,41 @@ function DirectoryView() {
     }
 
     const currentItem = uploadQueueRef.current[0];
-    // Remove the item we are about to process from the queue ref
     uploadQueueRef.current = uploadQueueRef.current.slice(1);
-    
-    // Update state to match (optional but good for debugging/consistency)
     setUploadQueue((prev) => prev.slice(1));
 
-    const tempId = currentItem.id; // Keep reference to temp ID for progress tracking
+    const tempId = currentItem.id;
 
     try {
-      // Step 1: Initiate upload
       console.log(`Initiating upload for: ${currentItem.name}`);
       const { fileId, uploadUrl } = await initiateUpload(
         currentItem.file,
         dirId
       );
 
-      // Update the temp ID to real fileId in UI
       setFilesList((prev) =>
         prev.map((f) => (f.id === tempId ? { ...f, realFileId: fileId } : f))
       );
 
-      // Step 2: Upload to S3 - use tempId for progress tracking
       console.log(`Uploading to S3: ${currentItem.name}`);
       await uploadToS3(uploadUrl, currentItem.file, fileId, (progress) => {
         setProgressMap((prev) => ({ ...prev, [tempId]: progress }));
       });
 
-      // Step 3: Complete upload
       console.log(`Completing upload: ${currentItem.name}`);
       await completeUpload(fileId);
 
       console.log(`Successfully uploaded: ${currentItem.name}`);
 
-      // Clean up progress
       setProgressMap((prev) => {
         const { [tempId]: _, ...rest } = prev;
         return rest;
       });
 
-      // Process next item
       processUploadQueue();
     } catch (error) {
       console.error(`Upload failed for ${currentItem.name}:`, error);
 
-      // Remove failed item from UI
       setFilesList((prev) =>
         prev.filter(
           (f) => f.id !== tempId && f.realFileId !== currentItem.realFileId
@@ -409,12 +469,10 @@ function DirectoryView() {
         return rest;
       });
 
-      // Show error message
       setErrorMessage(
         `Upload failed for ${currentItem.name}: ${error.message}`
       );
 
-      // Continue with rest of queue
       processUploadQueue();
     }
   }
@@ -423,23 +481,18 @@ function DirectoryView() {
    * Cancel an in-progress upload
    */
   async function handleCancelUpload(fileId) {
-    // Abort the XHR upload if it's in progress
     const xhr = uploadXhrMap[fileId];
     if (xhr) {
       xhr.abort();
     }
 
-    // Call server to clean up (delete from S3 and MongoDB)
-    // We do this optimistically and don't wait for it to remove from UI
     try {
-      // If it's a temp ID (starts with "temp-"), we might not have a real fileId yet
-      // But if we do (stored in realFileId), we should use that.
-      // The fileId passed to this function might be the tempId or realId depending on how it's called.
-      // Looking at the UI rendering (not shown here but inferred), it likely passes the item.id.
-      
-      // Find the file in the list to get the realFileId if we only have tempId
-      const fileItem = filesList.find(f => f.id === fileId || f.realFileId === fileId);
-      const realId = fileItem?.realFileId || (fileId.toString().startsWith("temp-") ? null : fileId);
+      const fileItem = filesList.find(
+        (f) => f.id === fileId || f.realFileId === fileId
+      );
+      const realId =
+        fileItem?.realFileId ||
+        (fileId.toString().startsWith("temp-") ? null : fileId);
 
       if (realId) {
         console.log(`Notifying server to cancel upload for fileId: ${realId}`);
@@ -450,34 +503,31 @@ function DirectoryView() {
           },
           credentials: "include",
           body: JSON.stringify({ fileId: realId }),
-        }).catch(err => console.error("Failed to notify server of cancellation:", err));
+        }).catch((err) =>
+          console.error("Failed to notify server of cancellation:", err)
+        );
       }
     } catch (error) {
       console.error("Error in cancel logic:", error);
     }
 
-    // Remove from queue ref
     uploadQueueRef.current = uploadQueueRef.current.filter(
       (item) => item.id !== fileId && item.realFileId !== fileId
     );
 
-    // Remove from queue state
     setUploadQueue((prev) =>
       prev.filter((item) => item.id !== fileId && item.realFileId !== fileId)
     );
 
-    // Remove from UI
     setFilesList((prev) =>
       prev.filter((f) => f.id !== fileId && f.realFileId !== fileId)
     );
 
-    // Clean up progress
     setProgressMap((prev) => {
       const { [fileId]: _, ...rest } = prev;
       return rest;
     });
 
-    // Clean up XHR map
     setUploadXhrMap((prev) => {
       const copy = { ...prev };
       delete copy[fileId];
@@ -499,7 +549,6 @@ function DirectoryView() {
       });
       await handleFetchErrors(response);
       getDirectoryItems();
-      // Refresh storage after delete
       if (refreshStorageRef.current) {
         refreshStorageRef.current();
       }
@@ -517,7 +566,6 @@ function DirectoryView() {
       });
       await handleFetchErrors(response);
       getDirectoryItems();
-      // Refresh storage after delete
       if (refreshStorageRef.current) {
         refreshStorageRef.current();
       }
@@ -622,12 +670,23 @@ function DirectoryView() {
   ];
 
   return (
-    <div className="directory-view">
+    <div className="min-h-screen bg-gray-50">
       {errorMessage &&
         errorMessage !==
           "Directory not found or you do not have access to it!" && (
-          <div className="error-message">{errorMessage}</div>
+          <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            {errorMessage}
+          </div>
         )}
+
+      {isImporting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl flex items-center gap-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p className="text-gray-700 font-medium">Importing from Google Drive...</p>
+          </div>
+        </div>
+      )}
 
       <DirectoryHeader
         directoryName={directoryName}
@@ -643,7 +702,59 @@ function DirectoryView() {
         onStorageUpdate={(refreshFn) => {
           refreshStorageRef.current = refreshFn;
         }}
+        userName={userName}
+        userEmail={userEmail}
+        userPicture={userPicture}
       />
+
+      {/* Upload Section with 3 Buttons */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-8 text-center">
+          <div className="mb-4">
+            <FaUpload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-1">
+              Upload Files or Create Directory
+            </h2>
+            <p className="text-gray-600 text-sm">
+              Drag and drop files here, or click to select files
+            </p>
+          </div>
+
+          <div className="flex items-center justify-center gap-4">
+            {/* Upload Files Button */}
+            <button
+              onClick={() => fileInputRef.current.click()}
+              disabled={
+                errorMessage ===
+                "Directory not found or you do not have access to it!"
+              }
+              className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+            >
+              <FaUpload className="w-4 h-4" />
+              Upload Files
+            </button>
+
+            {/* Create Directory Button */}
+            <button
+              onClick={() => setShowCreateDirModal(true)}
+              disabled={
+                errorMessage ===
+                "Directory not found or you do not have access to it!"
+              }
+              className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+            >
+              <FaFolderPlus className="w-4 h-4" />
+              Create Directory
+            </button>
+
+            {/* Import from Drive Button - NEW */}
+            <ImportFromDrive
+              onFilesSelected={handleDriveFileImport}
+              className="flex items-center gap-2 px-5 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+            />
+          </div>
+        </div>
+      </div>
 
       {showCreateDirModal && (
         <CreateDirectoryModal
@@ -686,37 +797,39 @@ function DirectoryView() {
         />
       )}
 
-      {combinedItems.length === 0 ? (
-        errorMessage ===
-        "Directory not found or you do not have access to it!" ? (
-          <p className="no-data-message">
-            Directory not found or you do not have access to it!
-          </p>
+      <div className="max-w-7xl mx-auto px-6 pb-8">
+        {combinedItems.length === 0 ? (
+          errorMessage ===
+          "Directory not found or you do not have access to it!" ? (
+            <p className="text-center text-gray-500 py-12">
+              Directory not found or you do not have access to it!
+            </p>
+          ) : (
+            <p className="text-center text-gray-500 py-12">
+              This folder is empty. Upload files or create a folder to see some
+              data.
+            </p>
+          )
         ) : (
-          <p className="no-data-message">
-            This folder is empty. Upload files or create a folder to see some
-            data.
-          </p>
-        )
-      ) : (
-        <DirectoryList
-          items={combinedItems}
-          handleRowClick={handleRowClick}
-          activeContextMenu={activeContextMenu}
-          contextMenuPos={contextMenuPos}
-          handleContextMenu={handleContextMenu}
-          getFileIcon={getFileIcon}
-          isUploading={isUploading}
-          progressMap={progressMap}
-          handleCancelUpload={handleCancelUpload}
-          handleDeleteFile={handleDeleteFile}
-          handleDeleteDirectory={handleDeleteDirectory}
-          openRenameModal={openRenameModal}
-          openDetailsPopup={openDetailsPopup}
-          handleShare={handleShare}
-          BASE_URL={BASE_URL}
-        />
-      )}
+          <DirectoryList
+            items={combinedItems}
+            handleRowClick={handleRowClick}
+            activeContextMenu={activeContextMenu}
+            contextMenuPos={contextMenuPos}
+            handleContextMenu={handleContextMenu}
+            getFileIcon={getFileIcon}
+            isUploading={isUploading}
+            progressMap={progressMap}
+            handleCancelUpload={handleCancelUpload}
+            handleDeleteFile={handleDeleteFile}
+            handleDeleteDirectory={handleDeleteDirectory}
+            openRenameModal={openRenameModal}
+            openDetailsPopup={openDetailsPopup}
+            handleShare={handleShare}
+            BASE_URL={BASE_URL}
+          />
+        )}
+      </div>
     </div>
   );
 }
