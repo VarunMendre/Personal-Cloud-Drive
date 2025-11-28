@@ -7,6 +7,7 @@ import {
   getFileDetails,
   renameFile,
   uploadFileInitiate,
+  cancelFileUpload,
 } from "../controllers/fileController.js";
 import { rateLimiters } from "../utils/rateLimiting.js";
 import { throttlers } from "../utils/throttler.js";
@@ -36,5 +37,6 @@ router.delete(
 
 router.post("/uploads/initiate", checkAuth, uploadFileInitiate);
 router.post("/uploads/complete", checkAuth, completeFileUpload);
+router.post("/uploads/cancel", checkAuth, cancelFileUpload);
 
 export default router;

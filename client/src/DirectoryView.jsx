@@ -45,6 +45,7 @@ function DirectoryView() {
   // Uploading states - UPDATED for S3
   const fileInputRef = useRef(null);
   const [uploadQueue, setUploadQueue] = useState([]);
+  const uploadQueueRef = useRef([]); // Added Ref for synchronous queue access
   const [uploadXhrMap, setUploadXhrMap] = useState({}); // Keep this for compatibility
   const [progressMap, setProgressMap] = useState({});
   const [isUploading, setIsUploading] = useState(false);
@@ -321,20 +322,24 @@ function DirectoryView() {
     });
 
     setUploadQueue((prev) => [...prev, ...newItems]);
+    uploadQueueRef.current = [...uploadQueueRef.current, ...newItems]; // Update ref
 
     e.target.value = "";
 
     if (!isUploading) {
       setIsUploading(true);
-      processUploadQueue([...uploadQueue, ...newItems.reverse()]);
+      processUploadQueue();
     }
   }
 
   /**
    * Process upload queue with S3 direct upload
    */
-  async function processUploadQueue(queue) {
-    if (queue.length === 0) {
+  /**
+   * Process upload queue with S3 direct upload
+   */
+  async function processUploadQueue() {
+    if (uploadQueueRef.current.length === 0) {
       setIsUploading(false);
       setUploadQueue([]);
       setTimeout(() => {
@@ -347,7 +352,13 @@ function DirectoryView() {
       return;
     }
 
-    const [currentItem, ...restQueue] = queue;
+    const currentItem = uploadQueueRef.current[0];
+    // Remove the item we are about to process from the queue ref
+    uploadQueueRef.current = uploadQueueRef.current.slice(1);
+    
+    // Update state to match (optional but good for debugging/consistency)
+    setUploadQueue((prev) => prev.slice(1));
+
     const tempId = currentItem.id; // Keep reference to temp ID for progress tracking
 
     try {
@@ -382,7 +393,7 @@ function DirectoryView() {
       });
 
       // Process next item
-      processUploadQueue(restQueue);
+      processUploadQueue();
     } catch (error) {
       console.error(`Upload failed for ${currentItem.name}:`, error);
 
@@ -404,21 +415,53 @@ function DirectoryView() {
       );
 
       // Continue with rest of queue
-      processUploadQueue(restQueue);
+      processUploadQueue();
     }
   }
 
   /**
    * Cancel an in-progress upload
    */
-  function handleCancelUpload(fileId) {
+  async function handleCancelUpload(fileId) {
     // Abort the XHR upload if it's in progress
     const xhr = uploadXhrMap[fileId];
     if (xhr) {
       xhr.abort();
     }
 
-    // Remove from queue
+    // Call server to clean up (delete from S3 and MongoDB)
+    // We do this optimistically and don't wait for it to remove from UI
+    try {
+      // If it's a temp ID (starts with "temp-"), we might not have a real fileId yet
+      // But if we do (stored in realFileId), we should use that.
+      // The fileId passed to this function might be the tempId or realId depending on how it's called.
+      // Looking at the UI rendering (not shown here but inferred), it likely passes the item.id.
+      
+      // Find the file in the list to get the realFileId if we only have tempId
+      const fileItem = filesList.find(f => f.id === fileId || f.realFileId === fileId);
+      const realId = fileItem?.realFileId || (fileId.toString().startsWith("temp-") ? null : fileId);
+
+      if (realId) {
+        console.log(`Notifying server to cancel upload for fileId: ${realId}`);
+        fetch(`${BASE_URL}/file/uploads/cancel`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ fileId: realId }),
+        }).catch(err => console.error("Failed to notify server of cancellation:", err));
+      }
+    } catch (error) {
+      console.error("Error in cancel logic:", error);
+    }
+
+    // Remove from queue ref
+    uploadQueueRef.current = uploadQueueRef.current.filter(
+      (item) => item.id !== fileId && item.realFileId !== fileId
+    );
+
+    // Remove from queue state
     setUploadQueue((prev) =>
       prev.filter((item) => item.id !== fileId && item.realFileId !== fileId)
     );

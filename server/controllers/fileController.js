@@ -218,10 +218,7 @@ export const completeFileUpload = async (req, res, next) => {
     file.isUploading = false;
     await file.save();
 
-    const user = await User.findById(file.userId);
-    const rootDir = await Directory.findById(user.rootDirId);
-
-    await updateDirectorySize(rootDir, file.size);
+    await updateDirectorySize(file.parentDirId, file.size);
 
     return res.status(200).json({
       success: true,
@@ -234,5 +231,53 @@ export const completeFileUpload = async (req, res, next) => {
       error: "Failed to verify file",
       message: err.message,
     });
+  }
+};
+
+export const cancelFileUpload = async (req, res, next) => {
+  const { fileId } = req.body;
+
+  if (!fileId) {
+    return res.status(400).json({ error: "File ID is required" });
+  }
+
+  try {
+    const file = await File.findById(fileId);
+
+    if (!file) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    // Verify ownership
+    if (file.userId.toString() !== req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ error: "You don't have access to this file" });
+    }
+
+    // Delete from S3
+    const s3Key = `${file._id}${file.extension}`;
+    await deletes3File(s3Key);
+
+    // If the file was NOT in uploading state, it means it was already counted in storage
+    // So we would need to decrease storage.
+    // BUT, this endpoint is specifically for cancelling an *ongoing* upload.
+    // If isUploading is true, it hasn't been added to directory size yet (see completeFileUpload).
+    // So we ONLY update directory size if isUploading is FALSE (which shouldn't happen for a cancel, but good for safety).
+    // Actually, if it's a cancel, we assume it's incomplete.
+    // If isUploading is true, we just delete the file doc and S3 object.
+    
+    if (!file.isUploading) {
+       // If for some reason we cancel a completed file (unlikely via this route, but possible),
+       // we should treat it like a delete.
+       await updateDirectorySize(file.parentDirId, -file.size);
+    }
+
+    await file.deleteOne();
+
+    return res.status(200).json({ message: "Upload cancelled successfully" });
+  } catch (err) {
+    console.error("Error cancelling upload:", err);
+    return res.status(500).json({ error: "Failed to cancel upload" });
   }
 };
