@@ -1,4 +1,5 @@
 import {
+  DeleteObjectCommand,
   GetObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
@@ -21,11 +22,11 @@ export const createUploadSignedUrl = async ({ key, contentType }) => {
     ContentType: contentType,
   });
 
-   const url = await getSignedUrl(s3Client, command, {
+  const url = await getSignedUrl(s3Client, command, {
     expiresIn: 300,
     signableHeaders: new Set(["content-type"]),
-   });
-  
+  });
+
   return url;
 };
 
@@ -47,15 +48,24 @@ export const completeUploadCheck = async ({ filename }) => {
   return resultFileSize;
 };
 
-export const getFileUrl = async ({Key, download=false, filename}) => {
-    const command = new GetObjectCommand({
-      Bucket: "varun-personal-stuff",
-      Key: Key,
-      ResponseContentDisposition: `${download ? "attachment" : "inline"}; filename=${encodeURIComponent(filename)}`,
-    });
-    const url = await getSignedUrl(s3Client, command, {
-        expiresIn: 3600,
-    });
-  
+export const getFileUrl = async ({ Key, download = false, filename }) => {
+  const command = new GetObjectCommand({
+    Bucket: "varun-personal-stuff",
+    Key: Key,
+    ResponseContentDisposition: `${download ? "attachment" : "inline"}; filename=${encodeURIComponent(filename)}`,
+  });
+  const url = await getSignedUrl(s3Client, command, {
+    expiresIn: 3600,
+  });
+
   return url;
-}
+};
+
+export const deletes3File = async (Key) => {
+  const command = new DeleteObjectCommand({
+    Bucket: "varun-personal-stuff",
+    Key: Key,
+  });
+
+  return await s3Client.send(command);
+};

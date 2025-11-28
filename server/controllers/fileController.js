@@ -16,6 +16,7 @@ import { resolveFilePath } from "../utils/resolveFilePath.js";
 import {
   completeUploadCheck,
   createUploadSignedUrl,
+  deletes3File,
   getFileUrl,
 } from "../utils/s3.js";
 
@@ -119,7 +120,7 @@ export const deleteFile = async (req, res, next) => {
   try {
     await file.deleteOne();
     await updateDirectorySize(file.parentDirId, -file.size);
-    await rm(`${import.meta.dirname}/../storage/${fileId}${file.extension}`);
+    await deletes3File(`${file.id}${file.extension}`);
     return res.status(200).json({ message: "File Deleted Successfully" });
   } catch (err) {
     next(err);
