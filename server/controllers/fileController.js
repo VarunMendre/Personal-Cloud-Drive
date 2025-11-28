@@ -1,24 +1,12 @@
-import { createWriteStream } from "fs";
-import { rm } from "fs/promises";
-import path from "path";
-import Directory from "../models/directoryModel.js";
 import File from "../models/fileModel.js";
 import User from "../models/userModel.js";
-
-import { updateDirectorySize } from "../utils/updateDirectorySize.js";
-
-import {
-  deleteFileSchema,
-  getFileSchema,
-  renameFileSchema,
-} from "../validators/fileSchema.js";
+import Directory from "../models/directoryModel.js";
 import { resolveFilePath } from "../utils/resolveFilePath.js";
-import {
-  completeUploadCheck,
-  createUploadSignedUrl,
-  deletes3File,
-  getFileUrl,
-} from "../utils/s3.js";
+import { updateDirectorySize } from "../utils/updateDirectorySize.js";
+import { createCloudFrontSignedGetUrl } from "../services/cloudFront.js";
+import {deleteFileSchema, getFileSchema, renameFileSchema } from "../validators/fileSchema.js";
+import { completeUploadCheck, createUploadSignedUrl, deletes3File, getFileUrl, } from "../services/s3.js";
+
 
 
 export const getFile = async (req, res) => {
@@ -42,8 +30,6 @@ export const getFile = async (req, res) => {
     return res.status(404).json({ error: "File not found!" });
   }
 
-  const filePath = `${process.cwd()}/storage/${fileId}${fileData.extension}`;
-
   const s3Key = `${fileId}${fileData.extension}`;
 
   if (req.query.action === "download") {
@@ -55,8 +41,8 @@ export const getFile = async (req, res) => {
     return res.redirect(getUrl);
   }
 
-  const getUrl = await getFileUrl({
-    Key: s3Key,
+  const getUrl = createCloudFrontSignedGetUrl({
+    key: s3Key,
     filename: fileData.name,
   });
 

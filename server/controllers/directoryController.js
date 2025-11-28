@@ -9,7 +9,7 @@ import {
 } from "../validators/directorySchema.js";
 import { updateDirectorySize } from "../utils/updateDirectorySize.js";
 import { file } from "zod";
-import { deletes3Files } from "../utils/s3.js";
+import { deletes3Files } from "../services/s3.js";
 
 export const getDirectory = async (req, res) => {
   const user = req.user;
