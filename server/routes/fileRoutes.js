@@ -1,14 +1,17 @@
 import express from "express";
 import validateIdMiddleware from "../middlewares/validateIdMiddleware.js";
 import {
+  completeFileUpload,
   deleteFile,
   getFile,
   getFileDetails,
   renameFile,
   uploadFile,
+  uploadFileInitiate,
 } from "../controllers/fileController.js";
 import { rateLimiters } from "../utils/rateLimiting.js";
 import { throttlers } from "../utils/throttler.js";
+import checkAuth from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -38,5 +41,8 @@ router.delete(
   throttlers.deleteFile,
   deleteFile
 );
+
+router.post("/uploads/initiate", checkAuth, uploadFileInitiate);
+router.post("/uploads/complete", checkAuth, completeFileUpload);
 
 export default router;

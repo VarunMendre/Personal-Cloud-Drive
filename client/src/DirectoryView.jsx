@@ -39,25 +39,26 @@ function DirectoryView() {
   const [shareResourceId, setShareResourceId] = useState(null);
   const [shareResourceName, setShareResourceName] = useState("");
 
-  // Details modal state - ADDED
+  // Details modal state
   const [detailsItem, setDetailsItem] = useState(null);
 
-  // Uploading states
+  // Uploading states - UPDATED for S3
   const fileInputRef = useRef(null);
   const [uploadQueue, setUploadQueue] = useState([]);
-  const [uploadXhrMap, setUploadXhrMap] = useState({});
+  const [uploadXhrMap, setUploadXhrMap] = useState({}); // Keep this for compatibility
   const [progressMap, setProgressMap] = useState({});
   const [isUploading, setIsUploading] = useState(false);
+  const [abortControllers, setAbortControllers] = useState({});
 
   // Context menu
   const [activeContextMenu, setActiveContextMenu] = useState(null);
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
 
-  // Details functions - UPDATED
+  // Details functions
   const openDetailsPopup = (item) => {
     console.log("Opening details for:", item);
     setDetailsItem(item);
-    setActiveContextMenu(null); // Close context menu when opening details
+    setActiveContextMenu(null);
   };
 
   const closeDetailsPopup = () => setDetailsItem(null);
@@ -170,13 +171,133 @@ function DirectoryView() {
   }
 
   /**
+   * S3 DIRECT UPLOAD - Step 1: Initiate upload
+   */
+  async function initiateUpload(file, parentDirId) {
+    try {
+      const response = await fetch(`${BASE_URL}/file/uploads/initiate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name: file.name,
+          size: file.size,
+          contentType: file.type || "application/octet-stream",
+          parentDirId: parentDirId || undefined,
+        }),
+      });
+
+      if (response.status === 401) {
+        navigate("/login");
+        throw new Error("Unauthorized");
+      }
+
+      await handleFetchErrors(response);
+      const data = await response.json();
+      return data; // { fileId, uploadUrl }
+    } catch (error) {
+      console.error("Failed to initiate upload:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * S3 DIRECT UPLOAD - Step 2: Upload to S3
+   */
+  async function uploadToS3(uploadUrl, file, fileId, onProgress) {
+    const xhr = new XMLHttpRequest();
+
+    // Store XHR for cancellation (compatible with existing cancel logic)
+    setUploadXhrMap((prev) => ({ ...prev, [fileId]: xhr }));
+
+    try {
+      return new Promise((resolve, reject) => {
+        // Track progress
+        xhr.upload.addEventListener("progress", (evt) => {
+          if (evt.lengthComputable) {
+            const progress = (evt.loaded / evt.total) * 100;
+            onProgress(progress);
+          }
+        });
+
+        // Handle completion
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error(`S3 upload failed with status ${xhr.status}`));
+          }
+        });
+
+        // Handle errors
+        xhr.addEventListener("error", () => {
+          reject(new Error("S3 upload failed due to network error"));
+        });
+
+        // Handle abort
+        xhr.addEventListener("abort", () => {
+          reject(new Error("Upload cancelled"));
+        });
+
+        // Send to S3
+        xhr.open("PUT", uploadUrl);
+        xhr.setRequestHeader(
+          "Content-Type",
+          file.type || "application/octet-stream"
+        );
+        xhr.send(file);
+      });
+    } catch (error) {
+      throw error;
+    } finally {
+      // Clean up XHR map
+      setUploadXhrMap((prev) => {
+        const copy = { ...prev };
+        delete copy[fileId];
+        return copy;
+      });
+    }
+  }
+
+  /**
+   * S3 DIRECT UPLOAD - Step 3: Complete upload
+   */
+  async function completeUpload(fileId) {
+    try {
+      const response = await fetch(`${BASE_URL}/file/uploads/complete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          fileId: fileId,
+        }),
+      });
+
+      if (response.status === 401) {
+        navigate("/login");
+        throw new Error("Unauthorized");
+      }
+
+      await handleFetchErrors(response);
+      return await response.json();
+    } catch (error) {
+      console.error("Failed to complete upload:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Select multiple files
    */
   function handleFileSelect(e) {
     const selectedFiles = Array.from(e.target.files);
     if (selectedFiles.length === 0) return;
 
-    console.log(selectedFiles);
+    console.log("Selected files:", selectedFiles);
 
     const newItems = selectedFiles.map((file) => {
       const tempId = `temp-${Date.now()}-${Math.random()}`;
@@ -185,7 +306,8 @@ function DirectoryView() {
         name: file.name,
         size: file.size,
         id: tempId,
-        isUploading: false,
+        isUploading: true,
+        createdAt: new Date().toISOString(),
       };
     });
 
@@ -206,9 +328,9 @@ function DirectoryView() {
   }
 
   /**
-   * Upload items in queue one by one
+   * Process upload queue with S3 direct upload
    */
-  function processUploadQueue(queue) {
+  async function processUploadQueue(queue) {
     if (queue.length === 0) {
       setIsUploading(false);
       setUploadQueue([]);
@@ -220,111 +342,107 @@ function DirectoryView() {
 
     const [currentItem, ...restQueue] = queue;
 
-    setFilesList((prev) =>
-      prev.map((f) =>
-        f.id === currentItem.id ? { ...f, isUploading: true } : f
-      )
-    );
+    try {
+      // Step 1: Initiate upload
+      console.log(`Initiating upload for: ${currentItem.name}`);
+      const { fileId, uploadUrl } = await initiateUpload(
+        currentItem.file,
+        dirId
+      );
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${BASE_URL}/file/${dirId || ""}`, true);
-    xhr.withCredentials = true;
-    xhr.setRequestHeader("filename", currentItem.name);
-    xhr.setRequestHeader("filesize", currentItem.size);
+      // Update the temp ID to real fileId in UI
+      setFilesList((prev) =>
+        prev.map((f) =>
+          f.id === currentItem.id ? { ...f, id: fileId, realFileId: fileId } : f
+        )
+      );
 
-    // Progress update
-    xhr.upload.addEventListener("progress", (evt) => {
-      if (evt.lengthComputable) {
-        const progress = (evt.loaded / evt.total) * 100;
-        setProgressMap((prev) => ({ ...prev, [currentItem.id]: progress }));
-      }
-    });
+      // Update progress map with new fileId
+      setProgressMap((prev) => {
+        const { [currentItem.id]: oldProgress, ...rest } = prev;
+        return { ...rest, [fileId]: oldProgress || 0 };
+      });
 
-    // -----------------------
-    // MAIN UPDATE STARTS HERE
-    // -----------------------
+      // Step 2: Upload to S3
+      console.log(`Uploading to S3: ${currentItem.name}`);
+      await uploadToS3(uploadUrl, currentItem.file, fileId, (progress) => {
+        setProgressMap((prev) => ({ ...prev, [fileId]: progress }));
+      });
 
-    // Handle server response
-    xhr.addEventListener("load", () => {
-      // If file too large → backend sends 413
-      if (xhr.status === 413) {
-        // Remove rejected file from UI
-        setFilesList((prev) => prev.filter((f) => f.id !== currentItem.id));
+      // Step 3: Complete upload
+      console.log(`Completing upload: ${currentItem.name}`);
+      await completeUpload(fileId);
 
-        setProgressMap((prev) => {
-          const { [currentItem.id]: _, ...rest } = prev;
-          return rest;
-        });
+      console.log(`Successfully uploaded: ${currentItem.name}`);
 
-        setUploadXhrMap((prev) => {
-          const copy = { ...prev };
-          delete copy[currentItem.id];
-          return copy;
-        });
+      // Clean up progress
+      setProgressMap((prev) => {
+        const { [fileId]: _, ...rest } = prev;
+        return rest;
+      });
 
-        return processUploadQueue(restQueue);
-      }
-
-      // normal success
+      // Process next item
       processUploadQueue(restQueue);
-    });
+    } catch (error) {
+      console.error(`Upload failed for ${currentItem.name}:`, error);
 
-    // Handle abrupt network error (socket close, abort, etc)
-    xhr.addEventListener("error", () => {
-      console.log("Upload failed due to network or server closing connection");
-
-      // Clean rejected file
-      setFilesList((prev) => prev.filter((f) => f.id !== currentItem.id));
+      // Remove failed item from UI
+      setFilesList((prev) =>
+        prev.filter(
+          (f) =>
+            f.id !== currentItem.id && f.realFileId !== currentItem.realFileId
+        )
+      );
 
       setProgressMap((prev) => {
         const { [currentItem.id]: _, ...rest } = prev;
         return rest;
       });
 
-      setUploadXhrMap((prev) => {
-        const copy = { ...prev };
-        delete copy[currentItem.id];
-        return copy;
-      });
+      // Show error message
+      setErrorMessage(
+        `Upload failed for ${currentItem.name}: ${error.message}`
+      );
 
+      // Continue with rest of queue
       processUploadQueue(restQueue);
-    });
-
-    // Handle manual cancel
-    xhr.addEventListener("abort", () => {
-      console.log("Upload aborted by user");
-      processUploadQueue(restQueue);
-    });
-
-    // -----------------------
-    // MAIN UPDATE ENDS HERE
-    // -----------------------
-
-    setUploadXhrMap((prev) => ({ ...prev, [currentItem.id]: xhr }));
-    xhr.send(currentItem.file);
+    }
   }
 
   /**
    * Cancel an in-progress upload
    */
-  function handleCancelUpload(tempId) {
-    const xhr = uploadXhrMap[tempId];
+  function handleCancelUpload(fileId) {
+    // Abort the XHR upload if it's in progress
+    const xhr = uploadXhrMap[fileId];
     if (xhr) {
       xhr.abort();
     }
-    setUploadQueue((prev) => prev.filter((item) => item.id !== tempId));
-    setFilesList((prev) => prev.filter((f) => f.id !== tempId));
+
+    // Remove from queue
+    setUploadQueue((prev) =>
+      prev.filter((item) => item.id !== fileId && item.realFileId !== fileId)
+    );
+
+    // Remove from UI
+    setFilesList((prev) =>
+      prev.filter((f) => f.id !== fileId && f.realFileId !== fileId)
+    );
+
+    // Clean up progress
     setProgressMap((prev) => {
-      const { [tempId]: _, ...rest } = prev;
+      const { [fileId]: _, ...rest } = prev;
       return rest;
     });
+
+    // Clean up XHR map
     setUploadXhrMap((prev) => {
       const copy = { ...prev };
-      delete copy[tempId];
+      delete copy[fileId];
       return copy;
     });
 
-    getDirectoryItems();
+    console.log(`Upload cancelled for fileId: ${fileId}`);
   }
 
   /**
@@ -423,8 +541,6 @@ function DirectoryView() {
     }
   }
 
-
-
   /**
    * Context Menu
    */
@@ -509,12 +625,13 @@ function DirectoryView() {
         />
       )}
 
-      {/* ADDED - Details Popup */}
       {detailsItem && (
-        <DetailsPopup item={detailsItem} onClose={closeDetailsPopup} BASE_URL={BASE_URL} />
+        <DetailsPopup
+          item={detailsItem}
+          onClose={closeDetailsPopup}
+          BASE_URL={BASE_URL}
+        />
       )}
-
-
 
       {combinedItems.length === 0 ? (
         errorMessage ===
@@ -542,7 +659,7 @@ function DirectoryView() {
           handleDeleteFile={handleDeleteFile}
           handleDeleteDirectory={handleDeleteDirectory}
           openRenameModal={openRenameModal}
-          openDetailsPopup={openDetailsPopup} // ADDED - Pass to DirectoryList
+          openDetailsPopup={openDetailsPopup}
           handleShare={handleShare}
           BASE_URL={BASE_URL}
         />

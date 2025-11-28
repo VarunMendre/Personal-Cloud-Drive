@@ -4,13 +4,19 @@ import path from "path";
 import Directory from "../models/directoryModel.js";
 import File from "../models/fileModel.js";
 import User from "../models/userModel.js";
+import {
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { updateDirectorySize } from "../utils/updateDirectorySize.js";
 
 import {
   deleteFileSchema,
   getFileSchema,
   renameFileSchema,
 } from "../validators/fileSchema.js";
-import { updateDirectorySize } from "../utils/updateDirectorySize.js";
 import { resolveFilePath } from "../utils/resolveFilePath.js";
 
 export const uploadFile = async (req, res, next) => {
@@ -34,7 +40,7 @@ export const uploadFile = async (req, res, next) => {
 
     const remainingSpace = user.maxStorageLimit - rootDir.size;
 
-    if (filesize > remainingSpace)  {
+    if (filesize > remainingSpace) {
       console.log("File is too Large");
       return res.destroy();
     }
@@ -193,7 +199,7 @@ export const deleteFile = async (req, res, next) => {
   try {
     await file.deleteOne();
     await updateDirectorySize(file.parentDirId, -file.size);
-     await rm(`${import.meta.dirname}/../storage/${fileId}${file.extension}`);
+    await rm(`${import.meta.dirname}/../storage/${fileId}${file.extension}`);
     return res.status(200).json({ message: "File Deleted Successfully" });
   } catch (err) {
     next(err);
@@ -207,4 +213,128 @@ export const getFileDetails = async (req, res, next) => {
     return res.status(404).json({ message: "File not found" });
   }
   res.json(result);
+};
+
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+export const uploadFileInitiate = async (req, res, next) => {
+  const { name, size, contentType, parentDirId } = req.body;
+
+  if (!name || size <= 0 || !contentType) {
+    return res
+      .status(400)
+      .json({ error: "to upload file req body need specified info" });
+  }
+
+  const actualParentDirId = parentDirId || req.user.rootDirId;
+  const parentDir = await Directory.findById(actualParentDirId);
+
+  if (!parentDir) {
+    return res.status(400).json({ error: "Parent directory not found" });
+  }
+
+  // parent directory belongs to user
+  if (parentDir.userId.toString() !== req.user._id.toString()) {
+    return res
+      .status(403)
+      .json({ error: "You don't have access to this directory" });
+  }
+
+  const rootDir = await Directory.findById(req.user.rootDirId);
+
+  const fullUser = await User.findById(req.user._id);
+
+  const availableSpace = fullUser.maxStorageLimit - rootDir.size;
+
+  if (size > availableSpace) {
+    return res.status(413).json({
+      error:
+        "Storage quota exceeded. Please delete some files or upgrade your plan.",
+    });
+  }
+
+  const extension = name.includes(".")
+    ? name.substring(name.lastIndexOf("."))
+    : "";
+
+  const newFile = await File.insertOne({
+    name,
+    size,
+    contentType,
+    extension,
+    userId: fullUser._id,
+    parentDirId: actualParentDirId,
+    isUploading: true,
+  });
+
+  const s3Key = `${newFile._id}${extension}`;
+
+  // const s3Client = new S3Client({
+  //   profile: process.env.AWS_PROFILE,
+  // });
+
+  const command = new PutObjectCommand({
+    Bucket: process.env.BUCKET_NAME,
+    Key: s3Key,
+    ContentType: contentType,
+  });
+
+  const url = await getSignedUrl(s3Client, command, {
+    expiresIn: 3600,
+    signableHeaders: new Set(["content-type"]),
+  });
+
+  return res.status(200).json({ fileId: newFile._id, uploadUrl: url });
+};
+
+export const completeFileUpload = async (req, res, next) => {
+  const { fileId } = req.body;
+
+  const file = await File.findById(fileId);
+
+  const fullFileName = file.extension.startsWith(".")
+    ? `${file._id}${file.extension}`
+    : `${file._id}.${file.extension}`;
+
+  try {
+    const command = new ListObjectsV2Command({
+      Bucket: process.env.BUCKET_NAME,
+      Prefix: fullFileName, // This will only return files starting with this name
+      MaxKeys: 1,
+    });
+
+    const result = await s3Client.send(command);
+
+    const resultFile = result.Contents[0].Size;
+
+    if (file.size !== resultFile) {
+      return res.status(412).json({ error: "File Sizes doesn't matched" });
+    }
+
+    file.isUploading = false;
+    await file.save();
+
+    const user = await User.findById(file.userId);
+    const rootDir = await Directory.findById(user.rootDirId);
+
+    await updateDirectorySize(rootDir, file.size);
+
+    return res.status(200).json({
+      success: true,
+      size: result.ContentLength,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to verify file",
+      message: err.message,
+    });
+  }
 };
