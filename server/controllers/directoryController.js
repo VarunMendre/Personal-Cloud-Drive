@@ -8,6 +8,8 @@ import {
   renameDirectorySchema,
 } from "../validators/directorySchema.js";
 import { updateDirectorySize } from "../utils/updateDirectorySize.js";
+import { file } from "zod";
+import { deletes3Files } from "../utils/s3.js";
 
 export const getDirectory = async (req, res) => {
   const user = req.user;
@@ -175,12 +177,11 @@ export const deleteDirectory = async (req, res, next) => {
 
     const { files, directories } = await getDirectoryContents(dirId);
 
-    for (const { _id, extension } of files) {
-      await rm(
-        `${import.meta.dirname}/../storage/${_id.toString()}${extension}`
-      );
-    }
+    const keys = files.map(({_id, extension}) => ({Key:`${_id}${extension}`}))
 
+    console.log(keys);
+
+    await deletes3Files(keys);
     await File.deleteMany({
       _id: { $in: files.map(({ _id }) => _id) },
     });

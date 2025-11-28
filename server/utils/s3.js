@@ -1,5 +1,6 @@
 import {
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   GetObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
@@ -65,6 +66,18 @@ export const deletes3File = async (Key) => {
   const command = new DeleteObjectCommand({
     Bucket: "varun-personal-stuff",
     Key: Key,
+  });
+
+  return await s3Client.send(command);
+};
+
+export const deletes3Files = async (keys) => {
+  const command = new DeleteObjectsCommand({
+    Bucket: "varun-personal-stuff",
+    Delete: {
+      Objects: keys,
+      Quiet: false, // set true to skip individual delete responses
+    },
   });
 
   return await s3Client.send(command);
