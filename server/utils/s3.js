@@ -1,10 +1,8 @@
 import {
-  HeadObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export const s3Client = new S3Client({
@@ -15,28 +13,35 @@ export const s3Client = new S3Client({
   },
 });
 
-export const createUploadSignedUrl = async ({key, contentType}) => {
-    const command = new PutObjectCommand({
-      Bucket: "varun-personal-stuff",
-      Key: key,
-      ContentType: contentType,
-    });
+export const createUploadSignedUrl = async ({ key, contentType }) => {
+  const command = new PutObjectCommand({
+    Bucket: "varun-personal-stuff",
+    Key: key,
+    ContentType: contentType,
+  });
 
-    const url = await getSignedUrl(s3Client, command, {
-      expiresIn: 300,
-      signableHeaders: new Set(["content-type"]),
-    });
-}
+   const url = await getSignedUrl(s3Client, command, {
+    expiresIn: 300,
+    signableHeaders: new Set(["content-type"]),
+   });
+  
+  return url;
+};
 
 export const completeUploadCheck = async ({ filename }) => {
   const command = new ListObjectsV2Command({
     Bucket: "varun-personal-stuff",
-    Prefix: filename, // This will only return files starting with this name
+    Prefix: filename,
     MaxKeys: 1,
   });
 
   const result = await s3Client.send(command);
-  const resultFile = result.Contents[0].Size;
 
-  return resultFile
+  // Check if file exists
+  if (!result.Contents || result.Contents.length === 0) {
+    throw new Error("File not found in S3");
+  }
+
+  const resultFileSize = result.Contents[0].Size;
+  return resultFileSize;
 };

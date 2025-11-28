@@ -4,12 +4,7 @@ import path from "path";
 import Directory from "../models/directoryModel.js";
 import File from "../models/fileModel.js";
 import User from "../models/userModel.js";
-import {
-  ListObjectsV2Command,
-  PutObjectCommand,
-  S3Client,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
 import { updateDirectorySize } from "../utils/updateDirectorySize.js";
 
 import {
@@ -18,6 +13,7 @@ import {
   renameFileSchema,
 } from "../validators/fileSchema.js";
 import { resolveFilePath } from "../utils/resolveFilePath.js";
+import { completeUploadCheck, createUploadSignedUrl } from "../utils/s3.js";
 
 export const uploadFile = async (req, res, next) => {
   const parentDirId = req.params.parentDirId || req.user.rootDirId;
@@ -215,14 +211,6 @@ export const getFileDetails = async (req, res, next) => {
   res.json(result);
 };
 
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
-
 export const uploadFileInitiate = async (req, res, next) => {
   const { name, size, contentType, parentDirId } = req.body;
 
@@ -275,22 +263,9 @@ export const uploadFileInitiate = async (req, res, next) => {
 
   const s3Key = `${newFile._id}${extension}`;
 
-  // const s3Client = new S3Client({
-  //   profile: process.env.AWS_PROFILE,
-  // });
-
-  const command = new PutObjectCommand({
-    Bucket: process.env.BUCKET_NAME,
-    Key: s3Key,
-    ContentType: contentType,
-  });
-
-  const url = await getSignedUrl(s3Client, command, {
-    expiresIn: 3600,
-    signableHeaders: new Set(["content-type"]),
-  });
-
-  return res.status(200).json({ fileId: newFile._id, uploadUrl: url });
+  const signedUrl = await createUploadSignedUrl({ key: s3Key, contentType: contentType });
+  
+  return res.status(200).json({ fileId: newFile._id, uploadUrl: signedUrl });
 };
 
 export const completeFileUpload = async (req, res, next) => {
@@ -298,23 +273,32 @@ export const completeFileUpload = async (req, res, next) => {
 
   const file = await File.findById(fileId);
 
+  if (!file) {
+    return res.status(404).json({ error: "File not found" });
+  }
+
+  // ADD THIS: Verify ownership
+  if (file.userId.toString() !== req.user._id.toString()) {
+    return res
+      .status(403)
+      .json({ error: "You don't have access to this file" });
+  }
+
   const fullFileName = file.extension.startsWith(".")
     ? `${file._id}${file.extension}`
     : `${file._id}.${file.extension}`;
 
   try {
-    const command = new ListObjectsV2Command({
-      Bucket: process.env.BUCKET_NAME,
-      Prefix: fullFileName, // This will only return files starting with this name
-      MaxKeys: 1,
+    const resultFileSize = await completeUploadCheck({
+      filename: fullFileName,
     });
 
-    const result = await s3Client.send(command);
-
-    const resultFile = result.Contents[0].Size;
-
-    if (file.size !== resultFile) {
-      return res.status(412).json({ error: "File Sizes doesn't matched" });
+    if (file.size !== resultFileSize) {
+      return res.status(412).json({
+        error: "File sizes don't match",
+        expected: file.size,
+        actual: resultFileSize,
+      });
     }
 
     file.isUploading = false;
@@ -327,7 +311,7 @@ export const completeFileUpload = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      size: result.ContentLength,
+      size: resultFileSize,
     });
   } catch (err) {
     console.log(err);
