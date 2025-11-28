@@ -13,94 +13,12 @@ import {
   renameFileSchema,
 } from "../validators/fileSchema.js";
 import { resolveFilePath } from "../utils/resolveFilePath.js";
-import { completeUploadCheck, createUploadSignedUrl } from "../utils/s3.js";
+import {
+  completeUploadCheck,
+  createUploadSignedUrl,
+  getFileUrl,
+} from "../utils/s3.js";
 
-export const uploadFile = async (req, res, next) => {
-  const parentDirId = req.params.parentDirId || req.user.rootDirId;
-  try {
-    const parentDirData = await Directory.findOne({
-      _id: parentDirId,
-      userId: req.user._id,
-    });
-
-    // Check if parent directory exists
-    if (!parentDirData) {
-      return res.status(404).json({ error: "Parent directory not found!" });
-    }
-
-    const filename = req.headers.filename || "untitled";
-    const filesize = Number(req.headers.filesize);
-
-    const user = await User.findById(req.user._id);
-    const rootDir = await Directory.findById(req.user.rootDirId);
-
-    const remainingSpace = user.maxStorageLimit - rootDir.size;
-
-    if (filesize > remainingSpace) {
-      console.log("File is too Large");
-      return res.destroy();
-    }
-
-    const extension = path.extname(filename);
-
-    const insertedFile = await File.insertOne({
-      extension,
-      name: filename,
-      size: filesize,
-      parentDirId: parentDirData._id,
-      userId: req.user._id,
-    });
-
-    const fileId = insertedFile.id;
-
-    const fullFileName = `${fileId}${extension}`;
-    const filePath = `${import.meta.dirname}/../storage/${fullFileName}`;
-
-    const writeStream = createWriteStream(filePath);
-
-    let totalStreamSize = 0;
-    let aborted = false;
-    req.on("data", async (chunk) => {
-      if (aborted) return;
-      totalStreamSize += chunk.length;
-      if (totalStreamSize > filesize) {
-        aborted = true;
-        writeStream.close();
-        await rm(filePath);
-        await insertedFile.deleteOne();
-        return req.socket.destroy();
-      }
-      writeStream.write(chunk);
-    });
-
-    let fileUploadCompleted = false;
-    req.on("end", async () => {
-      fileUploadCompleted = true;
-      await updateDirectorySize(parentDirId, totalStreamSize);
-      return res.status(201).json({ message: "File Uploaded" });
-    });
-
-    req.on("close", async () => {
-      if (!fileUploadCompleted) {
-        try {
-          await insertedFile.deleteOne();
-          await rm(filePath);
-          console.log("file cleaned");
-        } catch (err) {
-          console.log("Error to cleaning up upload abort: ", err);
-        }
-      }
-    });
-
-    req.on("error", async () => {
-      await File.deleteOne({ _id: insertedFile.insertedId });
-      return res.status(404).json({ message: "Could not Upload File" });
-    });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
 
 export const getFile = async (req, res) => {
   const validateData = getFileSchema.safeParse({
@@ -123,19 +41,25 @@ export const getFile = async (req, res) => {
     return res.status(404).json({ error: "File not found!" });
   }
 
-  // If "download" is requested, set the appropriate headers
   const filePath = `${process.cwd()}/storage/${fileId}${fileData.extension}`;
 
+  const s3Key = `${fileId}${fileData.extension}`;
+
   if (req.query.action === "download") {
-    return res.download(filePath, fileData.name);
+    const getUrl = await getFileUrl({
+      Key: s3Key,
+      download: true,
+      filename: fileData.name,
+    });
+    return res.redirect(getUrl);
   }
 
-  // Send file
-  return res.sendFile(filePath, (err) => {
-    if (!res.headersSent && err) {
-      return res.status(404).json({ error: "File not found!" });
-    }
+  const getUrl = await getFileUrl({
+    Key: s3Key,
+    filename: fileData.name,
   });
+
+  return res.redirect(getUrl);
 };
 
 export const renameFile = async (req, res, next) => {
@@ -263,8 +187,11 @@ export const uploadFileInitiate = async (req, res, next) => {
 
   const s3Key = `${newFile._id}${extension}`;
 
-  const signedUrl = await createUploadSignedUrl({ key: s3Key, contentType: contentType });
-  
+  const signedUrl = await createUploadSignedUrl({
+    key: s3Key,
+    contentType: contentType,
+  });
+
   return res.status(200).json({ fileId: newFile._id, uploadUrl: signedUrl });
 };
 

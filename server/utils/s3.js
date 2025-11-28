@@ -1,4 +1,5 @@
 import {
+  GetObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
@@ -45,3 +46,16 @@ export const completeUploadCheck = async ({ filename }) => {
   const resultFileSize = result.Contents[0].Size;
   return resultFileSize;
 };
+
+export const getFileUrl = async ({Key, download=false, filename}) => {
+    const command = new GetObjectCommand({
+      Bucket: "varun-personal-stuff",
+      Key: Key,
+      ResponseContentDisposition: `${download ? "attachment" : "inline"}; filename=${encodeURIComponent(filename)}`,
+    });
+    const url = await getSignedUrl(s3Client, command, {
+        expiresIn: 3600,
+    });
+  
+  return url;
+}

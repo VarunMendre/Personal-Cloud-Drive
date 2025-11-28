@@ -50,6 +50,9 @@ function DirectoryView() {
   const [isUploading, setIsUploading] = useState(false);
   const [abortControllers, setAbortControllers] = useState({});
 
+  // Storage refresh ref
+  const refreshStorageRef = useRef(null);
+
   // Context menu
   const [activeContextMenu, setActiveContextMenu] = useState(null);
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
@@ -336,11 +339,16 @@ function DirectoryView() {
       setUploadQueue([]);
       setTimeout(() => {
         getDirectoryItems();
+        // Refresh storage info after uploads complete
+        if (refreshStorageRef.current) {
+          refreshStorageRef.current();
+        }
       }, 1000);
       return;
     }
 
     const [currentItem, ...restQueue] = queue;
+    const tempId = currentItem.id; // Keep reference to temp ID for progress tracking
 
     try {
       // Step 1: Initiate upload
@@ -352,21 +360,13 @@ function DirectoryView() {
 
       // Update the temp ID to real fileId in UI
       setFilesList((prev) =>
-        prev.map((f) =>
-          f.id === currentItem.id ? { ...f, id: fileId, realFileId: fileId } : f
-        )
+        prev.map((f) => (f.id === tempId ? { ...f, realFileId: fileId } : f))
       );
 
-      // Update progress map with new fileId
-      setProgressMap((prev) => {
-        const { [currentItem.id]: oldProgress, ...rest } = prev;
-        return { ...rest, [fileId]: oldProgress || 0 };
-      });
-
-      // Step 2: Upload to S3
+      // Step 2: Upload to S3 - use tempId for progress tracking
       console.log(`Uploading to S3: ${currentItem.name}`);
       await uploadToS3(uploadUrl, currentItem.file, fileId, (progress) => {
-        setProgressMap((prev) => ({ ...prev, [fileId]: progress }));
+        setProgressMap((prev) => ({ ...prev, [tempId]: progress }));
       });
 
       // Step 3: Complete upload
@@ -377,7 +377,7 @@ function DirectoryView() {
 
       // Clean up progress
       setProgressMap((prev) => {
-        const { [fileId]: _, ...rest } = prev;
+        const { [tempId]: _, ...rest } = prev;
         return rest;
       });
 
@@ -389,13 +389,12 @@ function DirectoryView() {
       // Remove failed item from UI
       setFilesList((prev) =>
         prev.filter(
-          (f) =>
-            f.id !== currentItem.id && f.realFileId !== currentItem.realFileId
+          (f) => f.id !== tempId && f.realFileId !== currentItem.realFileId
         )
       );
 
       setProgressMap((prev) => {
-        const { [currentItem.id]: _, ...rest } = prev;
+        const { [tempId]: _, ...rest } = prev;
         return rest;
       });
 
@@ -457,6 +456,10 @@ function DirectoryView() {
       });
       await handleFetchErrors(response);
       getDirectoryItems();
+      // Refresh storage after delete
+      if (refreshStorageRef.current) {
+        refreshStorageRef.current();
+      }
     } catch (error) {
       setErrorMessage(error.message);
     }
@@ -471,6 +474,10 @@ function DirectoryView() {
       });
       await handleFetchErrors(response);
       getDirectoryItems();
+      // Refresh storage after delete
+      if (refreshStorageRef.current) {
+        refreshStorageRef.current();
+      }
     } catch (error) {
       setErrorMessage(error.message);
     }
@@ -590,6 +597,9 @@ function DirectoryView() {
           errorMessage ===
           "Directory not found or you do not have access to it!"
         }
+        onStorageUpdate={(refreshFn) => {
+          refreshStorageRef.current = refreshFn;
+        }}
       />
 
       {showCreateDirModal && (

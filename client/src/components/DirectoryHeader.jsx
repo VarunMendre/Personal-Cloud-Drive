@@ -21,6 +21,7 @@ function DirectoryHeader({
   fileInputRef,
   handleFileSelect,
   disabled = false,
+  onStorageUpdate,
 }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
@@ -38,38 +39,44 @@ function DirectoryHeader({
   const navigate = useNavigate();
 
   // -------------------------------------------
-  // 1. Fetch user info from /user on mount
+  // 1. Fetch user info - moved outside useEffect
   // -------------------------------------------
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const response = await fetch(`${BASE_URL}/user`, {
-          credentials: "include",
-        });
-        if (response.ok) {
-          const data = await response.json();
-          // Set user info if logged in
-          setUserName(data.name);
-          setUserEmail(data.email);
-          setMaxStorageLimit(data.maxStorageLimit);
-          setUserPicture(data.picture)
-          setUsedStorageInBytes(data.usedStorageInBytes);
-          setLoggedIn(true);
-        } else if (response.status === 401) {
-          // User not logged in
-          setUserName("Guest User");
-          setUserEmail("guest@example.com");
-          setLoggedIn(false);
-        } else {
-          // Handle other error statuses if needed
-          console.error("Error fetching user info:", response.status);
-        }
-      } catch (err) {
-        console.error("Error fetching user info:", err);
+  const fetchUser = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/user`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUserName(data.name);
+        setUserEmail(data.email);
+        setMaxStorageLimit(data.maxStorageLimit);
+        setUserPicture(data.picture);
+        setUsedStorageInBytes(data.usedStorageInBytes);
+        setLoggedIn(true);
+      } else if (response.status === 401) {
+        setUserName("Guest User");
+        setUserEmail("guest@example.com");
+        setLoggedIn(false);
+      } else {
+        console.error("Error fetching user info:", response.status);
       }
+    } catch (err) {
+      console.error("Error fetching user info:", err);
     }
+  };
+
+  // Call fetchUser on mount
+  useEffect(() => {
     fetchUser();
   }, []);
+
+  // Expose fetchUser to parent via callback
+  useEffect(() => {
+    if (onStorageUpdate) {
+      onStorageUpdate(fetchUser);
+    }
+  }, [onStorageUpdate]);
 
   // -------------------------------------------
   // 2. Toggle user menu
@@ -163,17 +170,19 @@ function DirectoryHeader({
               >
                 {index === 0 ? "My Drive" : dir.name}
               </span>
-              {index < path.length - 1 && <span style={{ margin: "0 5px" }}>/</span>}
+              {index < path.length - 1 && (
+                <span style={{ margin: "0 5px" }}>/</span>
+              )}
             </span>
           ))
         ) : (
           <h1>My Drive</h1>
         )}
         {path && path.length > 0 && (
-             <>
-                <span style={{ margin: "0 5px" }}>/</span>
-                <span>{directoryName}</span>
-             </>
+          <>
+            <span style={{ margin: "0 5px" }}>/</span>
+            <span>{directoryName}</span>
+          </>
         )}
       </div>
       <div className="header-links">
@@ -278,7 +287,7 @@ function DirectoryHeader({
                       ></div>
                     </div>
                     <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>
-                      {usedGB.toFixed(2)} GB of {totalGB} GB used
+                      {usedGB.toFixed(2)} GB of {totalGB.toFixed(2)} GB used
                     </div>
                   </div>
 

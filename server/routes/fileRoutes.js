@@ -6,7 +6,6 @@ import {
   getFile,
   getFileDetails,
   renameFile,
-  uploadFile,
   uploadFileInitiate,
 } from "../controllers/fileController.js";
 import { rateLimiters } from "../utils/rateLimiting.js";
@@ -17,13 +16,6 @@ const router = express.Router();
 
 router.param("parentDirId", validateIdMiddleware);
 router.param("id", validateIdMiddleware);
-
-router.post(
-  "/:parentDirId?",
-  rateLimiters.uploadFile,
-  throttlers.uploadFile,
-  uploadFile
-);
 
 router.get("/:id", rateLimiters.getFile, throttlers.getFile, getFile);
 router.get("/details/:id", getFileDetails);
