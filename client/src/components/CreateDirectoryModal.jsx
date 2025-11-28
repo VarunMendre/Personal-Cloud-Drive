@@ -40,24 +40,24 @@ function CreateDirectoryModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content" onClick={handleContentClick}>
-        <h2>Create a new directory</h2>
-        <form onSubmit={onCreateDirectory}>
+    <div className="fixed top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.5)] flex justify-center items-center z-[999]" onClick={handleOverlayClick}>
+      <div className="bg-white p-5 w-[90%] max-w-[400px] rounded-[4px]" onClick={handleContentClick}>
+        <h2 className="mt-0">Create a new directory</h2>
+        <form onSubmit={onCreateDirectory} className="flex flex-col gap-2">
           <input
             ref={inputRef}
             type="text"
-            className="modal-input"
+            className="p-[12px] my-[10px] border border-[#ccc] rounded-[4px] w-full box-border"
             placeholder="Enter folder name"
             value={newDirname}
             onChange={(e) => setNewDirname(e.target.value)}
           />
-          <div className="modal-buttons">
-            <button className="primary-button" type="submit">
+          <div className="flex justify-end gap-[10px]">
+            <button className="bg-[#007bff] text-white py-[8px] px-[15px] border-none rounded-[4px] cursor-pointer hover:bg-[#0056b3]" type="submit">
               Create
             </button>
             <button
-              className="secondary-button"
+              className="bg-[#ccc] text-[#333] py-[8px] px-[15px] border-none rounded-[4px] cursor-pointer hover:bg-[#999]"
               type="button"
               onClick={onClose}
             >

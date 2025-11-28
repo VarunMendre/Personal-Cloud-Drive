@@ -1,5 +1,4 @@
-import React from "react";
-import "./ShareModal.css"; // Reusing ShareModal styles for consistency
+import React, { useState } from "react";
 
 function PathModal({ path, onClose }) {
   return (

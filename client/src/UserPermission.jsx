@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./UserPermission.css";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -177,49 +176,49 @@ export default function UserPermission() {
 
   if (loading) {
     return (
-      <div className="permissions-container">
-        <p className="loading-message">Loading permissions...</p>
+      <div className="max-w-[900px] mx-auto my-10">
+        <p className="text-center py-10 text-[#666] text-base">Loading permissions...</p>
       </div>
     );
   }
 
   return (
-    <div className="permissions-container">
-      <h1 className="title">User Permissions Management</h1>
-      <p className="current-user-info">
+    <div className="max-w-[900px] mx-auto my-10">
+      <h1 className="text-[2em] font-bold mb-5">User Permissions Management</h1>
+      <p className="mb-[5px] text-sm text-[#333]">
         {userName}: <strong>{userRole}</strong>
       </p>
-      <p className="info-text">
+      <p className="mb-[30px] text-[13px] text-[#007bff]">
         You can manage roles for: <strong>{editableRoles.join(", ")}</strong>
       </p>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="bg-[#f8d7da] border border-[#f5c6cb] text-[#721c24] px-4 py-3 rounded mb-5 text-sm">{error}</div>}
 
-      <table className="user-table">
+      <table className="w-full border-collapse">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Current Role</th>
-            <th>Actions</th>
+            <th className="border border-[#ddd] p-3 text-left bg-[#f3f3f3]">Name</th>
+            <th className="border border-[#ddd] p-3 text-left bg-[#f3f3f3]">Email</th>
+            <th className="border border-[#ddd] p-3 text-left bg-[#f3f3f3]">Current Role</th>
+            <th className="border border-[#ddd] p-3 text-left bg-[#f3f3f3]">Actions</th>
           </tr>
         </thead>
         <tbody>
           {users.map((user) => (
             <tr key={user._id}>
-              <td>{user.name}</td>
-              <td>{user.email}</td>
-              <td>
+              <td className="border border-[#ddd] p-3 text-left">{user.name}</td>
+              <td className="border border-[#ddd] p-3 text-left">{user.email}</td>
+              <td className="border border-[#ddd] p-3 text-left">
                 <span
-                  className="role-badge"
+                  className="inline-block px-3 py-1 rounded-xl text-white text-xs font-semibold uppercase"
                   style={{ backgroundColor: getRoleColor(user.role) }}
                 >
                   {user.role}
                 </span>
               </td>
-              <td>
+              <td className="border border-[#ddd] p-3 text-left">
                 <button
-                  className="change-role-button"
+                  className="px-3 py-[6px] text-sm border-none rounded bg-[#28a745] text-white cursor-pointer transition-colors duration-200 hover:not(:disabled):bg-[#218838] disabled:bg-[#ccc] disabled:cursor-not-allowed"
                   onClick={() => handleRoleChangeClick(user)}
                   disabled={!canChangeRole(user)}
                 >
@@ -232,41 +231,41 @@ export default function UserPermission() {
       </table>
 
       {users.length === 0 && (
-        <p className="no-users-message">
+        <p className="text-center py-10 text-[#666] italic">
           No users available to manage at this time.
         </p>
       )}
 
       {showRoleModal && selectedUser && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Change User Role</h2>
-              <button className="modal-close" onClick={closeModal}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]" onClick={closeModal}>
+          <div className="bg-white rounded-lg w-[90%] max-w-[500px] shadow-[0_4px_6px_rgba(0,0,0,0.1)] animate-[modalFadeIn_0.2s_ease-out]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-5 border-b border-[#ddd]">
+              <h2 className="m-0 text-2xl">Change User Role</h2>
+              <button className="bg-transparent border-none text-[28px] cursor-pointer text-[#666] p-0 w-[30px] h-[30px] flex items-center justify-center transition-colors duration-200 hover:text-black" onClick={closeModal}>
                 &times;
               </button>
             </div>
-            <div className="modal-body">
-              <p className="modal-user-info">
+            <div className="p-5">
+              <p className="mb-[15px] text-sm text-[#333]">
                 Changing role for: <strong>{selectedUser.email}</strong>
               </p>
-              <p className="current-role-info">
+              <p className="mb-5 text-sm text-[#666]">
                 Current role:{" "}
                 <span
-                  className="role-badge"
+                  className="inline-block px-3 py-1 rounded-xl text-white text-xs font-semibold uppercase"
                   style={{ backgroundColor: getRoleColor(selectedUser.role) }}
                 >
                   {selectedUser.role}
                 </span>
               </p>
 
-              <div className="role-selection">
-                <label htmlFor="role-select">Select new role:</label>
+              <div className="mb-[25px]">
+                <label htmlFor="role-select" className="block mb-2 font-semibold text-[#333] text-sm">Select new role:</label>
                 <select
                   id="role-select"
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
-                  className="role-select"
+                  className="w-full p-[10px] border border-[#ddd] rounded bg-white cursor-pointer transition-colors duration-200 focus:outline-none focus:border-[#007bff] focus:shadow-[0_0_0_3px_rgba(0,123,255,0.1)]"
                 >
                   <option value="">-- Select a role --</option>
                   {getAvailableRolesForUser(selectedUser.role).map((role) => (
@@ -277,12 +276,12 @@ export default function UserPermission() {
                 </select>
               </div>
 
-              <div className="confirm-actions">
-                <button className="cancel-button" onClick={closeModal}>
+              <div className="flex gap-3 justify-end mt-5">
+                <button className="px-5 py-[10px] border border-[#ddd] rounded bg-white text-[#333] text-sm cursor-pointer transition-all duration-200 hover:bg-[#f5f5f5] hover:border-[#999]" onClick={closeModal}>
                   Cancel
                 </button>
                 <button
-                  className="confirm-button"
+                  className="px-5 py-[10px] border-none rounded bg-[#007bff] text-white text-sm cursor-pointer transition-all duration-200 hover:bg-[#0056b3] disabled:bg-[#ccc] disabled:cursor-not-allowed"
                   onClick={confirmRoleChange}
                   disabled={!newRole || newRole === selectedUser.role}
                 >

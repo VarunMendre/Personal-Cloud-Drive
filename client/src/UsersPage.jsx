@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { BASE_URL } from "./components/DirectoryHeader";
 import { useNavigate } from "react-router-dom";
-import "./UsersPage.css";
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -435,38 +434,38 @@ export default function UsersPage() {
   const canRenameFiles = userRole === "Owner";
 
   return (
-    <div className="users-container">
-      <h1 className="title">All Users</h1>
+    <div className="max-w-[900px] mx-auto my-10">
+      <h1 className="text-[2em] font-bold mb-5">All Users</h1>
       <p>
         {userName}: {userRole}
       </p>
-      <table className="user-table">
+      <table className="w-full border-collapse">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Status</th>
-            <th></th>
-            {canViewFiles && <th></th>}
-            {(userRole === "Admin" || userRole === "Owner") && <th></th>}
-            {userRole === "Owner" && <th></th>}
+            <th className="border border-[#ddd] p-3 text-left bg-[#f3f3f3]">Name</th>
+            <th className="border border-[#ddd] p-3 text-left bg-[#f3f3f3]">Email</th>
+            <th className="border border-[#ddd] p-3 text-left bg-[#f3f3f3]">Status</th>
+            <th className="border border-[#ddd] p-3 text-left bg-[#f3f3f3]"></th>
+            {canViewFiles && <th className="border border-[#ddd] p-3 text-left bg-[#f3f3f3]"></th>}
+            {(userRole === "Admin" || userRole === "Owner") && <th className="border border-[#ddd] p-3 text-left bg-[#f3f3f3]"></th>}
+            {userRole === "Owner" && <th className="border border-[#ddd] p-3 text-left bg-[#f3f3f3]"></th>}
           </tr>
         </thead>
         <tbody>
           {filteredUsers.map((user) => (
-            <tr key={user.id} className={user.isDeleted ? "deleted-user" : ""}>
-              <td>{user.name}</td>
-              <td>{user.email}</td>
-              <td>
+            <tr key={user.id} className={user.isDeleted ? "bg-[#fff3cd] opacity-70" : ""}>
+              <td className={`border border-[#ddd] p-3 text-left ${user.isDeleted ? "text-[#856404]" : ""}`}>{user.name}</td>
+              <td className={`border border-[#ddd] p-3 text-left ${user.isDeleted ? "text-[#856404]" : ""}`}>{user.email}</td>
+              <td className={`border border-[#ddd] p-3 text-left ${user.isDeleted ? "text-[#856404]" : ""}`}>
                 {user.isDeleted
                   ? "Deleted"
                   : user.isLoggedIn
                   ? "Logged In"
                   : "Logged Out"}
               </td>
-              <td>
+              <td className={`border border-[#ddd] p-3 text-left ${user.isDeleted ? "text-[#856404]" : ""}`}>
                 <button
-                  className="logout-button"
+                  className="px-3 py-[6px] text-sm border-none rounded bg-[#007bff] text-white cursor-pointer transition-colors duration-200 hover:not(:disabled):bg-[#0056b3] disabled:bg-[#ccc] disabled:cursor-not-allowed"
                   onClick={() => handleLogoutClick(user)}
                   disabled={!user.isLoggedIn || user.isDeleted}
                 >
@@ -475,9 +474,9 @@ export default function UsersPage() {
               </td>
 
               {canViewFiles && (
-                <td>
+                <td className={`border border-[#ddd] p-3 text-left ${user.isDeleted ? "text-[#856404]" : ""}`}>
                   <button
-                    className="logout-button view-button"
+                    className="px-3 py-[6px] text-sm border-none rounded bg-[#17a2b8] text-white cursor-pointer transition-colors duration-200 hover:not(:disabled):bg-[#138496] disabled:bg-[#ccc] disabled:cursor-not-allowed"
                     onClick={() => handleViewClick(user)}
                     disabled={user.isDeleted}
                   >
@@ -487,9 +486,9 @@ export default function UsersPage() {
               )}
 
               {(userRole === "Admin" || userRole === "Owner") && (
-                <td>
+                <td className={`border border-[#ddd] p-3 text-left ${user.isDeleted ? "text-[#856404]" : ""}`}>
                   <button
-                    className="logout-button delete-button"
+                    className="px-3 py-[6px] text-sm border-none rounded bg-[#bd1839] text-white cursor-pointer transition-colors duration-200 hover:not(:disabled):bg-[#d91e1e] disabled:bg-[#ccc] disabled:cursor-not-allowed"
                     onClick={() => handleDeleteClick(user)}
                     disabled={userEmail === user.email || user.isDeleted}
                   >
@@ -499,9 +498,9 @@ export default function UsersPage() {
               )}
 
               {userRole === "Owner" && (
-                <td>
+                <td className={`border border-[#ddd] p-3 text-left ${user.isDeleted ? "text-[#856404]" : ""}`}>
                   <button
-                    className="logout-button recover-button"
+                    className="px-3 py-[6px] text-sm border-none rounded bg-[#28a745] text-white cursor-pointer transition-colors duration-200 hover:not(:disabled):bg-[#218838] disabled:bg-[#ccc] disabled:cursor-not-allowed"
                     onClick={() => handleRecoverClick(user)}
                     disabled={
                       userEmail === user.email ||
@@ -520,40 +519,40 @@ export default function UsersPage() {
 
       {/* FILES MODAL */}
       {showFilesModal && selectedUser && (
-        <div className="modal-overlay" onClick={closeFilesModal}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]" onClick={closeFilesModal}>
           <div
-            className="modal-content files-modal"
+            className="bg-white rounded-lg w-[90%] max-w-[800px] max-h-[90vh] shadow-[0_4px_6px_rgba(0,0,0,0.1)] animate-[modalFadeIn_0.2s_ease-out]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-header">
-              <h2>{selectedUser.name}'s Files</h2>
-              <button className="modal-close" onClick={closeFilesModal}>
+            <div className="flex justify-between items-center p-5 border-b border-[#ddd]">
+              <h2 className="m-0 text-2xl">{selectedUser.name}'s Files</h2>
+              <button className="bg-transparent border-none text-[28px] cursor-pointer text-[#666] p-0 w-[30px] h-[30px] flex items-center justify-center transition-colors duration-200 hover:text-black" onClick={closeFilesModal}>
                 &times;
               </button>
             </div>
-            <div className="modal-body files-modal-body">
+            <div className="p-5 max-h-[60vh] overflow-y-auto">
               {loadingFiles ? (
-                <div className="loading-spinner">Loading files...</div>
+                <div className="text-center py-10 text-[#666] text-base">Loading files...</div>
               ) : userFiles.length === 0 ? (
-                <p className="no-files">No files found for this user.</p>
+                <p className="text-center py-10 text-[#999] text-sm">No files found for this user.</p>
               ) : (
-                <div className="files-list">
-                  <table className="files-table">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse mt-[10px]">
                     <thead>
                       <tr>
-                        <th>File Name</th>
-                        <th>Type</th>
-                        <th>Size</th>
-                        <th>Created</th>
-                        {(canDeleteFiles || canRenameFiles) && <th>Actions</th>}
+                        <th className="border border-[#e0e0e0] p-3 text-left text-sm bg-[#f8f9fa] font-semibold text-[#333] sticky top-0 z-10">File Name</th>
+                        <th className="border border-[#e0e0e0] p-3 text-left text-sm bg-[#f8f9fa] font-semibold text-[#333] sticky top-0 z-10">Type</th>
+                        <th className="border border-[#e0e0e0] p-3 text-left text-sm bg-[#f8f9fa] font-semibold text-[#333] sticky top-0 z-10">Size</th>
+                        <th className="border border-[#e0e0e0] p-3 text-left text-sm bg-[#f8f9fa] font-semibold text-[#333] sticky top-0 z-10">Created</th>
+                        {(canDeleteFiles || canRenameFiles) && <th className="border border-[#e0e0e0] p-3 text-left text-sm bg-[#f8f9fa] font-semibold text-[#333] sticky top-0 z-10">Actions</th>}
                       </tr>
                     </thead>
                     <tbody>
                       {userFiles.map((file) => (
-                        <tr key={file._id || file.id}>
-                          <td>
+                        <tr key={file._id || file.id} className="hover:bg-[#f8f9fa]">
+                          <td className="border border-[#e0e0e0] p-3 text-left text-sm">
                             <span
-                              className="file-name-link"
+                              className="text-[#007bff] cursor-pointer no-underline transition-all duration-200 hover:text-[#0056b3] hover:underline"
                               onClick={() => {
                                 setSelectedFile(file);
                                 handleFileClick(file);
@@ -562,23 +561,23 @@ export default function UsersPage() {
                               {file.name}
                             </span>
                           </td>
-                          <td>{file.type || "File"}</td>
-                          <td>
+                          <td className="border border-[#e0e0e0] p-3 text-left text-sm">{file.type || "File"}</td>
+                          <td className="border border-[#e0e0e0] p-3 text-left text-sm">
                             {file.size
                               ? `${(file.size / 1024).toFixed(2)} KB`
                               : "N/A"}
                           </td>
-                          <td>
+                          <td className="border border-[#e0e0e0] p-3 text-left text-sm">
                             {file.createdAt
                               ? new Date(file.createdAt).toLocaleDateString()
                               : "N/A"}
                           </td>
                           {(canDeleteFiles || canRenameFiles) && (
-                            <td>
+                            <td className="border border-[#e0e0e0] p-3 text-left text-sm">
                               <div style={{ display: "flex", gap: "8px" }}>
                                 {canRenameFiles && (
                                   <button
-                                    className="file-rename-btn"
+                                    className="px-[14px] py-[6px] text-[13px] border-none rounded bg-[#ffc107] text-[#333] cursor-pointer transition-all duration-200 font-medium hover:bg-[#e0a800] hover:-translate-y-px hover:shadow-[0_2px_4px_rgba(255,193,7,0.3)]"
                                     onClick={() => handleRenameClick(file)}
                                   >
                                     Rename
@@ -586,7 +585,7 @@ export default function UsersPage() {
                                 )}
                                 {canDeleteFiles && (
                                   <button
-                                    className="file-delete-btn"
+                                    className="px-[14px] py-[6px] text-[13px] border-none rounded bg-[#dc3545] text-white cursor-pointer transition-all duration-200 hover:bg-[#c82333] hover:-translate-y-px hover:shadow-[0_2px_4px_rgba(220,53,69,0.3)]"
                                     onClick={() => handleDeleteFileClick(file)}
                                   >
                                     Delete
@@ -603,8 +602,8 @@ export default function UsersPage() {
               )}
 
               {!canDeleteFiles && !canRenameFiles && (
-                <div className="read-only-notice">
-                  <p>⚠️ You have read-only access to this user's files.</p>
+                <div className="mt-5 p-3 bg-[#fff3cd] border-l-4 border-[#ffc107] rounded">
+                  <p className="m-0 text-[#856404] text-sm font-medium">⚠️ You have read-only access to this user's files.</p>
                 </div>
               )}
             </div>

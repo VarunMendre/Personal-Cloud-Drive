@@ -158,37 +158,36 @@ function DirectoryHeader({
   }, []);
 
   return (
-    <header className="directory-header">
-      <div className="breadcrumb">
+    <header className="flex flex-wrap justify-between items-center border-b-2 border-[#ccc] py-[10px] sticky top-0 z-10 bg-white">
+      <div className="flex items-center">
         {path && path.length > 0 ? (
           path.map((dir, index) => (
-            <span key={dir._id}>
+            <span key={dir._id} className="flex items-center">
               <span
-                className="breadcrumb-item"
+                className="cursor-pointer text-blue-500 hover:underline"
                 onClick={() => navigate(`/directory/${dir._id}`)}
-                style={{ cursor: "pointer", color: "#3b82f6" }}
               >
                 {index === 0 ? "My Drive" : dir.name}
               </span>
               {index < path.length - 1 && (
-                <span style={{ margin: "0 5px" }}>/</span>
+                <span className="mx-[5px] text-gray-500">/</span>
               )}
             </span>
           ))
         ) : (
-          <h1>My Drive</h1>
+          <h1 className="m-0 mr-5 text-[2rem] rounded-[4px]">My Drive</h1>
         )}
         {path && path.length > 0 && (
           <>
-            <span style={{ margin: "0 5px" }}>/</span>
-            <span>{directoryName}</span>
+            <span className="mx-[5px] text-gray-500">/</span>
+            <span className="text-gray-700">{directoryName}</span>
           </>
         )}
       </div>
-      <div className="header-links">
+      <div className="flex flex-wrap items-center gap-[10px]">
         {/* Create Folder (icon button) */}
         <button
-          className="icon-button"
+          className="bg-transparent border-none cursor-pointer text-[1.2rem] text-[#007bff] flex items-center justify-center hover:text-[#0056b3] disabled:opacity-50"
           title="Create Folder"
           onClick={onCreateFolderClick}
           disabled={disabled}
@@ -198,7 +197,7 @@ function DirectoryHeader({
 
         {/* Upload Files (icon button) */}
         <button
-          className="icon-button"
+          className="bg-transparent border-none cursor-pointer text-[1.2rem] text-[#007bff] flex items-center justify-center hover:text-[#0056b3] disabled:opacity-50"
           title="Upload Files"
           onClick={onUploadFilesClick}
           disabled={disabled}
@@ -209,7 +208,7 @@ function DirectoryHeader({
         {/* Settings Icon - Only show when logged in */}
         {loggedIn && (
           <button
-            className="icon-button"
+            className="bg-transparent border-none cursor-pointer text-[1.2rem] text-[#007bff] flex items-center justify-center hover:text-[#0056b3]"
             title="Settings"
             onClick={handleSettings}
           >
@@ -220,7 +219,7 @@ function DirectoryHeader({
         {/* Shared with Me - Only show when logged in */}
         {loggedIn && (
           <button
-            className="icon-button"
+            className="bg-transparent border-none cursor-pointer text-[1.2rem] text-[#007bff] flex items-center justify-center hover:text-[#0056b3]"
             title="Shared with Me"
             onClick={() => navigate("/shared-with-me")}
           >
@@ -239,33 +238,36 @@ function DirectoryHeader({
         />
 
         {/* User Icon & Dropdown Menu */}
-        <div className="user-menu-container" ref={userMenuRef}>
+        <div className="relative" ref={userMenuRef}>
           <button
-            className="icon-button"
+            className="bg-transparent border-none cursor-pointer text-[1.2rem] text-[#007bff] flex items-center justify-center hover:text-[#0056b3]"
             title="User Menu"
             onClick={handleUserIconClick}
           >
             {userPicture ? (
-              <img className="userPicture" src={userPicture} alt={userName} />
+              <img
+                className="w-[25px] h-[25px] border border-gray-500 rounded-full hover:p-[2px] object-cover"
+                src={userPicture}
+                alt={userName}
+              />
             ) : (
               <FaUser />
             )}
           </button>
 
           {showUserMenu && (
-            <div className="user-menu">
+            <div className="absolute top-[28px] right-0 bg-white border border-[#ddd] rounded-md shadow-[0_2px_6px_rgba(0,0,0,0.15)] z-[999] min-w-[150px]">
               {loggedIn ? (
                 <>
                   {/* Display name & email if logged in */}
-                  <div className="user-menu-item user-info">
-                    <span className="user-name">{userName}</span>
-                    <span className="user-email">{userEmail}</span>
+                  <div className="flex flex-col gap-1 px-4 py-2 cursor-auto text-[#333] text-[0.95rem] whitespace-nowrap">
+                    <span className="font-semibold text-[#222]">{userName}</span>
+                    <span className="text-[0.85rem] text-[#555]">{userEmail}</span>
                   </div>
 
                   {/* Storage Usage Progress Bar */}
                   <div
-                    className="user-menu-item storage-info"
-                    style={{ padding: "8px 16px", cursor: "default" }}
+                    className="flex flex-col gap-1 px-4 py-2 cursor-default text-[#333] text-[0.95rem] whitespace-nowrap"
                   >
                     <div
                       style={{
@@ -291,19 +293,19 @@ function DirectoryHeader({
                     </div>
                   </div>
 
-                  <div className="user-menu-divider" />
+                  <div className="border-t border-[#eaeaea]" />
                   <div
-                    className="user-menu-item login-btn"
+                    className="flex items-center gap-2 px-4 py-2 cursor-pointer text-[#333] text-[0.95rem] whitespace-nowrap hover:bg-[#e9e9e9]"
                     onClick={handleLogout}
                   >
-                    <FaSignOutAlt className="menu-item-icon" />
+                    <FaSignOutAlt className="text-[1rem] text-[#007bff]" />
                     <span>Logout</span>
                   </div>
                   <div
-                    className="user-menu-item login-btn"
+                    className="flex items-center gap-2 px-4 py-2 cursor-pointer text-[#333] text-[0.95rem] whitespace-nowrap hover:bg-[#e9e9e9]"
                     onClick={handleLogoutAll}
                   >
-                    <FaSignOutAlt className="menu-item-icon" />
+                    <FaSignOutAlt className="text-[1rem] text-[#007bff]" />
                     <span>Logout All</span>
                   </div>
                 </>
@@ -311,13 +313,13 @@ function DirectoryHeader({
                 <>
                   {/* Show Login if not logged in */}
                   <div
-                    className="user-menu-item login-btn"
+                    className="flex items-center gap-2 px-4 py-2 cursor-pointer text-[#333] text-[0.95rem] whitespace-nowrap hover:bg-[#e9e9e9]"
                     onClick={() => {
                       navigate("/login");
                       setShowUserMenu(false);
                     }}
                   >
-                    <FaSignInAlt className="menu-item-icon" />
+                    <FaSignInAlt className="text-[1rem] text-[#007bff]" />
                     <span>Login</span>
                   </div>
                 </>

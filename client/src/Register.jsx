@@ -309,12 +309,10 @@
 // };
 
 // export default Register;
-
 "use client"
 
 import { useState, useEffect } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import "./Auth.css"
 import { GoogleLogin } from "@react-oauth/google"
 import DOMPurify from "dompurify"
 import { loginWithGoogle } from "../src/apis/loginWithGoogle"
@@ -474,16 +472,16 @@ const Register = () => {
   }
 
   return (
-    <div className="container">
-      <h2 className="heading">Register</h2>
-      <form className="form" onSubmit={handleSubmit}>
+    <div className="max-w-[400px] mx-auto p-5">
+      <h2 className="text-center mb-5 text-2xl font-bold">Register</h2>
+      <form className="flex flex-col" onSubmit={handleSubmit}>
         {/* Name */}
-        <div className="form-group">
-          <label htmlFor="name" className="label">
+        <div className="relative mb-5">
+          <label htmlFor="name" className="block mb-[5px] font-bold">
             Name
           </label>
           <input
-            className="input"
+            className="w-full p-2 box-border border border-[#ccc] rounded-[4px]"
             type="text"
             id="name"
             name="name"
@@ -495,13 +493,13 @@ const Register = () => {
         </div>
 
         {/* Email + Send OTP */}
-        <div className="form-group">
-          <label htmlFor="email" className="label">
+        <div className="relative mb-5">
+          <label htmlFor="email" className="block mb-[5px] font-bold">
             Email
           </label>
-          <div className="otp-wrapper">
+          <div className="relative">
             <input
-              className={`input ${serverError ? "input-error" : ""}`}
+              className={`w-full p-2 box-border border rounded-[4px] pr-[80px] ${serverError ? "border-red-500" : "border-[#ccc]"}`}
               type="email"
               id="email"
               name="email"
@@ -510,22 +508,27 @@ const Register = () => {
               placeholder="Enter your email"
               required
             />
-            <button type="button" className="otp-button" onClick={handleSendOtp} disabled={isSending || countdown > 0}>
+            <button
+              type="button"
+              className="absolute top-1/2 right-2 -translate-y-1/2 px-2 py-1 text-xs leading-none border-none rounded-[3px] bg-[#007bff] text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              onClick={handleSendOtp}
+              disabled={isSending || countdown > 0}
+            >
               {isSending ? "Sending..." : countdown > 0 ? `${countdown}s` : "Send OTP"}
             </button>
           </div>
-          {serverError && <span className="error-msg">{serverError}</span>}
+          {serverError && <span className="absolute top-full left-0 text-red-500 text-[0.7rem] mt-[2px] whitespace-nowrap">{serverError}</span>}
         </div>
 
         {/* OTP Input + Verify */}
         {otpSent && (
-          <div className="form-group">
-            <label htmlFor="otp" className="label">
+          <div className="relative mb-5">
+            <label htmlFor="otp" className="block mb-[5px] font-bold">
               Enter OTP
             </label>
-            <div className="otp-wrapper">
+            <div className="relative">
               <input
-                className="input"
+                className="w-full p-2 box-border border border-[#ccc] rounded-[4px] pr-[80px]"
                 type="text"
                 id="otp"
                 name="otp"
@@ -537,24 +540,24 @@ const Register = () => {
               />
               <button
                 type="button"
-                className="otp-button"
+                className="absolute top-1/2 right-2 -translate-y-1/2 px-2 py-1 text-xs leading-none border-none rounded-[3px] bg-[#007bff] text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 onClick={handleVerifyOtp}
                 disabled={isVerifying || otpVerified}
               >
                 {isVerifying ? "Verifying..." : otpVerified ? "Verified" : "Verify OTP"}
               </button>
             </div>
-            {otpError && <span className="error-msg">{otpError}</span>}
+            {otpError && <span className="absolute top-full left-0 text-red-500 text-[0.7rem] mt-[2px] whitespace-nowrap">{otpError}</span>}
           </div>
         )}
 
         {/* Password */}
-        <div className="form-group">
-          <label htmlFor="password" className="label">
+        <div className="relative mb-5">
+          <label htmlFor="password" className="block mb-[5px] font-bold">
             Password
           </label>
           <input
-            className="input"
+            className="w-full p-2 box-border border border-[#ccc] rounded-[4px]"
             type="password"
             id="password"
             name="password"
@@ -567,22 +570,23 @@ const Register = () => {
 
         <button
           type="submit"
-          className={`submit-button ${isSuccess ? "success" : ""}`}
+          className={`bg-[#007bff] text-white border-none rounded-[4px] p-[10px_15px] w-full cursor-pointer text-[1rem] hover:opacity-90 disabled:bg-[#92a6bc] disabled:cursor-not-allowed ${isSuccess ? "bg-green-600" : ""}`}
           disabled={!otpVerified || isSuccess}
         >
           {isSuccess ? "Registration Successful" : "Register"}
         </button>
       </form>
 
-      <p className="link-text">
-        Already have an account? <Link to="/login">Login</Link>
+      <p className="text-center mt-[10px]">
+        Already have an account? <Link to="/login" className="text-[#0066cc] no-underline font-medium hover:underline hover:text-[#004a99]">Login</Link>
       </p>
 
-      <div className="or">
-        <span>Or</span>
+      <div className="text-center my-5 relative">
+        <span className="bg-white px-[15px] text-[#666] text-[0.9rem] relative z-10">Or</span>
+        <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-[#ddd] -z-10"></div>
       </div>
 
-      <div className="google-login">
+      <div className="flex justify-center mt-[10px]">
         <GoogleLogin
           onSuccess={async (credentialResponse) => {
             const data = await loginWithGoogle(credentialResponse.credential)
@@ -605,8 +609,8 @@ const Register = () => {
         />
       </div>
 
-      <div className="github-login">
-        <button onClick={loginWithGitHubHandler} className="github-button">
+      <div className="flex justify-center mt-[10px]">
+        <button onClick={loginWithGitHubHandler} className="bg-[#24292e] text-white border-none rounded-md px-5 py-[10px] text-sm font-medium cursor-pointer flex items-center gap-2 transition-colors duration-200 hover:bg-[#1a1e22] active:bg-[#0d1117]">
           Continue with GitHub
         </button>
       </div>

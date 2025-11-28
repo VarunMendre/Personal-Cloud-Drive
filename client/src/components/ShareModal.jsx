@@ -8,7 +8,6 @@ import {
   FaEye,
   FaGlobe,
 } from "react-icons/fa";
-import "./ShareModal.css";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -245,96 +244,96 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
 
   if (loading) {
     return (
-      <div className="share-modal-overlay">
-        <div className="share-modal">
-          <div className="loading">Loading...</div>
+      <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1000] animate-[fadeIn_0.2s_ease]">
+        <div className="bg-white rounded-xl w-[90%] max-w-[600px] max-h-[90vh] overflow-y-auto shadow-[0_10px_40px_rgba(0,0,0,0.2)] animate-[slideUp_0.3s_ease]">
+          <div className="text-center py-10 text-[#666]">Loading...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="share-modal-overlay" onClick={onClose}>
-      <div className="share-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="share-modal-header">
-          <h2>Share "{resourceName}"</h2>
-          <button className="close-btn" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1000] animate-[fadeIn_0.2s_ease]" onClick={onClose}>
+      <div className="bg-white rounded-xl w-[90%] max-w-[600px] max-h-[90vh] overflow-y-auto shadow-[0_10px_40px_rgba(0,0,0,0.2)] animate-[slideUp_0.3s_ease]" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center px-6 py-5 border-b border-[#e0e0e0]">
+          <h2 className="text-xl m-0 text-[#333]">Share "{resourceName}"</h2>
+          <button className="bg-transparent border-none text-xl text-[#666] cursor-pointer p-2 rounded-full transition-all duration-200 hover:bg-[#f0f0f0] hover:text-[#333]" onClick={onClose}>
             <FaTimes />
           </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">{success}</div>}
+        {error && <div className="mx-6 my-4 px-4 py-3 bg-[#fee] text-[#c33] rounded-lg border-l-4 border-[#c33]">{error}</div>}
+        {success && <div className="mx-6 my-4 px-4 py-3 bg-[#efe] text-[#3c3] rounded-lg border-l-4 border-[#3c3]">{success}</div>}
 
         {/* Share with specific user */}
-        <div className="share-section">
-          <h3>Add people</h3>
-          <form onSubmit={handleShareWithUser} className="share-form">
+        <div className="px-6 py-5 border-b border-[#e0e0e0]">
+          <h3 className="text-base m-0 mb-4 text-[#333] flex items-center gap-2">Add people</h3>
+          <form onSubmit={handleShareWithUser} className="flex gap-2 items-center max-[600px]:flex-col">
             <input
               type="email"
               placeholder="Enter email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="email-input"
+              className="flex-1 px-[14px] py-[10px] border-2 border-[#e0e0e0] rounded-lg text-sm transition-colors duration-200 focus:outline-none focus:border-[#667eea] max-[600px]:w-full"
             />
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="role-select"
+              className="px-[14px] py-[10px] border-2 border-[#e0e0e0] rounded-lg text-sm cursor-pointer bg-white max-[600px]:w-full"
             >
               <option value="viewer">Viewer</option>
               <option value="editor">Editor</option>
             </select>
-            <button type="submit" disabled={isSharing} className="share-btn">
+            <button type="submit" disabled={isSharing} className="px-6 py-[10px] bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white border-none rounded-lg font-semibold cursor-pointer transition-transform duration-200 hover:not(:disabled):-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none max-[600px]:w-full">
               {isSharing ? "Sharing..." : "Share"}
             </button>
           </form>
         </div>
 
         {/* People with access */}
-        <div className="share-section">
-          <h3>People with access</h3>
-          <div className="users-list">
+        <div className="px-6 py-5 border-b border-[#e0e0e0]">
+          <h3 className="text-base m-0 mb-4 text-[#333] flex items-center gap-2">People with access</h3>
+          <div className="flex flex-col gap-3">
             {/* Owner */}
             {owner && (
-              <div className="user-item">
+              <div className="flex items-center gap-3 p-3 bg-[#f9f9f9] rounded-lg transition-colors duration-200 hover:bg-[#f0f0f0]">
                 <img
                   src={owner.picture}
                   alt={owner.name}
-                  className="user-avatar"
+                  className="w-10 h-10 rounded-full object-cover"
                 />
-                <div className="user-info">
-                  <div className="user-name">{owner.name}</div>
-                  <div className="user-email">{owner.email}</div>
+                <div className="flex-1">
+                  <div className="font-semibold text-[#333] text-sm">{owner.name}</div>
+                  <div className="text-[#666] text-[13px]">{owner.email}</div>
                 </div>
-                <div className="user-role owner-badge">Owner</div>
+                <div className="px-3 py-[6px] rounded-md text-[13px] font-semibold bg-[#e3f2fd] text-[#1976d2]">Owner</div>
               </div>
             )}
 
             {/* Shared users */}
             {sharedUsers.map((user) => (
-              <div key={user.userId} className="user-item">
+              <div key={user.userId} className="flex items-center gap-3 p-3 bg-[#f9f9f9] rounded-lg transition-colors duration-200 hover:bg-[#f0f0f0]">
                 <img
                   src={user.picture}
                   alt={user.name}
-                  className="user-avatar"
+                  className="w-10 h-10 rounded-full object-cover"
                 />
-                <div className="user-info">
-                  <div className="user-name">{user.name}</div>
-                  <div className="user-email">{user.email}</div>
+                <div className="flex-1">
+                  <div className="font-semibold text-[#333] text-sm">{user.name}</div>
+                  <div className="text-[#666] text-[13px]">{user.email}</div>
                 </div>
                 <select
                   value={user.role}
                   onChange={(e) =>
                     handleUpdateAccess(user.userId, e.target.value)
                   }
-                  className="role-select-small"
+                  className="px-[10px] py-[6px] border border-[#e0e0e0] rounded-md text-[13px] cursor-pointer bg-white"
                 >
                   <option value="viewer">Viewer</option>
                   <option value="editor">Editor</option>
                 </select>
                 <button
-                  className="remove-btn"
+                  className="p-2 bg-transparent border-none text-[#999] cursor-pointer rounded-md transition-all duration-200 hover:bg-[#ffebee] hover:text-[#c33]"
                   onClick={() => handleRemoveAccess(user.userId)}
                   title="Remove access"
                 >
@@ -344,45 +343,45 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
             ))}
 
             {sharedUsers.length === 0 && (
-              <p className="no-users">Not shared with anyone yet</p>
+              <p className="text-center text-[#999] py-5 italic">Not shared with anyone yet</p>
             )}
           </div>
         </div>
 
         {/* Share link section */}
-        <div className="share-section">
-          <h3>
+        <div className="px-6 py-5 border-b border-[#e0e0e0]">
+          <h3 className="text-base m-0 mb-4 text-[#333] flex items-center gap-2">
             <FaGlobe /> Get Link
           </h3>
           {shareLink ? (
-            <div className="link-section">
-              <div className="link-display">
-                <FaLink className="link-icon" />
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 p-3 bg-[#f9f9f9] rounded-lg">
+                <FaLink className="text-[#667eea] text-lg" />
                 <input
                   type="text"
                   value={shareLink.url}
                   readOnly
-                  className="link-input"
+                  className="flex-1 border-none bg-transparent text-[13px] text-[#333] outline-none"
                 />
                 <button
-                  className="copy-btn"
+                  className="px-4 py-2 bg-[#667eea] text-white border-none rounded-md cursor-pointer text-[13px] transition-all duration-200 hover:bg-[#5568d3]"
                   onClick={handleCopyLink}
                   title="Copy link"
                 >
                   {copiedLink ? "Copied!" : <FaCopy />}
                 </button>
               </div>
-              <div className="link-controls">
+              <div className="flex gap-2 items-center max-[600px]:flex-col">
                 <select
                   value={shareLink.role}
                   onChange={(e) => handleUpdateLinkRole(e.target.value)}
-                  className="role-select-small"
+                  className="px-[10px] py-[6px] border border-[#e0e0e0] rounded-md text-[13px] cursor-pointer bg-white max-[600px]:w-full"
                 >
                   <option value="viewer">Anyone with link can view</option>
                   <option value="editor">Anyone with link can edit</option>
                 </select>
                 <button
-                  className="disable-link-btn"
+                  className="px-4 py-2 bg-[#f44336] text-white border-none rounded-md cursor-pointer text-[13px] transition-all duration-200 hover:bg-[#d32f2f] max-[600px]:w-full"
                   onClick={handleDisableLink}
                 >
                   Disable Link
@@ -390,18 +389,18 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
               </div>
             </div>
           ) : (
-            <div className="no-link">
-              <p>Create a shareable link for this {resourceType}</p>
+            <div className="text-center py-5">
+              <p className="text-[#666] mb-4">Create a shareable link for this {resourceType}</p>
               <select
                 value={linkRole}
                 onChange={(e) => setLinkRole(e.target.value)}
-                className="role-select"
+                className="px-[14px] py-[10px] border-2 border-[#e0e0e0] rounded-lg text-sm cursor-pointer bg-white"
               >
                 <option value="viewer">Viewer</option>
                 <option value="editor">Editor</option>
               </select>
               <button
-                className="generate-link-btn"
+                className="px-6 py-[10px] bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white border-none rounded-lg font-semibold cursor-pointer inline-flex items-center gap-2 transition-transform duration-200 hover:-translate-y-0.5 ml-2"
                 onClick={handleGenerateLink}
               >
                 <FaLink /> Generate Link
@@ -411,16 +410,16 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
         </div>
 
         {/* Permission descriptions */}
-        <div className="permissions-info">
-          <h4>Permission levels:</h4>
-          <div className="permission-item">
-            <FaEye className="permission-icon" />
+        <div className="px-6 py-4 bg-[#f9f9f9] rounded-b-xl">
+          <h4 className="text-sm m-0 mb-3 text-[#333]">Permission levels:</h4>
+          <div className="flex items-center gap-3 mb-2 text-[13px] text-[#666]">
+            <FaEye className="text-[#667eea] text-base" />
             <div>
               <strong>Viewer:</strong> Can view and download
             </div>
           </div>
-          <div className="permission-item">
-            <FaEdit className="permission-icon" />
+          <div className="flex items-center gap-3 mb-2 text-[13px] text-[#666]">
+            <FaEdit className="text-[#667eea] text-base" />
             <div>
               <strong>Editor:</strong> Can view, download, edit, and delete
             </div>

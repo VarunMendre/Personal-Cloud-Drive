@@ -18,7 +18,7 @@ function DirectoryList({
   BASE_URL,
 }) {
   return (
-    <div className="directory-list">
+    <div className="flex flex-col gap-[10px] mt-5">
       {items.map((item) => {
         const uploadProgress = progressMap[item.id] || 0;
 

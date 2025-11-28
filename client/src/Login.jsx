@@ -3,9 +3,7 @@
 // In Login.jsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import "./Auth.css";
 import { GoogleLogin } from "@react-oauth/google";
-import "./App.css";
 import { loginWithGoogle } from "../src/apis/loginWithGoogle";
 import DOMPurify from "dompurify"; // Import DOMPurify for input sanitization
 
@@ -85,7 +83,7 @@ const Login = () => {
   const hasError = Boolean(serverError);
 
   return (
-    <div className="container">
+    <div className="max-w-[400px] mx-auto p-5">
       {notification && (
         <div
           style={{
@@ -105,14 +103,16 @@ const Login = () => {
           {notification}
         </div>
       )}
-      <h2 className="heading">Login</h2>
-      <form className="form" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="email" className="label">
+      <h2 className="text-center mb-5 text-2xl font-bold">Login</h2>
+      <form className="flex flex-col" onSubmit={handleSubmit}>
+        <div className="relative mb-5">
+          <label htmlFor="email" className="block mb-[5px] font-bold">
             Email
           </label>
           <input
-            className={`input ${hasError ? "input-error" : ""}`}
+            className={`w-full p-2 box-border border rounded-[4px] ${
+              hasError ? "border-red-500" : "border-[#ccc]"
+            }`}
             type="email"
             id="email"
             name="email"
@@ -123,12 +123,14 @@ const Login = () => {
           />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="password" className="label">
+        <div className="relative mb-5">
+          <label htmlFor="password" className="block mb-[5px] font-bold">
             Password
           </label>
           <input
-            className={`input ${hasError ? "input-error" : ""}`}
+            className={`w-full p-2 box-border border rounded-[4px] ${
+              hasError ? "border-red-500" : "border-[#ccc]"
+            }`}
             type="password"
             id="password"
             name="password"
@@ -137,24 +139,40 @@ const Login = () => {
             placeholder="Enter your password"
             required
           />
-          {serverError && <span className="error-msg">{serverError}</span>}
+          {serverError && (
+            <span className="absolute top-full left-0 text-red-500 text-[0.7rem] mt-[2px] whitespace-nowrap">
+              {serverError}
+            </span>
+          )}
         </div>
 
-        <button type="submit" className="submit-button">
+        <button
+          type="submit"
+          className="bg-[#007bff] text-white border-none rounded-[4px] p-[10px_15px] w-full cursor-pointer text-[1rem] hover:opacity-90 disabled:bg-[#92a6bc] disabled:cursor-not-allowed"
+        >
           Login
         </button>
       </form>
 
-      <p className="link-text">
-        Don't have an account? <Link to="/register">Register</Link>
+      <p className="text-center mt-[10px]">
+        Don't have an account?{" "}
+        <Link
+          to="/register"
+          className="text-[#0066cc] no-underline font-medium hover:underline hover:text-[#004a99]"
+        >
+          Register
+        </Link>
       </p>
 
-      <div className="or">
-        <span>Or</span>
+      <div className="text-center my-5 relative">
+        <span className="bg-white px-[15px] text-[#666] text-[0.9rem] relative z-10">
+          Or
+        </span>
+        <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-[#ddd] -z-10"></div>
       </div>
 
       {/* Google login section */}
-      <div className="google-login">
+      <div className="flex justify-center mt-[10px]">
         <GoogleLogin
           onSuccess={async (credentialResponse) => {
             const data = await loginWithGoogle(credentialResponse.credential);
@@ -175,8 +193,11 @@ const Login = () => {
       </div>
 
       {/* GitHub login button */}
-      <div className="github-login">
-        <button onClick={loginWithGitHubHandler} className="github-button">
+      <div className="flex justify-center mt-[10px]">
+        <button
+          onClick={loginWithGitHubHandler}
+          className="bg-[#24292e] text-white border-none rounded-md px-5 py-[10px] text-sm font-medium cursor-pointer flex items-center gap-2 transition-colors duration-200 hover:bg-[#1a1e22] active:bg-[#0d1117]"
+        >
           Continue with GitHub
         </button>
       </div>

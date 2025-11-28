@@ -1,7 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import DirectoryView from "./DirectoryView";
 import Register from "./Register";
-import "./App.css";
+
 import Login from "./Login";
 import GitHubCallbackHandler from "./GitHubCallbackHandler";
 import UsersPage from "./UsersPage";

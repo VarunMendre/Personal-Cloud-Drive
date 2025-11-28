@@ -6,7 +6,6 @@ import RenameModal from "./components/RenameModal";
 import DirectoryList from "./components/DirectoryList";
 import ShareModal from "./components/ShareModal";
 import DetailsPopup from "./components/DetailsPopup";
-import "./DirectoryView.css";
 
 function DirectoryView() {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -622,11 +621,11 @@ function DirectoryView() {
   ];
 
   return (
-    <div className="directory-view">
+    <div className="px-[10px] max-w-[1000px] mx-auto">
       {errorMessage &&
         errorMessage !==
           "Directory not found or you do not have access to it!" && (
-          <div className="error-message">{errorMessage}</div>
+          <div className="text-red-500 mb-4">{errorMessage}</div>
         )}
 
       <DirectoryHeader
@@ -689,11 +688,11 @@ function DirectoryView() {
       {combinedItems.length === 0 ? (
         errorMessage ===
         "Directory not found or you do not have access to it!" ? (
-          <p className="no-data-message">
+          <p className="text-center italic mt-[40px] text-[#777]">
             Directory not found or you do not have access to it!
           </p>
         ) : (
-          <p className="no-data-message">
+          <p className="text-center italic mt-[40px] text-[#777]">
             This folder is empty. Upload files or create a folder to see some
             data.
           </p>

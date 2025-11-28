@@ -11,13 +11,13 @@ function ContextMenu({
   BASE_URL,
 }) {
   // FIXED - Define the missing itemClass
-  const itemClass = "context-menu-item";
+  const itemClass = "flex items-center gap-3 px-5 py-2 cursor-pointer whitespace-nowrap text-[#333] hover:bg-[#eee] transition-colors duration-200 text-sm";
 
   // Directory context menu
   if (item.isDirectory) {
     return (
       <div
-        className="context-menu"
+        className="fixed bg-white shadow-[0_2px_6px_rgba(0,0,0,0.2)] rounded-[4px] z-[999] py-[5px] min-w-[160px]"
         style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
       >
         {/* Share option */}
@@ -50,7 +50,7 @@ function ContextMenu({
       // Only show "Cancel"
       return (
         <div
-          className="context-menu"
+          className="fixed bg-white shadow-[0_2px_6px_rgba(0,0,0,0.2)] rounded-[4px] z-[999] py-[5px] min-w-[160px]"
           style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
         >
           <div
@@ -65,7 +65,7 @@ function ContextMenu({
       // Normal file
       return (
         <div
-          className="context-menu"
+          className="fixed bg-white shadow-[0_2px_6px_rgba(0,0,0,0.2)] rounded-[4px] z-[999] py-[5px] min-w-[160px]"
           style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
         >
           {/* Share option */}

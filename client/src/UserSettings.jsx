@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../src/components/DirectoryHeader"
-import "./UserSettings.css";
 
 function UserSettings() {
   const navigate = useNavigate();
@@ -101,8 +100,8 @@ function UserSettings() {
 
   if (loading) {
     return (
-      <div className="user-settings-container">
-        <div className="user-settings-card">
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-5">
+        <div className="bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] p-10 w-full max-w-[500px]">
           <p>Loading...</p>
         </div>
       </div>
@@ -111,14 +110,14 @@ function UserSettings() {
 
   if (hasPassword) {
     return (
-      <div className="user-settings-container">
-        <div className="user-settings-card">
-          <h1>User Settings</h1>
-          <div className="info-message">
-            <p>You already have a password set up.</p>
-            <p>You can login using your email and password.</p>
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-5">
+        <div className="bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] p-10 w-full max-w-[500px] max-[600px]:px-5 max-[600px]:py-[30px]">
+          <h1 className="text-[28px] text-[#333] mb-[10px] text-center max-[600px]:text-2xl">User Settings</h1>
+          <div className="bg-[#e3f2fd] text-[#1976d2] p-5 rounded-lg mb-5 text-center">
+            <p className="my-2">You already have a password set up.</p>
+            <p className="my-2">You can login using your email and password.</p>
           </div>
-          <button className="back-button" onClick={handleBack}>
+          <button className="flex-1 px-6 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all duration-300 bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white mt-[10px] hover:-translate-y-0.5 hover:shadow-[0_5px_15px_rgba(102,126,234,0.4)] w-full" onClick={handleBack}>
             Back to Home
           </button>
         </div>
@@ -127,16 +126,16 @@ function UserSettings() {
   }
 
   return (
-    <div className="user-settings-container">
-      <div className="user-settings-card">
-        <h1>Set Password</h1>
-        <p className="subtitle">
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-5">
+      <div className="bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] p-10 w-full max-w-[500px] max-[600px]:px-5 max-[600px]:py-[30px]">
+        <h1 className="text-[28px] text-[#333] mb-[10px] text-center max-[600px]:text-2xl">Set Password</h1>
+        <p className="text-[#666] text-center mb-[30px] text-sm">
           Set a password to enable login with email and password
         </p>
 
-        <form onSubmit={handleSubmit} className="settings-form">
-          <div className="form-group">
-            <label htmlFor="newPassword">New Password</label>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="newPassword" className="font-semibold text-[#333] text-sm">New Password</label>
             <input
               type="password"
               id="newPassword"
@@ -146,11 +145,12 @@ function UserSettings() {
               required
               minLength={4}
               disabled={submitting}
+              className="px-4 py-3 border-2 border-[#e0e0e0] rounded-lg text-sm transition-all duration-300 focus:outline-none focus:border-[#667eea] focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)] disabled:bg-[#f5f5f5] disabled:cursor-not-allowed"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="confirmPassword" className="font-semibold text-[#333] text-sm">Confirm Password</label>
             <input
               type="password"
               id="confirmPassword"
@@ -160,16 +160,17 @@ function UserSettings() {
               required
               minLength={4}
               disabled={submitting}
+              className="px-4 py-3 border-2 border-[#e0e0e0] rounded-lg text-sm transition-all duration-300 focus:outline-none focus:border-[#667eea] focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)] disabled:bg-[#f5f5f5] disabled:cursor-not-allowed"
             />
           </div>
 
-          {error && <div className="error-message">{error}</div>}
-          {success && <div className="success-message">{success}</div>}
+          {error && <div className="bg-[#fee] text-[#c33] px-4 py-3 rounded-lg text-sm border-l-4 border-[#c33]">{error}</div>}
+          {success && <div className="bg-[#efe] text-[#3c3] px-4 py-3 rounded-lg text-sm border-l-4 border-[#3c3]">{success}</div>}
 
-          <div className="button-group">
+          <div className="flex gap-3 mt-[10px] max-[600px]:flex-col">
             <button
               type="button"
-              className="cancel-button"
+              className="flex-1 px-6 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all duration-300 bg-[#f5f5f5] text-[#666] hover:not(:disabled):bg-[#e0e0e0] disabled:opacity-60 disabled:cursor-not-allowed"
               onClick={handleBack}
               disabled={submitting}
             >
@@ -177,7 +178,7 @@ function UserSettings() {
             </button>
             <button
               type="submit"
-              className="submit-button"
+              className="flex-1 px-6 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all duration-300 bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white hover:not(:disabled):-translate-y-0.5 hover:not(:disabled):shadow-[0_5px_15px_rgba(102,126,234,0.4)] disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
               disabled={submitting}
             >
               {submitting ? "Setting Password..." : "Set Password"}
