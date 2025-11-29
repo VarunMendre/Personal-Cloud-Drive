@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaFolder, FaFile, FaEye, FaEdit, FaArrowLeft } from "react-icons/fa";
 import "./SharedWithMe.css";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+import DirectoryHeader, { BASE_URL } from "./components/DirectoryHeader";
 
 function SharedWithMe() {
   const navigate = useNavigate();
@@ -11,10 +11,30 @@ function SharedWithMe() {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [userName, setUserName] = useState("Guest User");
+  const [userEmail, setUserEmail] = useState("");
+  const [userPicture, setUserPicture] = useState("");
 
   useEffect(() => {
     fetchSharedResources();
+    fetchUser();
   }, []);
+
+  const fetchUser = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/user`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUserName(data.name);
+        setUserEmail(data.email);
+        setUserPicture(data.picture);
+      }
+    } catch (err) {
+      console.error("Error fetching user info:", err);
+    }
+  };
 
   const fetchSharedResources = async () => {
     try {
@@ -88,7 +108,15 @@ function SharedWithMe() {
   const totalItems = directories.length + files.length;
 
   return (
-    <div className="shared-with-me-container">
+    <>
+      <DirectoryHeader
+        directoryName="Shared with Me"
+        path={[]}
+        userName={userName}
+        userEmail={userEmail}
+        userPicture={userPicture}
+      />
+      <div className="shared-with-me-container">
       <div className="shared-header">
         <button className="back-btn" onClick={() => navigate("/")}>
           <FaArrowLeft /> Back to My Drive
@@ -174,7 +202,8 @@ function SharedWithMe() {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

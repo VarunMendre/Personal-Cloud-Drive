@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { BASE_URL } from "../src/components/DirectoryHeader";
+import DirectoryHeader, { BASE_URL } from "./components/DirectoryHeader";
 import {
   FaGoogle,
   FaGithub,
@@ -203,8 +203,16 @@ function UserSettings() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-6">
+    <div className="min-h-screen bg-gray-50">
+      <DirectoryHeader
+        directoryName="Settings"
+        path={[]}
+        userName={userName}
+        userEmail={userEmail}
+        userPicture={userPicture}
+      />
+      <div className="py-8">
+        <div className="max-w-4xl mx-auto px-6">
         {/* Back Button */}
         <button
           onClick={() => navigate("/")}
@@ -537,6 +545,7 @@ function UserSettings() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

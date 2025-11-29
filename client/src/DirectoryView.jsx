@@ -691,10 +691,6 @@ function DirectoryView() {
       <DirectoryHeader
         directoryName={directoryName}
         path={path}
-        onCreateFolderClick={() => setShowCreateDirModal(true)}
-        onUploadFilesClick={() => fileInputRef.current.click()}
-        fileInputRef={fileInputRef}
-        handleFileSelect={handleFileSelect}
         disabled={
           errorMessage ===
           "Directory not found or you do not have access to it!"
@@ -705,6 +701,16 @@ function DirectoryView() {
         userName={userName}
         userEmail={userEmail}
         userPicture={userPicture}
+      />
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        id="file-upload"
+        type="file"
+        style={{ display: "none" }}
+        multiple
+        onChange={handleFileSelect}
       />
 
       {/* Upload Section with 3 Buttons */}

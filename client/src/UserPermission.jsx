@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./UserPermission.css";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+import DirectoryHeader, { BASE_URL } from "./components/DirectoryHeader";
 
 export default function UserPermission() {
   const [users, setUsers] = useState([]);
   const [userName, setUserName] = useState("Guest User");
   const [userEmail, setUserEmail] = useState("");
+  const [userPicture, setUserPicture] = useState("");
   const [userRole, setUserRole] = useState("User");
   const [editableRoles, setEditableRoles] = useState([]);
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -33,6 +34,7 @@ export default function UserPermission() {
         const data = await response.json();
         setUserName(data.name);
         setUserEmail(data.email);
+        setUserPicture(data.picture);
         setUserRole(data.role);
       } else if (response.status === 401) {
         navigate("/login");
@@ -184,7 +186,15 @@ export default function UserPermission() {
   }
 
   return (
-    <div className="permissions-container">
+    <>
+      <DirectoryHeader
+        directoryName="Permissions"
+        path={[]}
+        userName={userName}
+        userEmail={userEmail}
+        userPicture={userPicture}
+      />
+      <div className="permissions-container">
       <h1 className="title">User Permissions Management</h1>
       <p className="current-user-info">
         {userName}: <strong>{userRole}</strong>
@@ -293,6 +303,7 @@ export default function UserPermission() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

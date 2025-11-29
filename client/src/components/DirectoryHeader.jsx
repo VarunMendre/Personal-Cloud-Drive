@@ -1,6 +1,5 @@
-import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaFolderPlus, FaUpload, FaShare, FaUsers } from "react-icons/fa";
+import { FaShare, FaUsers } from "react-icons/fa";
 
 // Use a constant for the API base URL
 export const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -8,10 +7,6 @@ export const BASE_URL = import.meta.env.VITE_BASE_URL;
 function DirectoryHeader({
   directoryName,
   path,
-  onCreateFolderClick,
-  onUploadFilesClick,
-  fileInputRef,
-  handleFileSelect,
   disabled = false,
   onStorageUpdate,
   userName = "Guest User",
@@ -32,21 +27,17 @@ function DirectoryHeader({
         <div className="flex items-center gap-6">
           {/* Logo */}
           <div
-            className="flex items-center gap-2 cursor-pointer"
+            className="flex items-center gap-3 cursor-pointer"
             onClick={() => navigate("/")}
           >
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-              <svg
-                className="w-6 h-6 text-white"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-              </svg>
+            <div className="w-16 h-16 flex items-center justify-center">
+              <img
+                src="/cloud-logo.png"
+                alt="Cloud Storage Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
-            <span className="text-xl font-semibold text-gray-900">
-              Storage
-            </span>
+            <span className="text-xl font-semibold text-gray-900">Storage</span>
           </div>
 
           {/* Breadcrumb */}
@@ -67,7 +58,7 @@ function DirectoryHeader({
               ))
             ) : (
               <span className="text-lg font-medium text-gray-900">
-                My Drive
+                {directoryName || "My Drive"}
               </span>
             )}
             {path && path.length > 0 && (
@@ -136,16 +127,6 @@ function DirectoryHeader({
             )}
           </div>
         </div>
-
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          id="file-upload"
-          type="file"
-          style={{ display: "none" }}
-          multiple
-          onChange={handleFileSelect}
-        />
       </div>
     </header>
   );
