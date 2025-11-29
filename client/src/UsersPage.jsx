@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { BASE_URL } from "./components/DirectoryHeader";
+import DirectoryHeader from "./components/DirectoryHeader";
 import { useNavigate } from "react-router-dom";
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [userName, setUserName] = useState("Guest User");
   const [userEmail, setUserEmail] = useState("");
+  const [userPicture, setUserPicture] = useState("");
   const [userRole, setUserRole] = useState("User");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showRecoverModal, setShowRecoverModal] = useState(false);
@@ -410,6 +412,7 @@ export default function UsersPage() {
         const data = await response.json();
         setUserName(data.name);
         setUserEmail(data.email);
+        setUserPicture(data.picture);
         setUserRole(data.role);
       } else if (response.status === 401) {
         navigate("/login");
@@ -434,8 +437,21 @@ export default function UsersPage() {
   const canRenameFiles = userRole === "Owner";
 
   return (
+<<<<<<< HEAD
     <div className="max-w-[900px] mx-auto my-10">
       <h1 className="text-[2em] font-bold mb-5">All Users</h1>
+=======
+    <>
+      <DirectoryHeader
+        directoryName="Users"
+        path={[]}
+        userName={userName}
+        userEmail={userEmail}
+        userPicture={userPicture}
+      />
+      <div className="users-container">
+      <h1 className="title">All Users</h1>
+>>>>>>> backup/branch
       <p>
         {userName}: {userRole}
       </p>
@@ -940,6 +956,7 @@ export default function UsersPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

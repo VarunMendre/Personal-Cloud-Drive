@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { BASE_URL } from "../src/components/DirectoryHeader"
 =======
 import { BASE_URL } from "../src/components/DirectoryHeader";
+=======
+import DirectoryHeader, { BASE_URL } from "./components/DirectoryHeader";
+>>>>>>> backup/branch
 import {
   FaGoogle,
   FaGithub,
@@ -231,6 +235,7 @@ function UserSettings() {
 
   return (
 <<<<<<< HEAD
+<<<<<<< HEAD
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-5">
       <div className="bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] p-10 w-full max-w-[500px] max-[600px]:px-5 max-[600px]:py-[30px]">
         <h1 className="text-[28px] text-[#333] mb-[10px] text-center max-[600px]:text-2xl">Set Password</h1>
@@ -270,6 +275,18 @@ function UserSettings() {
 =======
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-6">
+=======
+    <div className="min-h-screen bg-gray-50">
+      <DirectoryHeader
+        directoryName="Settings"
+        path={[]}
+        userName={userName}
+        userEmail={userEmail}
+        userPicture={userPicture}
+      />
+      <div className="py-8">
+        <div className="max-w-4xl mx-auto px-6">
+>>>>>>> backup/branch
         {/* Back Button */}
         <button
           onClick={() => navigate("/")}
@@ -619,6 +636,7 @@ function UserSettings() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

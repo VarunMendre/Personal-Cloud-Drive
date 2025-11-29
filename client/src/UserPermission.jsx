@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+import DirectoryHeader, { BASE_URL } from "./components/DirectoryHeader";
 
 export default function UserPermission() {
   const [users, setUsers] = useState([]);
   const [userName, setUserName] = useState("Guest User");
   const [userEmail, setUserEmail] = useState("");
+  const [userPicture, setUserPicture] = useState("");
   const [userRole, setUserRole] = useState("User");
   const [editableRoles, setEditableRoles] = useState([]);
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -32,6 +33,7 @@ export default function UserPermission() {
         const data = await response.json();
         setUserName(data.name);
         setUserEmail(data.email);
+        setUserPicture(data.picture);
         setUserRole(data.role);
       } else if (response.status === 401) {
         navigate("/login");
@@ -183,9 +185,23 @@ export default function UserPermission() {
   }
 
   return (
+<<<<<<< HEAD
     <div className="max-w-[900px] mx-auto my-10">
       <h1 className="text-[2em] font-bold mb-5">User Permissions Management</h1>
       <p className="mb-[5px] text-sm text-[#333]">
+=======
+    <>
+      <DirectoryHeader
+        directoryName="Permissions"
+        path={[]}
+        userName={userName}
+        userEmail={userEmail}
+        userPicture={userPicture}
+      />
+      <div className="permissions-container">
+      <h1 className="title">User Permissions Management</h1>
+      <p className="current-user-info">
+>>>>>>> backup/branch
         {userName}: <strong>{userRole}</strong>
       </p>
       <p className="mb-[30px] text-[13px] text-[#007bff]">
@@ -292,6 +308,7 @@ export default function UserPermission() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

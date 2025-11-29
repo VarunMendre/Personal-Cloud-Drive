@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaFolder, FaFile, FaEye, FaEdit, FaArrowLeft } from "react-icons/fa";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+import DirectoryHeader, { BASE_URL } from "./components/DirectoryHeader";
 
 function SharedWithMe() {
   const navigate = useNavigate();
@@ -10,10 +10,30 @@ function SharedWithMe() {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [userName, setUserName] = useState("Guest User");
+  const [userEmail, setUserEmail] = useState("");
+  const [userPicture, setUserPicture] = useState("");
 
   useEffect(() => {
     fetchSharedResources();
+    fetchUser();
   }, []);
+
+  const fetchUser = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/user`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUserName(data.name);
+        setUserEmail(data.email);
+        setUserPicture(data.picture);
+      }
+    } catch (err) {
+      console.error("Error fetching user info:", err);
+    }
+  };
 
   const fetchSharedResources = async () => {
     try {
@@ -87,9 +107,23 @@ function SharedWithMe() {
   const totalItems = directories.length + files.length;
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-5 max-[768px]:p-3">
       <div className="bg-white p-[30px] rounded-xl mb-5 shadow-[0_4px_6px_rgba(0,0,0,0.1)] max-[768px]:p-5">
         <button className="inline-flex items-center gap-2 px-4 py-2 bg-[#f5f5f5] border-none rounded-md text-[#666] cursor-pointer text-sm mb-4 transition-all duration-200 hover:bg-[#e0e0e0] hover:text-[#333]" onClick={() => navigate("/")}>
+=======
+    <>
+      <DirectoryHeader
+        directoryName="Shared with Me"
+        path={[]}
+        userName={userName}
+        userEmail={userEmail}
+        userPicture={userPicture}
+      />
+      <div className="shared-with-me-container">
+      <div className="shared-header">
+        <button className="back-btn" onClick={() => navigate("/")}>
+>>>>>>> backup/branch
           <FaArrowLeft /> Back to My Drive
         </button>
         <h1 className="text-[32px] m-0 mb-2 text-[#333] max-[768px]:text-2xl max-[480px]:text-xl">Shared with Me</h1>
@@ -173,7 +207,8 @@ function SharedWithMe() {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
