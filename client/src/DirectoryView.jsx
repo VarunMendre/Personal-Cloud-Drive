@@ -6,12 +6,8 @@ import RenameModal from "./components/RenameModal";
 import DirectoryList from "./components/DirectoryList";
 import ShareModal from "./components/ShareModal";
 import DetailsPopup from "./components/DetailsPopup";
-<<<<<<< HEAD
-=======
 import ImportFromDrive from "./components/ImportFromDrive";
 import { FaUpload, FaFolderPlus, FaFileImport } from "react-icons/fa";
-import "./DirectoryView.css";
->>>>>>> backup/branch
 
 function DirectoryView() {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -673,13 +669,6 @@ function DirectoryView() {
   ];
 
   return (
-<<<<<<< HEAD
-    <div className="px-[10px] max-w-[1000px] mx-auto">
-      {errorMessage &&
-        errorMessage !==
-          "Directory not found or you do not have access to it!" && (
-          <div className="text-red-500 mb-4">{errorMessage}</div>
-=======
     <div className="min-h-screen bg-gray-50">
       {errorMessage &&
         errorMessage !==
@@ -687,7 +676,6 @@ function DirectoryView() {
           <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             {errorMessage}
           </div>
->>>>>>> backup/branch
         )}
 
       {isImporting && (
@@ -771,6 +759,35 @@ function DirectoryView() {
             />
           </div>
         </div>
+
+        {/* Breadcrumb Navigation - Below buttons */}
+        <div className="mt-6 flex items-center text-sm text-gray-600">
+          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+          </svg>
+          {path && path.length > 0 ? (
+            <>
+              {path.map((dir, index) => (
+                <span key={dir._id} className="flex items-center">
+                  <span
+                    className="hover:text-blue-600 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/directory/${dir._id}`)}
+                  >
+                    {index === 0 ? "My Drive" : dir.name}
+                  </span>
+                  <span className="mx-2 text-gray-400">›</span>
+                </span>
+              ))}
+              <span className="text-gray-900 font-medium">
+                {directoryName}
+              </span>
+            </>
+          ) : (
+            <span className="text-gray-900 font-medium">
+              {directoryName || "My Drive"}
+            </span>
+          )}
+        </div>
       </div>
 
       {showCreateDirModal && (
@@ -814,39 +831,6 @@ function DirectoryView() {
         />
       )}
 
-<<<<<<< HEAD
-      {combinedItems.length === 0 ? (
-        errorMessage ===
-        "Directory not found or you do not have access to it!" ? (
-          <p className="text-center italic mt-[40px] text-[#777]">
-            Directory not found or you do not have access to it!
-          </p>
-        ) : (
-          <p className="text-center italic mt-[40px] text-[#777]">
-            This folder is empty. Upload files or create a folder to see some
-            data.
-          </p>
-        )
-      ) : (
-        <DirectoryList
-          items={combinedItems}
-          handleRowClick={handleRowClick}
-          activeContextMenu={activeContextMenu}
-          contextMenuPos={contextMenuPos}
-          handleContextMenu={handleContextMenu}
-          getFileIcon={getFileIcon}
-          isUploading={isUploading}
-          progressMap={progressMap}
-          handleCancelUpload={handleCancelUpload}
-          handleDeleteFile={handleDeleteFile}
-          handleDeleteDirectory={handleDeleteDirectory}
-          openRenameModal={openRenameModal}
-          openDetailsPopup={openDetailsPopup}
-          handleShare={handleShare}
-          BASE_URL={BASE_URL}
-        />
-      )}
-=======
       <div className="max-w-7xl mx-auto px-6 pb-8">
         {combinedItems.length === 0 ? (
           errorMessage ===
@@ -880,7 +864,6 @@ function DirectoryView() {
           />
         )}
       </div>
->>>>>>> backup/branch
     </div>
   );
 }

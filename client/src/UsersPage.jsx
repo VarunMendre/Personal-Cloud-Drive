@@ -437,10 +437,6 @@ export default function UsersPage() {
   const canRenameFiles = userRole === "Owner";
 
   return (
-<<<<<<< HEAD
-    <div className="max-w-[900px] mx-auto my-10">
-      <h1 className="text-[2em] font-bold mb-5">All Users</h1>
-=======
     <>
       <DirectoryHeader
         directoryName="Users"
@@ -449,10 +445,9 @@ export default function UsersPage() {
         userEmail={userEmail}
         userPicture={userPicture}
       />
-      <div className="users-container">
-      <h1 className="title">All Users</h1>
->>>>>>> backup/branch
-      <p>
+      <div className="max-w-6xl mx-auto px-6 py-8">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">All Users</h1>
+      <p className="text-gray-700 mb-6">
         {userName}: {userRole}
       </p>
       <table className="w-full border-collapse">
@@ -630,29 +625,29 @@ export default function UsersPage() {
       {/* RENAME FILE MODAL */}
       {showRenameModal && selectedFile && (
         <div
-          className="modal-overlay"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
           onClick={() => setShowRenameModal(false)}
         >
           <div
-            className="modal-content confirm-modal"
+            className="bg-white rounded-lg w-full max-w-md shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-header">
-              <h2>Rename File</h2>
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Rename File</h2>
               <button
-                className="modal-close"
+                className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
                 onClick={() => setShowRenameModal(false)}
               >
                 &times;
               </button>
             </div>
-            <div className="modal-body">
-              <p className="modal-user-info">
+            <div className="p-6">
+              <p className="text-gray-700 mb-4">
                 Enter new name for: <strong>{selectedFile.name}</strong>
               </p>
               <input
                 type="text"
-                className="rename-input"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={newFileName}
                 onChange={(e) => setNewFileName(e.target.value)}
                 placeholder="Enter new file name"
@@ -662,14 +657,14 @@ export default function UsersPage() {
                   }
                 }}
               />
-              <div className="confirm-actions">
+              <div className="flex justify-end gap-3 mt-6">
                 <button
-                  className="cancel-button"
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                   onClick={() => setShowRenameModal(false)}
                 >
                   Cancel
                 </button>
-                <button className="confirm-button" onClick={confirmRenameFile}>
+                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" onClick={confirmRenameFile}>
                   Rename
                 </button>
               </div>
@@ -681,73 +676,73 @@ export default function UsersPage() {
       {/* FILE PREVIEW MODAL */}
       {showFilePreview && selectedFile && (
         <div
-          className="modal-overlay file-preview-overlay"
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
           onClick={closeFilePreview}
         >
           <div
-            className="modal-content file-preview-modal"
+            className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-header">
-              <h2>{selectedFile.name}</h2>
-              <button className="modal-close" onClick={closeFilePreview}>
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">{selectedFile.name}</h2>
+              <button className="text-gray-400 hover:text-gray-600 text-2xl font-bold" onClick={closeFilePreview}>
                 &times;
               </button>
             </div>
-            <div className="modal-body file-preview-body">
+            <div className="p-6 overflow-auto max-h-[calc(90vh-100px)]">
               {getFileType(selectedFile.name) === "image" && (
                 <img
                   src={previewFileUrl}
                   alt={selectedFile.name}
-                  className="preview-image"
+                  className="w-full h-auto max-h-[70vh] object-contain"
                 />
               )}
               {getFileType(selectedFile.name) === "video" && (
-                <video src={previewFileUrl} controls className="preview-video">
+                <video src={previewFileUrl} controls className="w-full h-auto max-h-[70vh]">
                   Your browser does not support the video tag.
                 </video>
               )}
               {getFileType(selectedFile.name) === "audio" && (
-                <div className="preview-audio-container">
+                <div className="flex flex-col items-center gap-4">
                   <audio
                     src={previewFileUrl}
                     controls
-                    className="preview-audio"
+                    className="w-full max-w-md"
                   >
                     Your browser does not support the audio tag.
                   </audio>
-                  <p className="audio-filename">{selectedFile.name}</p>
+                  <p className="text-gray-700 text-sm">{selectedFile.name}</p>
                 </div>
               )}
               {getFileType(selectedFile.name) === "pdf" && (
                 <iframe
                   src={previewFileUrl}
-                  className="preview-pdf"
+                  className="w-full h-[70vh] border-0"
                   title={selectedFile.name}
                 />
               )}
               {getFileType(selectedFile.name) === "text" && (
                 <iframe
                   src={previewFileUrl}
-                  className="preview-text"
+                  className="w-full h-[70vh] border-0"
                   title={selectedFile.name}
                 />
               )}
               {getFileType(selectedFile.name) === "office" && (
-                <div className="preview-office">
+                <div className="space-y-4">
                   <iframe
                     src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
                       previewFileUrl
                     )}`}
-                    className="preview-pdf"
+                    className="w-full h-[70vh] border-0"
                     title={selectedFile.name}
                   />
-                  <div className="office-fallback">
-                    <p>If preview doesn't load:</p>
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <p className="text-gray-700 mb-2">If preview doesn't load:</p>
                     <a
                       href={previewFileUrl}
                       download={selectedFile.name}
-                      className="download-link"
+                      className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       Download {selectedFile.name}
                     </a>
@@ -755,16 +750,16 @@ export default function UsersPage() {
                 </div>
               )}
               {getFileType(selectedFile.name) === "download" && (
-                <div className="preview-download">
-                  <div className="download-icon">📄</div>
-                  <p className="download-filename">{selectedFile.name}</p>
-                  <p className="download-info">
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <div className="text-6xl">📄</div>
+                  <p className="text-lg font-medium text-gray-900">{selectedFile.name}</p>
+                  <p className="text-gray-600">
                     Preview not available for this file type
                   </p>
                   <a
                     href={previewFileUrl}
                     download={selectedFile.name}
-                    className="download-link"
+                    className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Download File
                   </a>
@@ -778,37 +773,37 @@ export default function UsersPage() {
       {/* DELETE FILE CONFIRMATION */}
       {showDeleteFileConfirm && selectedFile && (
         <div
-          className="modal-overlay"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
           onClick={() => setShowDeleteFileConfirm(false)}
         >
           <div
-            className="modal-content confirm-modal danger-modal"
+            className="bg-white rounded-lg w-full max-w-md shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-header">
-              <h2>Confirm Delete File</h2>
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Confirm Delete File</h2>
               <button
-                className="modal-close"
+                className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
                 onClick={() => setShowDeleteFileConfirm(false)}
               >
                 &times;
               </button>
             </div>
-            <div className="modal-body">
-              <p className="modal-user-info danger-text">
+            <div className="p-6">
+              <p className="text-red-700 mb-2">
                 Are you sure you want to delete{" "}
                 <strong>{selectedFile.name}</strong>?
               </p>
-              <p className="warning-text">This action cannot be undone!</p>
-              <div className="confirm-actions">
+              <p className="text-red-600 text-sm mb-6">This action cannot be undone!</p>
+              <div className="flex justify-end gap-3">
                 <button
-                  className="cancel-button"
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                   onClick={() => setShowDeleteFileConfirm(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="confirm-button danger-button"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   onClick={confirmDeleteFile}
                 >
                   Delete File
@@ -821,27 +816,27 @@ export default function UsersPage() {
 
       {/* EXISTING MODALS */}
       {showLogoutModal && selectedUser && (
-        <div className="modal-overlay" onClick={closeModal}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={closeModal}>
           <div
-            className="modal-content confirm-modal"
+            className="bg-white rounded-lg w-full max-w-md shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-header">
-              <h2>Confirm Logout</h2>
-              <button className="modal-close" onClick={closeModal}>
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Confirm Logout</h2>
+              <button className="text-gray-400 hover:text-gray-600 text-2xl font-bold" onClick={closeModal}>
                 &times;
               </button>
             </div>
-            <div className="modal-body">
-              <p className="modal-user-info">
+            <div className="p-6">
+              <p className="text-gray-700 mb-6">
                 Are you sure you want to logout{" "}
                 <strong>{selectedUser.email}</strong>?
               </p>
-              <div className="confirm-actions">
-                <button className="cancel-button" onClick={closeModal}>
+              <div className="flex justify-end gap-3">
+                <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors" onClick={closeModal}>
                   Cancel
                 </button>
-                <button className="confirm-button" onClick={confirmLogout}>
+                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" onClick={confirmLogout}>
                   Logout
                 </button>
               </div>
@@ -851,28 +846,28 @@ export default function UsersPage() {
       )}
 
       {showRecoverModal && selectedUser && (
-        <div className="modal-overlay" onClick={closeModal}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={closeModal}>
           <div
-            className="modal-content confirm-modal"
+            className="bg-white rounded-lg w-full max-w-md shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-header">
-              <h2>Confirm Recovery</h2>
-              <button className="modal-close" onClick={closeModal}>
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Confirm Recovery</h2>
+              <button className="text-gray-400 hover:text-gray-600 text-2xl font-bold" onClick={closeModal}>
                 &times;
               </button>
             </div>
-            <div className="modal-body">
-              <p className="modal-user-info">
+            <div className="p-6">
+              <p className="text-gray-700 mb-6">
                 Are you sure you want to recover{" "}
                 <strong>{selectedUser.email}</strong>?
               </p>
-              <div className="confirm-actions">
-                <button className="cancel-button" onClick={closeModal}>
+              <div className="flex justify-end gap-3">
+                <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors" onClick={closeModal}>
                   Cancel
                 </button>
                 <button
-                  className="confirm-button recover-confirm"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   onClick={confirmRecover}
                 >
                   Recover
@@ -884,36 +879,36 @@ export default function UsersPage() {
       )}
 
       {showDeleteModal && selectedUser && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Delete User</h2>
-              <button className="modal-close" onClick={closeModal}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={closeModal}>
+          <div className="bg-white rounded-lg w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Delete User</h2>
+              <button className="text-gray-400 hover:text-gray-600 text-2xl font-bold" onClick={closeModal}>
                 &times;
               </button>
             </div>
-            <div className="modal-body">
-              <p className="modal-user-info">
+            <div className="p-6">
+              <p className="text-gray-700 mb-6">
                 Select delete type for: <strong>{selectedUser.email}</strong>
               </p>
 
-              <div className="delete-options">
+              <div className="space-y-3">
                 <button
-                  className="delete-option soft-delete"
+                  className="w-full p-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
                   onClick={handleSoftDelete}
                 >
-                  <div className="option-title">Soft Delete</div>
-                  <div className="option-description">
+                  <div className="font-semibold text-gray-900 mb-1">Soft Delete</div>
+                  <div className="text-sm text-gray-600">
                     Mark user as deleted but allow recovery
                   </div>
                 </button>
 
                 <button
-                  className="delete-option hard-delete"
+                  className="w-full p-4 border-2 border-red-300 rounded-lg hover:border-red-500 hover:bg-red-50 transition-all text-left"
                   onClick={handleHardDeleteClick}
                 >
-                  <div className="option-title">Hard Delete</div>
-                  <div className="option-description">
+                  <div className="font-semibold text-red-700 mb-1">Hard Delete</div>
+                  <div className="text-sm text-red-600">
                     Permanently remove user - cannot be undone
                   </div>
                 </button>
@@ -924,29 +919,29 @@ export default function UsersPage() {
       )}
 
       {showHardDeleteConfirm && selectedUser && (
-        <div className="modal-overlay" onClick={closeModal}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={closeModal}>
           <div
-            className="modal-content confirm-modal danger-modal"
+            className="bg-white rounded-lg w-full max-w-md shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-header">
-              <h2>Confirm Hard Delete</h2>
-              <button className="modal-close" onClick={closeModal}>
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Confirm Hard Delete</h2>
+              <button className="text-gray-400 hover:text-gray-600 text-2xl font-bold" onClick={closeModal}>
                 &times;
               </button>
             </div>
-            <div className="modal-body">
-              <p className="modal-user-info danger-text">
+            <div className="p-6">
+              <p className="text-red-700 mb-2">
                 Are you sure you want to <strong>permanently delete</strong>{" "}
                 <strong>{selectedUser.email}</strong>?
               </p>
-              <p className="warning-text">This action CANNOT be undone!</p>
-              <div className="confirm-actions">
-                <button className="cancel-button" onClick={closeModal}>
+              <p className="text-red-600 text-sm mb-6">This action CANNOT be undone!</p>
+              <div className="flex justify-end gap-3">
+                <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors" onClick={closeModal}>
                   Cancel
                 </button>
                 <button
-                  className="confirm-button danger-button"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   onClick={handleHardDelete}
                 >
                   Permanently Delete

@@ -185,11 +185,6 @@ export default function UserPermission() {
   }
 
   return (
-<<<<<<< HEAD
-    <div className="max-w-[900px] mx-auto my-10">
-      <h1 className="text-[2em] font-bold mb-5">User Permissions Management</h1>
-      <p className="mb-[5px] text-sm text-[#333]">
-=======
     <>
       <DirectoryHeader
         directoryName="Permissions"
@@ -198,13 +193,12 @@ export default function UserPermission() {
         userEmail={userEmail}
         userPicture={userPicture}
       />
-      <div className="permissions-container">
-      <h1 className="title">User Permissions Management</h1>
-      <p className="current-user-info">
->>>>>>> backup/branch
+      <div className="max-w-6xl mx-auto px-6 py-8">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">User Permissions Management</h1>
+      <p className="text-gray-700 mb-2">
         {userName}: <strong>{userRole}</strong>
       </p>
-      <p className="mb-[30px] text-[13px] text-[#007bff]">
+      <p className="mb-8 text-sm text-blue-600">
         You can manage roles for: <strong>{editableRoles.join(", ")}</strong>
       </p>
 

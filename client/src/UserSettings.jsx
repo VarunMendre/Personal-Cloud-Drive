@@ -1,13 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { BASE_URL } from "../src/components/DirectoryHeader"
-=======
-import { BASE_URL } from "../src/components/DirectoryHeader";
-=======
 import DirectoryHeader, { BASE_URL } from "./components/DirectoryHeader";
->>>>>>> backup/branch
 import {
   FaGoogle,
   FaGithub,
@@ -16,7 +9,6 @@ import {
   FaEye,
   FaEyeSlash,
 } from "react-icons/fa";
->>>>>>> backup/branch
 
 function UserSettings() {
   const navigate = useNavigate();
@@ -201,81 +193,16 @@ function UserSettings() {
 
   if (loading) {
     return (
-<<<<<<< HEAD
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-5">
-        <div className="bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] p-10 w-full max-w-[500px]">
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (hasPassword) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-5">
-        <div className="bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] p-10 w-full max-w-[500px] max-[600px]:px-5 max-[600px]:py-[30px]">
-          <h1 className="text-[28px] text-[#333] mb-[10px] text-center max-[600px]:text-2xl">User Settings</h1>
-          <div className="bg-[#e3f2fd] text-[#1976d2] p-5 rounded-lg mb-5 text-center">
-            <p className="my-2">You already have a password set up.</p>
-            <p className="my-2">You can login using your email and password.</p>
-          </div>
-          <button className="flex-1 px-6 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all duration-300 bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white mt-[10px] hover:-translate-y-0.5 hover:shadow-[0_5px_15px_rgba(102,126,234,0.4)] w-full" onClick={handleBack}>
-            Back to Home
-          </button>
-=======
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading settings...</p>
->>>>>>> backup/branch
         </div>
       </div>
     );
   }
 
   return (
-<<<<<<< HEAD
-<<<<<<< HEAD
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-5">
-      <div className="bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] p-10 w-full max-w-[500px] max-[600px]:px-5 max-[600px]:py-[30px]">
-        <h1 className="text-[28px] text-[#333] mb-[10px] text-center max-[600px]:text-2xl">Set Password</h1>
-        <p className="text-[#666] text-center mb-[30px] text-sm">
-          Set a password to enable login with email and password
-        </p>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <div className="flex flex-col gap-2">
-            <label htmlFor="newPassword" className="font-semibold text-[#333] text-sm">New Password</label>
-            <input
-              type="password"
-              id="newPassword"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Enter new password"
-              required
-              minLength={4}
-              disabled={submitting}
-              className="px-4 py-3 border-2 border-[#e0e0e0] rounded-lg text-sm transition-all duration-300 focus:outline-none focus:border-[#667eea] focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)] disabled:bg-[#f5f5f5] disabled:cursor-not-allowed"
-            />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label htmlFor="confirmPassword" className="font-semibold text-[#333] text-sm">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm new password"
-              required
-              minLength={4}
-              disabled={submitting}
-              className="px-4 py-3 border-2 border-[#e0e0e0] rounded-lg text-sm transition-all duration-300 focus:outline-none focus:border-[#667eea] focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)] disabled:bg-[#f5f5f5] disabled:cursor-not-allowed"
-            />
-=======
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-6">
-=======
     <div className="min-h-screen bg-gray-50">
       <DirectoryHeader
         directoryName="Settings"
@@ -286,7 +213,6 @@ function UserSettings() {
       />
       <div className="py-8">
         <div className="max-w-4xl mx-auto px-6">
->>>>>>> backup/branch
         {/* Back Button */}
         <button
           onClick={() => navigate("/")}
@@ -313,21 +239,9 @@ function UserSettings() {
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
             {success}
->>>>>>> backup/branch
           </div>
         )}
 
-<<<<<<< HEAD
-          {error && <div className="bg-[#fee] text-[#c33] px-4 py-3 rounded-lg text-sm border-l-4 border-[#c33]">{error}</div>}
-          {success && <div className="bg-[#efe] text-[#3c3] px-4 py-3 rounded-lg text-sm border-l-4 border-[#3c3]">{success}</div>}
-
-          <div className="flex gap-3 mt-[10px] max-[600px]:flex-col">
-            <button
-              type="button"
-              className="flex-1 px-6 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all duration-300 bg-[#f5f5f5] text-[#666] hover:not(:disabled):bg-[#e0e0e0] disabled:opacity-60 disabled:cursor-not-allowed"
-              onClick={handleBack}
-              disabled={submitting}
-=======
         {/* Storage Usage Section */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex items-center gap-3 mb-4">
@@ -336,7 +250,6 @@ function UserSettings() {
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
->>>>>>> backup/branch
             >
               <path
                 strokeLinecap="round"
@@ -563,10 +476,6 @@ function UserSettings() {
 
             <button
               type="submit"
-<<<<<<< HEAD
-              className="flex-1 px-6 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all duration-300 bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white hover:not(:disabled):-translate-y-0.5 hover:not(:disabled):shadow-[0_5px_15px_rgba(102,126,234,0.4)] disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
-=======
->>>>>>> backup/branch
               disabled={submitting}
               className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >

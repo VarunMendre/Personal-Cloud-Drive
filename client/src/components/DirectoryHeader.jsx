@@ -23,7 +23,7 @@ function DirectoryHeader({
   return (
     <header className="w-full bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
-        {/* Left side: Logo + Breadcrumb */}
+        {/* Left side: Logo only */}
         <div className="flex items-center gap-6">
           {/* Logo */}
           <div
@@ -38,37 +38,6 @@ function DirectoryHeader({
               />
             </div>
             <span className="text-xl font-semibold text-gray-900">Storage</span>
-          </div>
-
-          {/* Breadcrumb */}
-          <div className="flex items-center text-sm text-gray-600">
-            {path && path.length > 0 ? (
-              path.map((dir, index) => (
-                <span key={dir._id} className="flex items-center">
-                  <span
-                    className="hover:text-blue-600 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/directory/${dir._id}`)}
-                  >
-                    {index === 0 ? "My Drive" : dir.name}
-                  </span>
-                  {index < path.length - 1 && (
-                    <span className="mx-2 text-gray-400">/</span>
-                  )}
-                </span>
-              ))
-            ) : (
-              <span className="text-lg font-medium text-gray-900">
-                {directoryName || "My Drive"}
-              </span>
-            )}
-            {path && path.length > 0 && (
-              <>
-                <span className="mx-2 text-gray-400">/</span>
-                <span className="text-gray-900 font-medium">
-                  {directoryName}
-                </span>
-              </>
-            )}
           </div>
         </div>
 

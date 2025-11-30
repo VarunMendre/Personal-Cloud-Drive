@@ -107,11 +107,6 @@ function SharedWithMe() {
   const totalItems = directories.length + files.length;
 
   return (
-<<<<<<< HEAD
-    <div className="min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-5 max-[768px]:p-3">
-      <div className="bg-white p-[30px] rounded-xl mb-5 shadow-[0_4px_6px_rgba(0,0,0,0.1)] max-[768px]:p-5">
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-[#f5f5f5] border-none rounded-md text-[#666] cursor-pointer text-sm mb-4 transition-all duration-200 hover:bg-[#e0e0e0] hover:text-[#333]" onClick={() => navigate("/")}>
-=======
     <>
       <DirectoryHeader
         directoryName="Shared with Me"
@@ -121,11 +116,10 @@ function SharedWithMe() {
         userPicture={userPicture}
       />
       <div className="shared-with-me-container">
-      <div className="shared-header">
-        <button className="back-btn" onClick={() => navigate("/")}>
->>>>>>> backup/branch
-          <FaArrowLeft /> Back to My Drive
-        </button>
+        <div className="shared-header">
+          <button className="back-btn" onClick={() => navigate("/")}>
+            <FaArrowLeft /> Back to My Drive
+          </button>
         <h1 className="text-[32px] m-0 mb-2 text-[#333] max-[768px]:text-2xl max-[480px]:text-xl">Shared with Me</h1>
         <p className="text-[#666] text-sm m-0">
           {totalItems} {totalItems === 1 ? "item" : "items"} shared with you

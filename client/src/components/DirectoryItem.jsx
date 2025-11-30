@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   FaFolder,
   FaFilePdf,
@@ -6,6 +7,8 @@ import {
   FaFileArchive,
   FaFileCode,
   FaFileAlt,
+  FaDownload,
+  FaInfoCircle,
 } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import ContextMenu from "../components/ContextMenu";
@@ -28,6 +31,8 @@ function DirectoryItem({
   openDetailsPopup,
   BASE_URL,
 }) {
+  const [isHovered, setIsHovered] = useState(false);
+
   // Convert the file icon string to the actual Icon component
   function renderFileIcon(iconString) {
     switch (iconString) {
@@ -49,15 +54,27 @@ function DirectoryItem({
 
   const isUploadingItem = item.id.startsWith("temp-");
 
+  const handleDownload = (e) => {
+    e.stopPropagation();
+    window.location.href = `${BASE_URL}/file/${item.id}?action=download`;
+  };
+
+  const handleDetailsClick = (e) => {
+    e.stopPropagation();
+    openDetailsPopup(item);
+  };
+
   return (
     <div
-      className="flex flex-col relative gap-1 border border-[#ccc] rounded-[4px] bg-[#f9f9f9] cursor-pointer hover:bg-[#f0f0f0]"
+      className="flex flex-col relative gap-1 border border-[#ccc] rounded-[4px] bg-[#f9f9f9] cursor-pointer hover:bg-[#f0f0f0] group"
       onClick={() =>
         !(activeContextMenu || isUploading)
           ? handleRowClick(item.isDirectory ? "directory" : "file", item.id)
           : null
       }
       onContextMenu={(e) => handleContextMenu(e, item.id)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div
         className="flex items-center gap-2"
@@ -74,12 +91,39 @@ function DirectoryItem({
           <span>{item.name}</span>
         </div>
 
-        {/* Three dots for context menu */}
-        <div
-          className="flex items-center justify-center text-[1.2em] cursor-pointer ml-auto text-[#2c2c2c] rounded-full p-2 mr-1 hover:bg-[#dfdfdf]"
-          onClick={(e) => handleContextMenu(e, item.id)}
-        >
-          <BsThreeDotsVertical />
+        {/* Hover Action Buttons - Show on hover */}
+        <div className="ml-auto flex items-center gap-1 mr-1">
+          {isHovered && !isUploadingItem && (
+            <>
+              {/* Download button - only for files */}
+              {!item.isDirectory && (
+                <button
+                  onClick={handleDownload}
+                  className="flex items-center justify-center p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
+                  title="Download"
+                >
+                  <FaDownload className="text-sm" />
+                </button>
+              )}
+              
+              {/* Details button - for both files and folders */}
+              <button
+                onClick={handleDetailsClick}
+                className="flex items-center justify-center p-2 text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
+                title="Details"
+              >
+                <FaInfoCircle className="text-sm" />
+              </button>
+            </>
+          )}
+
+          {/* Three dots for context menu - always visible */}
+          <div
+            className="flex items-center justify-center text-[1.2em] cursor-pointer text-[#2c2c2c] rounded-full p-2 hover:bg-[#dfdfdf]"
+            onClick={(e) => handleContextMenu(e, item.id)}
+          >
+            <BsThreeDotsVertical />
+          </div>
         </div>
       </div>
 
