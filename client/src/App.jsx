@@ -5,7 +5,7 @@ import Register from "./Register";
 import Login from "./Login";
 import GitHubCallbackHandler from "./GitHubCallbackHandler";
 import UsersPage from "./UsersPage";
-import UserPermission from "./UserPermission";
+
 import UserSettings from "./UserSettings";
 import SharedWithMe from "./SharedWithMe";
 
@@ -30,10 +30,7 @@ const router = createBrowserRouter([
     path: "/users",
     element: <UsersPage />,
   },
-  {
-    path: "/users/permission",
-    element: <UserPermission />,
-  },
+
   {
     path: "/settings",
     element: <UserSettings />,

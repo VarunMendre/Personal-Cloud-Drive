@@ -12,6 +12,7 @@ function DirectoryHeader({
   userName = "Guest User",
   userEmail = "guest@example.com",
   userPicture = "",
+  userRole = "User",
 }) {
   const navigate = useNavigate();
 
@@ -52,23 +53,18 @@ function DirectoryHeader({
             <span className="text-sm font-medium">Share</span>
           </button>
 
-          {/* Users Link */}
-          <button
-            onClick={() => navigate("/users")}
-            className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <FaUsers className="w-4 h-4" />
-            <span className="text-sm font-medium">Users</span>
-          </button>
+          {/* Users Link - Only for Owner/Admin/Manager */}
+          {userRole !== "User" && (
+            <button
+              onClick={() => navigate("/users")}
+              className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <FaUsers className="w-4 h-4" />
+              <span className="text-sm font-medium">Users</span>
+            </button>
+          )}
 
-          {/* Users Permission Link */}
-          <button
-            onClick={() => navigate("/users/permission")}
-            className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <FaUsers className="w-4 h-4" />
-            <span className="text-sm font-medium">Users/Permission</span>
-          </button>
+
 
           {/* Profile Section - Clickable to navigate to settings */}
           <div
