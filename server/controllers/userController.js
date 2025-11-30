@@ -3,7 +3,6 @@ import File from "../models/fileModel.js";
 import User from "../models/userModel.js";
 import { rm } from "fs/promises";
 import mongoose, { Types } from "mongoose";
-import Session from "../models/sessionModel.js";
 import OTP from "../models/otpModel.js";
 import { getEditableRoles } from "../utils/permissions.js";
 import redisClient from "../config/redis.js";
@@ -265,16 +264,41 @@ export const getAllUsers = async (req, res) => {
   }
 
   const allUsers = await User.find(query).lean();
-  const allSession = await Session.find().lean();
-  const allSessionsUserId = allSession.map(({ userId }) => userId.toString());
-  const allSessionsUserIdSet = new Set(allSessionsUserId);
 
-  const transformedUsers = allUsers.map(({ _id, name, email, isDeleted }) => ({
+  const userIds = allUsers.map(u => u._id);
+  const rootDirs = await Directory.find({userId: {$in: userIds}, parentDirId: null}).lean();
+
+  const storageMap = {};
+  rootDirs.forEach((dir) => {
+    storageMap[dir.userId.toString()] = dir.size || 0;
+  });
+
+
+  const keys = await redisClient.keys("session:*");
+  const allSessionsUserIdSet = new Set();
+
+
+  if (keys.length > 0) {
+    const session = await Promise.all(
+      keys.map((key) => redisClient.json.get(key))
+    );
+
+    session.forEach((session) => {
+      if (session && session.userId) {
+        allSessionsUserIdSet.add(session.userId.toString());
+      }
+    });
+  }
+
+  const transformedUsers = allUsers.map(({ _id, name, email, isDeleted, maxStorageLimit }) => ({
     id: _id,
     name,
     email,
     isLoggedIn: allSessionsUserIdSet.has(_id.toString()),
     isDeleted: isDeleted || false,
+
+    usedStorageInBytes: storageMap[_id.toString()] || 0,
+    maxStorageLimit: maxStorageLimit || 0
   }));
 
   res.status(200).json(transformedUsers);
