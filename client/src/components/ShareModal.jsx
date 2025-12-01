@@ -7,8 +7,9 @@ import {
   FaEdit,
   FaEye,
   FaGlobe,
+  FaShare,
+  FaUserPlus,
 } from "react-icons/fa";
-import "./ShareModal.css";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -245,184 +246,230 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
 
   if (loading) {
     return (
-      <div className="share-modal-overlay">
-        <div className="share-modal">
-          <div className="loading">Loading...</div>
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-8 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-3 text-gray-700">Loading...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="share-modal-overlay" onClick={onClose}>
-      <div className="share-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="share-modal-header">
-          <h2>Share "{resourceName}"</h2>
-          <button className="close-btn" onClick={onClose}>
-            <FaTimes />
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-slideUp" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-xl z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <FaShare className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Share</h3>
+              <p className="text-sm text-gray-500 mt-0.5 truncate max-w-md" title={resourceName}>"{resourceName}"</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-2">
+            <FaTimes className="w-5 h-5" />
           </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">{success}</div>}
-
-        {/* Share with specific user */}
-        <div className="share-section">
-          <h3>Add people</h3>
-          <form onSubmit={handleShareWithUser} className="share-form">
-            <input
-              type="email"
-              placeholder="Enter email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="email-input"
-            />
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="role-select"
-            >
-              <option value="viewer">Viewer</option>
-              <option value="editor">Editor</option>
-            </select>
-            <button type="submit" disabled={isSharing} className="share-btn">
-              {isSharing ? "Sharing..." : "Share"}
-            </button>
-          </form>
-        </div>
-
-        {/* People with access */}
-        <div className="share-section">
-          <h3>People with access</h3>
-          <div className="users-list">
-            {/* Owner */}
-            {owner && (
-              <div className="user-item">
-                <img
-                  src={owner.picture}
-                  alt={owner.name}
-                  className="user-avatar"
-                />
-                <div className="user-info">
-                  <div className="user-name">{owner.name}</div>
-                  <div className="user-email">{owner.email}</div>
-                </div>
-                <div className="user-role owner-badge">Owner</div>
-              </div>
-            )}
-
-            {/* Shared users */}
-            {sharedUsers.map((user) => (
-              <div key={user.userId} className="user-item">
-                <img
-                  src={user.picture}
-                  alt={user.name}
-                  className="user-avatar"
-                />
-                <div className="user-info">
-                  <div className="user-name">{user.name}</div>
-                  <div className="user-email">{user.email}</div>
-                </div>
-                <select
-                  value={user.role}
-                  onChange={(e) =>
-                    handleUpdateAccess(user.userId, e.target.value)
-                  }
-                  className="role-select-small"
-                >
-                  <option value="viewer">Viewer</option>
-                  <option value="editor">Editor</option>
-                </select>
-                <button
-                  className="remove-btn"
-                  onClick={() => handleRemoveAccess(user.userId)}
-                  title="Remove access"
-                >
-                  <FaTrash />
-                </button>
-              </div>
-            ))}
-
-            {sharedUsers.length === 0 && (
-              <p className="no-users">Not shared with anyone yet</p>
-            )}
-          </div>
-        </div>
-
-        {/* Share link section */}
-        <div className="share-section">
-          <h3>
-            <FaGlobe /> Get Link
-          </h3>
-          {shareLink ? (
-            <div className="link-section">
-              <div className="link-display">
-                <FaLink className="link-icon" />
-                <input
-                  type="text"
-                  value={shareLink.url}
-                  readOnly
-                  className="link-input"
-                />
-                <button
-                  className="copy-btn"
-                  onClick={handleCopyLink}
-                  title="Copy link"
-                >
-                  {copiedLink ? "Copied!" : <FaCopy />}
-                </button>
-              </div>
-              <div className="link-controls">
-                <select
-                  value={shareLink.role}
-                  onChange={(e) => handleUpdateLinkRole(e.target.value)}
-                  className="role-select-small"
-                >
-                  <option value="viewer">Anyone with link can view</option>
-                  <option value="editor">Anyone with link can edit</option>
-                </select>
-                <button
-                  className="disable-link-btn"
-                  onClick={handleDisableLink}
-                >
-                  Disable Link
-                </button>
-              </div>
+        <div className="px-6 py-5">
+          {/* Messages */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
             </div>
-          ) : (
-            <div className="no-link">
-              <p>Create a shareable link for this {resourceType}</p>
+          )}
+          {success && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+              {success}
+            </div>
+          )}
+
+          {/* Share with specific user */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <FaUserPlus className="w-4 h-4 text-gray-600" />
+              <h4 className="text-sm font-semibold text-gray-900">Add People</h4>
+            </div>
+            <form onSubmit={handleShareWithUser} className="flex gap-2">
+              <input
+                type="email"
+                placeholder="Enter email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900"
+              />
               <select
-                value={linkRole}
-                onChange={(e) => setLinkRole(e.target.value)}
-                className="role-select"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900"
               >
                 <option value="viewer">Viewer</option>
                 <option value="editor">Editor</option>
               </select>
               <button
-                className="generate-link-btn"
-                onClick={handleGenerateLink}
+                type="submit"
+                disabled={isSharing}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                <FaLink /> Generate Link
+                {isSharing ? "Sharing..." : "Share"}
               </button>
-            </div>
-          )}
-        </div>
+            </form>
+          </div>
 
-        {/* Permission descriptions */}
-        <div className="permissions-info">
-          <h4>Permission levels:</h4>
-          <div className="permission-item">
-            <FaEye className="permission-icon" />
-            <div>
-              <strong>Viewer:</strong> Can view and download
+          {/* People with access */}
+          <div className="mb-6 pb-6 border-b border-gray-100">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">People with Access</h4>
+            <div className="space-y-2">
+              {/* Owner */}
+              {owner && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <img
+                    src={owner.picture}
+                    alt={owner.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">{owner.name}</div>
+                    <div className="text-xs text-gray-500 truncate">{owner.email}</div>
+                  </div>
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                    Owner
+                  </span>
+                </div>
+              )}
+
+              {/* Shared users */}
+              {sharedUsers.map((user) => (
+                <div key={user.userId} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                  <img
+                    src={user.picture}
+                    alt={user.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">{user.name}</div>
+                    <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                  </div>
+                  <select
+                    value={user.role}
+                    onChange={(e) => handleUpdateAccess(user.userId, e.target.value)}
+                    className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="viewer">Viewer</option>
+                    <option value="editor">Editor</option>
+                  </select>
+                  <button
+                    onClick={() => handleRemoveAccess(user.userId)}
+                    title="Remove access"
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <FaTrash className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+
+              {sharedUsers.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">Not shared with anyone yet</p>
+              )}
             </div>
           </div>
-          <div className="permission-item">
-            <FaEdit className="permission-icon" />
-            <div>
-              <strong>Editor:</strong> Can view, download, edit, and delete
+
+          {/* Share link section */}
+          <div className="mb-6 pb-6 border-b border-gray-100">
+            <div className="flex items-center gap-2 mb-3">
+              <FaGlobe className="w-4 h-4 text-gray-600" />
+              <h4 className="text-sm font-semibold text-gray-900">Get Link</h4>
+            </div>
+            {shareLink ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                  <FaLink className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={shareLink.url}
+                    readOnly
+                    className="flex-1 bg-transparent border-none text-sm text-gray-700 focus:outline-none"
+                  />
+                  <button
+                    onClick={handleCopyLink}
+                    title="Copy link"
+                    className="px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1.5"
+                  >
+                    {copiedLink ? (
+                      <>
+                        <FaCopy className="w-3 h-3" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <FaCopy className="w-3 h-3" />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <select
+                    value={shareLink.role}
+                    onChange={(e) => handleUpdateLinkRole(e.target.value)}
+                    className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="viewer">Anyone with link can view</option>
+                    <option value="editor">Anyone with link can edit</option>
+                  </select>
+                  <button
+                    onClick={handleDisableLink}
+                    className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    Disable
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600">Create a shareable link for this {resourceType}</p>
+                <div className="flex gap-2">
+                  <select
+                    value={linkRole}
+                    onChange={(e) => setLinkRole(e.target.value)}
+                    className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="viewer">Viewer</option>
+                    <option value="editor">Editor</option>
+                  </select>
+                  <button
+                    onClick={handleGenerateLink}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  >
+                    <FaLink className="w-4 h-4" />
+                    Generate Link
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Permission descriptions */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Permission Levels</h4>
+            <div className="space-y-2">
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <FaEye className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <strong className="text-gray-900">Viewer:</strong>
+                  <span className="text-gray-600"> Can view and download</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <FaEdit className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <strong className="text-gray-900">Editor:</strong>
+                  <span className="text-gray-600"> Can view, download, edit, and delete</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -432,3 +479,4 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
 }
 
 export default ShareModal;
+

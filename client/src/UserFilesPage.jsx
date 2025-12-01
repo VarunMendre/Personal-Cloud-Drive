@@ -34,6 +34,7 @@ export default function UserFilesPage() {
 
   const [currentUser, setCurrentUser] = useState(location.state?.currentUser || null);
   const hasInitialized = useRef(false);
+  const renameInputRef = useRef(null);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -164,6 +165,21 @@ export default function UserFilesPage() {
     setShowRenameModal(true);
   };
 
+  // Auto-select filename without extension when modal opens
+  useEffect(() => {
+    if (showRenameModal && renameInputRef.current && newFileName) {
+      const lastDotIndex = newFileName.lastIndexOf('.');
+      renameInputRef.current.focus();
+      if (lastDotIndex > 0) {
+        // Select only the filename part (before the extension)
+        renameInputRef.current.setSelectionRange(0, lastDotIndex);
+      } else {
+        // No extension, select all
+        renameInputRef.current.select();
+      }
+    }
+  }, [showRenameModal, newFileName]);
+
   const confirmRenameFile = async () => {
     if (!selectedFile || !newFileName.trim()) return;
     try {
@@ -285,32 +301,63 @@ export default function UserFilesPage() {
       </div>
 
       {/* Rename Modal */}
-      {showRenameModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Rename File</h3>
-            <input
-              type="text"
-              value={newFileName}
-              onChange={(e) => setNewFileName(e.target.value)}
-              className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-6"
-              placeholder="Enter new name"
-              autoFocus
-            />
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowRenameModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmRenameFile}
-                disabled={!newFileName.trim()}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-              >
-                Save
-              </button>
+      {showRenameModal && selectedFile && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900">Rename File</h3>
+              <p className="text-sm text-gray-500 mt-1">Change the name of this file</p>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-5">
+              {/* Current File Info */}
+              <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+                <div className="flex-shrink-0">
+                  {getFileIcon(getFileType(selectedFile.name))}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900 truncate" title={selectedFile.name}>
+                    {selectedFile.name}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {getFileType(selectedFile.name).toUpperCase()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Input Field */}
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New File Name
+                </label>
+                <input
+                  ref={renameInputRef}
+                  type="text"
+                  value={newFileName}
+                  onChange={(e) => setNewFileName(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900"
+                  placeholder="Enter new file name"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowRenameModal(false)}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmRenameFile}
+                  disabled={!newFileName.trim()}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  Save
+                </button>
+              </div>
             </div>
           </div>
         </div>
