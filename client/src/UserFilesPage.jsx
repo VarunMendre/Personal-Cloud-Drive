@@ -1,0 +1,353 @@
+import { useEffect, useState, useRef } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import {
+  FaArrowLeft,
+  FaEye,
+  FaPen,
+  FaFile,
+  FaFileImage,
+  FaFileVideo,
+  FaFileAudio,
+  FaFilePdf,
+  FaFileAlt,
+  FaDownload,
+  FaTrash,
+  FaExclamationTriangle,
+} from "react-icons/fa";
+import { BASE_URL } from "./components/DirectoryHeader";
+
+export default function UserFilesPage() {
+  const { userId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [user, setUser] = useState(location.state?.user || null);
+  const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Modals state
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showFilePreview, setShowFilePreview] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [newFileName, setNewFileName] = useState("");
+  const [previewFileUrl, setPreviewFileUrl] = useState("");
+  const [previewFileType, setPreviewFileType] = useState("");
+
+  const [currentUser, setCurrentUser] = useState(location.state?.currentUser || null);
+  const hasInitialized = useRef(false);
+
+  useEffect(() => {
+    if (hasInitialized.current) return;
+    
+    const initData = async () => {
+      // 1. Fetch Current User if missing
+      let activeUser = currentUser;
+      if (!activeUser) {
+        try {
+          const res = await fetch(`${BASE_URL}/user`, { credentials: "include" });
+          if (res.ok) {
+            activeUser = await res.json();
+            setCurrentUser(activeUser);
+          } else {
+            navigate("/login");
+            return;
+          }
+        } catch (err) {
+          console.error("Error fetching current user:", err);
+          navigate("/login");
+          return;
+        }
+      }
+
+      // 2. Fetch Target User if missing
+      let targetUser = user;
+      if (!targetUser) {
+        try {
+          const res = await fetch(`${BASE_URL}/users`, { credentials: "include" });
+          if (res.ok) {
+            const usersList = await res.json();
+            targetUser = usersList.find((u) => (u._id || u.id) === userId);
+            if (targetUser) {
+              setUser(targetUser);
+            } else {
+              alert("User not found or access denied.");
+              navigate("/users");
+              return;
+            }
+          } else {
+            navigate("/users");
+            return;
+          }
+        } catch (err) {
+          console.error("Error fetching users:", err);
+          navigate("/users");
+          return;
+        }
+      }
+
+      // 3. Fetch Files
+      if (targetUser) {
+        await fetchFiles();
+      }
+      
+      hasInitialized.current = true;
+    };
+
+    initData();
+  }, [userId]);
+
+  const fetchFiles = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${BASE_URL}/users/${userId}/files`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setFiles(data.files || data);
+      } else {
+        setFiles([]);
+      }
+    } catch (err) {
+      console.error("Error fetching files:", err);
+      setFiles([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getFileType = (fileName) => {
+    const ext = fileName?.split(".").pop()?.toLowerCase();
+    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "image";
+    if (["mp4", "webm", "ogg", "mov"].includes(ext)) return "video";
+    if (["mp3", "wav"].includes(ext)) return "audio";
+    if (ext === "pdf") return "pdf";
+    if (["txt", "md", "js", "json", "html", "css"].includes(ext)) return "text";
+    if (["doc", "docx", "xls", "xlsx", "ppt", "pptx"].includes(ext)) return "office";
+    return "download";
+  };
+
+  const getFileIcon = (type) => {
+    switch (type) {
+      case "image": return <FaFileImage className="w-8 h-8 text-purple-500" />;
+      case "video": return <FaFileVideo className="w-8 h-8 text-red-500" />;
+      case "audio": return <FaFileAudio className="w-8 h-8 text-yellow-500" />;
+      case "pdf": return <FaFilePdf className="w-8 h-8 text-red-600" />;
+      case "text": return <FaFileAlt className="w-8 h-8 text-gray-500" />;
+      case "office": return <FaFileAlt className="w-8 h-8 text-blue-500" />; // Placeholder for office
+      default: return <FaFile className="w-8 h-8 text-gray-400" />;
+    }
+  };
+
+  const handleViewClick = async (file) => {
+    try {
+      const response = await fetch(`${BASE_URL}/users/${userId}/files/${file._id || file.id}/view?format=json`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPreviewFileUrl(data.url);
+        setPreviewFileType(getFileType(file.name));
+        setShowFilePreview(true);
+      } else {
+        console.error("Failed to fetch file view:", response.status);
+        alert("Failed to view file. It may not exist or access is denied.");
+      }
+    } catch (err) {
+      console.error("Error viewing file:", err);
+      alert("Error viewing file.");
+    }
+  };
+
+  const handleRenameClick = (file) => {
+    setSelectedFile(file);
+    setNewFileName(file.name);
+    setShowRenameModal(true);
+  };
+
+  const confirmRenameFile = async () => {
+    if (!selectedFile || !newFileName.trim()) return;
+    try {
+      const response = await fetch(
+        `${BASE_URL}/users/${userId}/files/${selectedFile._id || selectedFile.id}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: newFileName.trim() }),
+        }
+      );
+      if (response.ok) {
+        setShowRenameModal(false);
+        fetchFiles();
+      }
+    } catch (err) {
+      console.error("Rename error:", err);
+    }
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Top Bar */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <button
+            onClick={() => navigate("/users")}
+            className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <FaArrowLeft className="w-4 h-4" />
+            <span>Back to Users</span>
+          </button>
+
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block">
+              <div className="text-sm font-medium text-gray-900">{user.name}</div>
+              <div className="text-xs text-gray-500">{user.email}</div>
+            </div>
+            {user.picture ? (
+              <img
+                src={user.picture}
+                alt={user.name}
+                className="w-10 h-10 rounded-full object-cover border border-gray-200"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
+                {user.name.charAt(0)}
+              </div>
+            )}
+            <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+              {user.role}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+          <FaFile className="text-gray-400" />
+          Files
+        </h2>
+
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : files.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
+            <FaFile className="mx-auto h-12 w-12 text-gray-300" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No files</h3>
+            <p className="mt-1 text-sm text-gray-500">This user hasn't uploaded any files yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {files.map((file) => (
+              <div
+                key={file._id || file.id}
+                className="group bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4 relative"
+              >
+                <div className="flex-shrink-0">
+                  {getFileIcon(getFileType(file.name))}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate" title={file.name}>
+                    {file.name}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {getFileType(file.name).toUpperCase()}
+                  </p>
+                </div>
+                
+                {/* Hover Actions */}
+                {currentUser?.role === "Owner" && (
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white pl-2">
+                    <button
+                      onClick={() => handleViewClick(file)}
+                      className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="View"
+                    >
+                      <FaEye className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleRenameClick(file)}
+                      className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Rename"
+                    >
+                      <FaPen className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Rename Modal */}
+      {showRenameModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Rename File</h3>
+            <input
+              type="text"
+              value={newFileName}
+              onChange={(e) => setNewFileName(e.target.value)}
+              className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-6"
+              placeholder="Enter new name"
+              autoFocus
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowRenameModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRenameFile}
+                disabled={!newFileName.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* File Preview Modal */}
+      {showFilePreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50 p-4">
+          <div className="relative w-full h-full max-w-6xl flex flex-col items-center justify-center">
+            <button
+              onClick={() => {
+                setShowFilePreview(false);
+                setPreviewFileUrl("");
+              }}
+              className="absolute top-4 right-4 z-[60] p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 hover:text-gray-200 transition-all"
+              title="Close Preview"
+            >
+              <span className="text-3xl leading-none">&times;</span>
+            </button>
+            <div className="flex-1 w-full flex items-center justify-center overflow-hidden p-4">
+              {previewFileType === "image" ? (
+                <img
+                  src={previewFileUrl}
+                  alt="Preview"
+                  className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                />
+              ) : (
+                <iframe
+                  src={previewFileUrl}
+                  className="w-full h-full bg-white rounded-lg shadow-2xl"
+                  title="File Preview"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

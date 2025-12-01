@@ -8,6 +8,7 @@ import UsersPage from "./UsersPage";
 
 import UserSettings from "./UserSettings";
 import SharedWithMe from "./SharedWithMe";
+import UserFilesPage from "./UserFilesPage";
 
 const router = createBrowserRouter([
   {
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
   {
     path: "/users",
     element: <UsersPage />,
+  },
+  {
+    path: "/users/:userId/files",
+    element: <UserFilesPage />,
   },
 
   {
