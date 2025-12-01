@@ -19,6 +19,7 @@ import {
   FaFileAlt,
   FaDownload,
   FaBolt,
+
 } from "react-icons/fa";
 
 export default function UsersPage() {
@@ -376,14 +377,14 @@ export default function UsersPage() {
         userRole={currentUser.role}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Top Section: Back Button & User Info */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-white rounded-lg shadow-sm p-3 mb-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
           >
-            <FaArrowLeft className="w-4 h-4" />
+            <FaArrowLeft className="w-3 h-3" />
             <span>Back to Home</span>
           </button>
 
@@ -396,68 +397,84 @@ export default function UsersPage() {
               <img
                 src={currentUser.picture}
                 alt={currentUser.name}
-                className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                className="w-8 h-8 rounded-full object-cover border border-gray-200"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-xs">
                 {currentUser.name.charAt(0)}
               </div>
             )}
-            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(currentUser.role)}`}>
+            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getRoleColor(currentUser.role)}`}>
               {currentUser.role}
             </span>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm p-6 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Users</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{totalUsers}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* Total Users */}
+          <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 border border-gray-100">
+            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white shadow-sm">
+              <FaUsers className="w-5 h-5" />
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
-              <FaUsers className="w-6 h-6" />
+            <div>
+              <p className="text-xs font-medium text-gray-500">Total Users</p>
+              <p className="text-xl font-bold text-gray-900">{totalUsers}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Active Users</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{activeUsers}</p>
+          {/* Active Users */}
+          <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 border border-gray-100">
+            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center text-white shadow-sm">
+              <FaCheckCircle className="w-5 h-5" />
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-600">
-              <FaCheckCircle className="w-6 h-6" />
+            <div>
+              <p className="text-xs font-medium text-gray-500">Active Users</p>
+              <p className="text-xl font-bold text-gray-900">{activeUsers}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Deleted Users</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{deletedUsers}</p>
+          {/* Online Users */}
+          <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 border border-gray-100">
+            <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center text-white shadow-sm">
+              <FaBolt className="w-5 h-5" />
             </div>
-            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center text-red-600">
-              <FaTrash className="w-6 h-6" />
+            <div>
+              <p className="text-xs font-medium text-gray-500">Online Users</p>
+              <p className="text-xl font-bold text-gray-900">
+                {users.filter(u => u.isLoggedIn && !u.isDeleted).length}
+              </p>
+            </div>
+          </div>
+
+          {/* Deleted Users */}
+          <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 border border-gray-100">
+            <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center text-white shadow-sm">
+              <FaTrash className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-500">Deleted Users</p>
+              <p className="text-xl font-bold text-gray-900">{deletedUsers}</p>
             </div>
           </div>
         </div>
 
         {/* Users Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="px-4 py-3 border-b border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Users Management</h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <h2 className="text-base font-semibold text-gray-900">Users Management</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
                 Total users: {totalUsers} | Active: {activeUsers} | Deleted: {deletedUsers}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <select className="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+            <div className="flex items-center gap-2">
+              <select className="text-xs border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 py-1.5 pl-2 pr-6">
                 <option>All Users</option>
               </select>
               <button 
                 onClick={fetchUsers}
-                className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 Refresh
               </button>
@@ -468,40 +485,40 @@ export default function UsersPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-medium">
-                  <th className="px-6 py-3">Name</th>
-                  <th className="px-6 py-3">Storage Used</th>
-                  <th className="px-6 py-3">Role</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3">Actions</th>
+                  <th className="px-4 py-2">Name</th>
+                  <th className="px-4 py-2">Storage Used</th>
+                  <th className="px-4 py-2">Role</th>
+                  <th className="px-4 py-2">Status</th>
+                  <th className="px-4 py-2">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredUsers.map((user) => (
                   <tr key={user._id || user.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {user.picture ? (
-                          <img src={user.picture} alt="" className="w-10 h-10 rounded-full object-cover" />
+                          <img src={user.picture} alt="" className="w-8 h-8 rounded-full object-cover" />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
                             <FaUsers />
                           </div>
                         )}
                         <div>
-                          <div className="font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className="font-medium text-gray-900 text-sm">{user.name}</div>
+                          <div className="text-xs text-gray-500">{user.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       <div className="text-sm text-gray-900 font-medium">
                         {formatBytes(user.usedStorageInBytes || 0)}
                       </div>
                       <div className="text-xs text-gray-500">of {formatBytes(user.maxStorageLimit || 500 * 1024 * 1024)}</div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
                           {user.role}
                         </span>
                         {canChangeRole(user) && (
@@ -514,12 +531,12 @@ export default function UsersPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.isLoggedIn, user.isDeleted)}`}>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.isLoggedIn, user.isDeleted)}`}>
                         {user.isDeleted ? "Deleted" : user.isLoggedIn ? "Logged In" : "Logged Out"}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {/* Logout */}
                         {canLogoutUser(user) && !user.isDeleted && (

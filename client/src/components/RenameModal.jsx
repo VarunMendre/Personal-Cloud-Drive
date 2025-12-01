@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 
 function RenameModal({
+  // Modal for renaming files and folders
   renameType,
   renameValue,
   setRenameValue,

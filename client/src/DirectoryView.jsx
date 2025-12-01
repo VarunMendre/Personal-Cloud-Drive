@@ -8,7 +8,7 @@ import ShareModal from "./components/ShareModal";
 import DetailsPopup from "./components/DetailsPopup";
 import ImportFromDrive from "./components/ImportFromDrive";
 import { FaUpload, FaFolderPlus, FaFileImport } from "react-icons/fa";
-import "./DirectoryView.css";
+
 
 function DirectoryView() {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
