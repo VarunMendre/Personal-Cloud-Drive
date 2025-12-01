@@ -1,4 +1,15 @@
 import { useEffect, useRef } from "react";
+import {
+  FaFolder,
+  FaFile,
+  FaFileImage,
+  FaFileVideo,
+  FaFileAudio,
+  FaFilePdf,
+  FaFileAlt,
+  FaFileArchive,
+  FaFileCode,
+} from "react-icons/fa";
 
 function RenameModal({
   renameType,
@@ -36,40 +47,99 @@ function RenameModal({
     };
   }, []);
 
-  // Stop propagation when clicking inside the content
-  const handleContentClick = (e) => {
-    e.stopPropagation();
+  // Get file type based on extension
+  const getFileType = (fileName) => {
+    if (renameType === "directory") return "folder";
+    const ext = fileName?.split(".").pop()?.toLowerCase();
+    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "image";
+    if (["mp4", "webm", "ogg", "mov", "avi"].includes(ext)) return "video";
+    if (["mp3", "wav"].includes(ext)) return "audio";
+    if (ext === "pdf") return "pdf";
+    if (["txt", "md", "js", "json", "html", "css", "py", "java", "jsx", "ts", "tsx"].includes(ext)) return "code";
+    if (["zip", "rar", "tar", "gz"].includes(ext)) return "archive";
+    return "file";
   };
 
-  // Close when clicking outside the modal content
-  const handleOverlayClick = () => {
-    onClose();
+  // Get appropriate icon
+  const getIcon = (type) => {
+    switch (type) {
+      case "folder": return <FaFolder className="w-8 h-8 text-blue-500" />;
+      case "image": return <FaFileImage className="w-8 h-8 text-purple-500" />;
+      case "video": return <FaFileVideo className="w-8 h-8 text-red-500" />;
+      case "audio": return <FaFileAudio className="w-8 h-8 text-yellow-500" />;
+      case "pdf": return <FaFilePdf className="w-8 h-8 text-red-600" />;
+      case "code": return <FaFileCode className="w-8 h-8 text-green-500" />;
+      case "archive": return <FaFileArchive className="w-8 h-8 text-orange-500" />;
+      default: return <FaFile className="w-8 h-8 text-gray-400" />;
+    }
   };
+
+  const itemType = getFileType(renameValue);
+  const typeLabel = renameType === "directory" ? "FOLDER" : getFileType(renameValue).toUpperCase();
 
   return (
-    <div className="fixed top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.5)] flex justify-center items-center z-[999]" onClick={handleOverlayClick}>
-      <div className="bg-white p-5 w-[90%] max-w-[400px] rounded-[4px]" onClick={handleContentClick}>
-        <h2 className="mt-0">Rename {renameType === "file" ? "File" : "Folder"}</h2>
-        <form onSubmit={onRenameSubmit} className="flex flex-col gap-2">
-          <input
-            ref={inputRef}
-            type="text"
-            className="p-[12px] my-[10px] border border-[#ccc] rounded-[4px] w-full box-border"
-            placeholder="Enter new name"
-            value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
-          />
-          <div className="flex justify-end gap-[10px]">
-            <button className="bg-[#007bff] text-white py-[8px] px-[15px] border-none rounded-[4px] cursor-pointer hover:bg-[#0056b3]" type="submit">
-              Save
-            </button>
-            <button
-              className="bg-[#ccc] text-[#333] py-[8px] px-[15px] border-none rounded-[4px] cursor-pointer hover:bg-[#999]"
-              type="button"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Rename {renameType === "file" ? "File" : "Folder"}
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Change the name of this {renameType === "file" ? "file" : "folder"}
+          </p>
+        </div>
+
+        {/* Content */}
+        <form onSubmit={onRenameSubmit}>
+          <div className="px-6 py-5">
+            {/* Current Item Info */}
+            <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+              <div className="flex-shrink-0">
+                {getIcon(itemType)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900 truncate" title={renameValue}>
+                  {renameValue}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {typeLabel}
+                </div>
+              </div>
+            </div>
+
+            {/* Input Field */}
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New {renameType === "file" ? "File" : "Folder"} Name
+              </label>
+              <input
+                ref={inputRef}
+                type="text"
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900"
+                placeholder={`Enter new ${renameType === "file" ? "file" : "folder"} name`}
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!renameValue.trim()}
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </form>
       </div>

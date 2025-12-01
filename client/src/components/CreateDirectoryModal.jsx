@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { FaFolderPlus } from "react-icons/fa";
 
 function CreateDirectoryModal({
   newDirname,
@@ -29,40 +30,57 @@ function CreateDirectoryModal({
     };
   }, []);
 
-  // Stop propagation when clicking inside the content
-  const handleContentClick = (e) => {
-    e.stopPropagation();
-  };
-
-  // Close when clicking outside the modal content
-  const handleOverlayClick = () => {
-    onClose();
-  };
-
   return (
-    <div className="fixed top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.5)] flex justify-center items-center z-[999]" onClick={handleOverlayClick}>
-      <div className="bg-white p-5 w-[90%] max-w-[400px] rounded-[4px]" onClick={handleContentClick}>
-        <h2 className="mt-0">Create a new directory</h2>
-        <form onSubmit={onCreateDirectory} className="flex flex-col gap-2">
-          <input
-            ref={inputRef}
-            type="text"
-            className="p-[12px] my-[10px] border border-[#ccc] rounded-[4px] w-full box-border"
-            placeholder="Enter folder name"
-            value={newDirname}
-            onChange={(e) => setNewDirname(e.target.value)}
-          />
-          <div className="flex justify-end gap-[10px]">
-            <button className="bg-[#007bff] text-white py-[8px] px-[15px] border-none rounded-[4px] cursor-pointer hover:bg-[#0056b3]" type="submit">
-              Create
-            </button>
-            <button
-              className="bg-[#ccc] text-[#333] py-[8px] px-[15px] border-none rounded-[4px] cursor-pointer hover:bg-[#999]"
-              type="button"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <FaFolderPlus className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Create New Folder</h3>
+              <p className="text-sm text-gray-500 mt-0.5">Enter a name for your new folder</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <form onSubmit={onCreateDirectory}>
+          <div className="px-6 py-5">
+            {/* Input Field */}
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Folder Name
+              </label>
+              <input
+                ref={inputRef}
+                type="text"
+                value={newDirname}
+                onChange={(e) => setNewDirname(e.target.value)}
+                className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900"
+                placeholder="Enter folder name"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!newDirname.trim()}
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                Create
+              </button>
+            </div>
           </div>
         </form>
       </div>

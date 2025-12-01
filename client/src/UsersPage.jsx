@@ -585,36 +585,67 @@ export default function UsersPage() {
 
       {/* Role Modal */}
       {showRoleModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Change User Role</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Select a new role for <strong>{selectedUser.name}</strong>.
-            </p>
-            <select
-              value={newRole}
-              onChange={(e) => setNewRole(e.target.value)}
-              className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-6"
-            >
-              <option value="">Select Role</option>
-              {getAvailableRolesForUser(selectedUser.role).map(role => (
-                <option key={role} value={role}>{role}</option>
-              ))}
-            </select>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowRoleModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmRoleChange}
-                disabled={!newRole}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-              >
-                Save Changes
-              </button>
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900">Change User Role</h3>
+              <p className="text-sm text-gray-500 mt-1">Update role for {selectedUser.name}</p>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-5">
+              {/* Current User Info */}
+              <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+                {selectedUser.picture ? (
+                  <img src={selectedUser.picture} alt="" className="w-10 h-10 rounded-full object-cover" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
+                    {selectedUser.name.charAt(0)}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900 truncate">{selectedUser.name}</div>
+                  <div className="text-sm text-gray-500 truncate">{selectedUser.email}</div>
+                </div>
+                <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${getRoleColor(selectedUser.role)}`}>
+                  {selectedUser.role}
+                </span>
+              </div>
+
+              {/* Role Selection */}
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Role
+                </label>
+                <select
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900"
+                >
+                  <option value="">Select a role</option>
+                  {getAvailableRolesForUser(selectedUser.role).map(role => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowRoleModal(false)}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmRoleChange}
+                  disabled={!newRole}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -622,40 +653,54 @@ export default function UsersPage() {
 
       {/* Delete/Soft Delete Modal */}
       {showDeleteModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <div className="flex items-center gap-3 text-red-600 mb-4">
-              <FaExclamationTriangle className="w-6 h-6" />
-              <h3 className="text-lg font-semibold">Delete User</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                  <FaExclamationTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Delete User</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">Remove user from the system</p>
+                </div>
+              </div>
             </div>
-            <p className="text-sm text-gray-600 mb-6">
-              Are you sure you want to delete <strong>{selectedUser.name}</strong>? 
-              This will move the user to the deleted list.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSoftDelete}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-              >
-                Delete
-              </button>
-              {canHardDeleteUser(selectedUser) && (
+
+            {/* Content */}
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-600 mb-5">
+                Are you sure you want to delete <strong className="text-gray-900">{selectedUser.name}</strong>? 
+                This will move the user to the deleted list.
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
                 <button
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setShowHardDeleteConfirm(true);
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-lg hover:bg-red-200"
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  Permanent Delete
+                  Cancel
                 </button>
-              )}
+                <button
+                  onClick={handleSoftDelete}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Delete
+                </button>
+                {canHardDeleteUser(selectedUser) && (
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setShowHardDeleteConfirm(true);
+                    }}
+                    className="flex-1 px-4 py-2.5 text-sm font-medium text-red-700 bg-red-100 rounded-lg hover:bg-red-200 transition-colors"
+                  >
+                    Permanent Delete
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -663,25 +708,42 @@ export default function UsersPage() {
 
       {/* Hard Delete Confirm */}
       {showHardDeleteConfirm && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-red-600 mb-4">Permanent Delete</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              This action is <strong>irreversible</strong>. All data for <strong>{selectedUser.name}</strong> will be wiped.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowHardDeleteConfirm(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleHardDelete}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-              >
-                Confirm Permanent Delete
-              </button>
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                  <FaExclamationTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-red-600">Permanent Delete</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">This action cannot be undone</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-600 mb-5">
+                This action is <strong className="text-red-600">irreversible</strong>. All data for <strong className="text-gray-900">{selectedUser.name}</strong> will be permanently wiped.
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowHardDeleteConfirm(false)}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleHardDelete}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Confirm Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -689,25 +751,42 @@ export default function UsersPage() {
 
       {/* Logout Modal */}
       {showLogoutModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Logout</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Force logout for <strong>{selectedUser.name}</strong>?
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowLogoutModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmLogout}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-              >
-                Logout User
-              </button>
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <FaSignOutAlt className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Confirm Logout</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">Force user to sign out</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-600 mb-5">
+                Force logout for <strong className="text-gray-900">{selectedUser.name}</strong>?
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLogoutModal(false)}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmLogout}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Logout User
+                </button>
+              </div>
             </div>
           </div>
         </div>

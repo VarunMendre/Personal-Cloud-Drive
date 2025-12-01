@@ -8,6 +8,7 @@ import ShareModal from "./components/ShareModal";
 import DetailsPopup from "./components/DetailsPopup";
 import ImportFromDrive from "./components/ImportFromDrive";
 import { FaUpload, FaFolderPlus, FaFileImport } from "react-icons/fa";
+import "./DirectoryView.css";
 
 function DirectoryView() {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -763,32 +764,49 @@ function DirectoryView() {
           </div>
         </div>
 
-        {/* Breadcrumb Navigation - Below buttons */}
-        <div className="mt-6 flex items-center text-sm text-gray-600">
-          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-          </svg>
+        {/* Breadcrumb Navigation */}
+        <div className="mt-4 flex items-center text-sm text-gray-600">
+          {/* Home Icon */}
+          <button
+            onClick={() => navigate("/")}
+            className="hover:text-blue-600 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+            </svg>
+          </button>
+
+          {/* Path Segments */}
           {path && path.length > 0 ? (
+            path.map((dir, index) => (
+              <span key={dir._id} className="flex items-center">
+                <span className="mx-2 text-gray-400">›</span>
+                <button
+                  onClick={() => navigate(`/directory/${dir._id}`)}
+                  className="hover:text-blue-600 transition-colors"
+                >
+                  {index === 0 ? "My Drive" : dir.name}
+                </button>
+              </span>
+            ))
+          ) : null}
+
+          {/* Current Directory */}
+          {directoryName && (
             <>
-              {path.map((dir, index) => (
-                <span key={dir._id} className="flex items-center">
-                  <span
-                    className="hover:text-blue-600 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/directory/${dir._id}`)}
-                  >
-                    {index === 0 ? "My Drive" : dir.name}
-                  </span>
-                  <span className="mx-2 text-gray-400">›</span>
-                </span>
-              ))}
+              <span className="mx-2 text-gray-400">›</span>
               <span className="text-gray-900 font-medium">
                 {directoryName}
               </span>
             </>
-          ) : (
-            <span className="text-gray-900 font-medium">
-              {directoryName || "My Drive"}
-            </span>
+          )}
+
+          {/* Show "My Drive" when at root */}
+          {!directoryName && (!path || path.length === 0) && (
+            <>
+              <span className="mx-2 text-gray-400">›</span>
+              <span className="text-gray-900 font-medium">My Drive</span>
+            </>
           )}
         </div>
       </div>
