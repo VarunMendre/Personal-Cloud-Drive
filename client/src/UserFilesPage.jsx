@@ -178,7 +178,7 @@ export default function UserFilesPage() {
         renameInputRef.current.select();
       }
     }
-  }, [showRenameModal, newFileName]);
+  }, [showRenameModal]); // Only run when modal opens, not when filename changes
 
   const confirmRenameFile = async () => {
     if (!selectedFile || !newFileName.trim()) return;
