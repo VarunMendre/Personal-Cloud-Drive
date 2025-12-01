@@ -10,6 +10,8 @@ import { loginSchema, registerSchema } from "../validators/authSchema.js";
 import z from "zod";
 import { JSDOM } from "jsdom";
 import createDOMPurify from "dompurify";
+import { getFileUrl } from "../services/s3.js";
+import { createCloudFrontSignedGetUrl } from "../services/cloudFront.js";
 
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
@@ -290,10 +292,11 @@ export const getAllUsers = async (req, res) => {
     });
   }
 
-  const transformedUsers = allUsers.map(({ _id, name, email, isDeleted, maxStorageLimit }) => ({
+  const transformedUsers = allUsers.map(({ _id, name, email, role, isDeleted, maxStorageLimit }) => ({
     id: _id,
     name,
     email,
+    role,
     isLoggedIn: allSessionsUserIdSet.has(_id.toString()),
     isDeleted: isDeleted || false,
 
@@ -514,13 +517,27 @@ export const getUserFileView = async (req, res, next) => {
       return res.status(404).json({ error: "File not found" });
     }
 
-    const filePath = `${process.cwd()}/storage/${fileId}${fileData.extension}`;
+    const s3Key = `${fileId}${fileData.extension}`;
 
-    return res.sendFile(filePath, (err) => {
-      if (!res.headersSent && err) {
-        return res.status(404).json({ error: "File not found!" });
+    if (req.query.action === "download") {
+        const getUrl = await getFileUrl({
+          Key: s3Key,
+          download: true,
+          filename: fileData.name,
+        });
+        return res.redirect(getUrl);
       }
-    });
+    
+      const getUrl = createCloudFrontSignedGetUrl({
+        key: s3Key,
+        filename: fileData.name,
+      });
+
+    if (req.query.format === "json") {
+      return res.json({ url: getUrl });
+    }
+    
+    return res.redirect(getUrl);
   } catch (err) {
     next(err);
   }

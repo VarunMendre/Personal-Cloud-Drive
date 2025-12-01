@@ -38,7 +38,6 @@ export default function UsersPage() {
   const [showRecoverModal, setShowRecoverModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showHardDeleteConfirm, setShowHardDeleteConfirm] = useState(false);
-  const [showFilesModal, setShowFilesModal] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
   
   // File Modals
@@ -48,14 +47,9 @@ export default function UsersPage() {
 
   // Selection
   const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
   const [newRole, setNewRole] = useState("");
-  const [newFileName, setNewFileName] = useState("");
-  const [previewFileUrl, setPreviewFileUrl] = useState("");
 
   // Data
-  const [userFiles, setUserFiles] = useState([]);
-  const [loadingFiles, setLoadingFiles] = useState(false);
 
   // --- Effects ---
   useEffect(() => {
@@ -193,7 +187,7 @@ export default function UsersPage() {
     if (currentUser.role === "Owner") return true;
     const currentPriority = getRolePriority(currentUser.role);
     const targetPriority = getRolePriority(targetUser.role);
-    return currentPriority < targetPriority;
+    return currentPriority <= targetPriority;
   };
 
   const getAvailableRolesForUser = (targetUserRole) => {
@@ -201,10 +195,11 @@ export default function UsersPage() {
     if (role === "Owner") {
       return targetUserRole === "Owner" ? ["Owner"] : ["Admin", "Manager", "User"];
     } else if (role === "Admin") {
-      if (targetUserRole === "Manager") return ["Admin", "Manager"];
-      if (targetUserRole === "User") return ["Manager", "User"];
+      // Admin can change role upto Admin (make new Admin, Manager)
+      return ["Admin", "Manager", "User"];
     } else if (role === "Manager") {
-      if (targetUserRole === "User") return ["Manager", "User"];
+      // Manager can change role to Manager or User
+      return ["Manager", "User"];
     }
     return [];
   };
@@ -219,7 +214,10 @@ export default function UsersPage() {
 
   // --- Handlers ---
   
-  // Role Management
+  // File Management
+  const handleViewClick = (user) => {
+    navigate(`/users/${user._id || user.id}/files`, { state: { user, currentUser } });
+  };
   const handleRoleChangeClick = (user) => {
     setSelectedUser(user);
     setNewRole("");
@@ -327,115 +325,45 @@ export default function UsersPage() {
     }
   };
 
-  // File Management
-  const handleViewClick = async (user) => {
-    setSelectedUser(user);
-    setShowFilesModal(true);
-    setLoadingFiles(true);
-    try {
-      const response = await fetch(`${BASE_URL}/users/${user._id || user.id}/files`, {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUserFiles(data.files || data);
-      } else {
-        setUserFiles([]);
-      }
-    } catch (err) {
-      console.error("Error fetching files:", err);
-      setUserFiles([]);
-    } finally {
-      setLoadingFiles(false);
-    }
-  };
-
-  const handleFileClick = (file) => {
-    const fileUrl = `${BASE_URL}/users/${selectedUser.id}/files/${file._id || file.id}/view`;
-    setPreviewFileUrl(fileUrl);
-    setShowFilePreview(true);
-  };
-
-  const handleRenameClick = (file) => {
-    setSelectedFile(file);
-    setNewFileName(file.name);
-    setShowRenameModal(true);
-  };
-
-  const confirmRenameFile = async () => {
-    if (!selectedFile || !selectedUser || !newFileName.trim()) return;
-    try {
-      const response = await fetch(
-        `${BASE_URL}/users/${selectedUser.id}/files/${selectedFile._id || selectedFile.id}`,
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: newFileName.trim() }),
-        }
-      );
-      if (response.ok) {
-        setShowRenameModal(false);
-        // Refresh files
-        handleViewClick(selectedUser);
-      }
-    } catch (err) {
-      console.error("Rename error:", err);
-    }
-  };
-
-  const handleDeleteFileClick = (file) => {
-    setSelectedFile(file);
-    setShowDeleteFileConfirm(true);
-  };
-
-  const confirmDeleteFile = async () => {
-    if (!selectedFile || !selectedUser) return;
-    try {
-      const response = await fetch(
-        `${BASE_URL}/users/${selectedUser.id}/files/${selectedFile._id || selectedFile.id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
-      if (response.ok) {
-        setShowDeleteFileConfirm(false);
-        handleViewClick(selectedUser);
-      }
-    } catch (err) {
-      console.error("Delete file error:", err);
-    }
-  };
-
-  const getFileType = (fileName) => {
-    const ext = fileName?.split(".").pop()?.toLowerCase();
-    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "image";
-    if (["mp4", "webm", "ogg", "mov"].includes(ext)) return "video";
-    if (["mp3", "wav"].includes(ext)) return "audio";
-    if (ext === "pdf") return "pdf";
-    if (["txt", "md", "js", "json", "html", "css"].includes(ext)) return "text";
-    if (["doc", "docx", "xls", "xlsx", "ppt", "pptx"].includes(ext)) return "office";
-    return "download";
-  };
-
-  // --- Stats ---
-  const totalUsers = users.length;
-  const activeUsers = users.filter((u) => !u.isDeleted).length;
-  const deletedUsers = users.filter((u) => u.isDeleted).length;
-
   // --- Permissions ---
   const canViewFiles = currentUser.role === "Owner" || currentUser.role === "Admin";
-  const canDeleteFiles = currentUser.role === "Owner";
+  const canDeleteFiles = currentUser.role === "Owner"; // Only Owner can delete files (from prompt: Admin can't open or rename, doesn't say delete file, but usually implied no write access if no rename)
   const canRenameFiles = currentUser.role === "Owner";
 
-  // Filter users based on role (Manager sees all, but maybe some logic needed? Prompt says Manager can see all users)
-  // Owner sees all.
-  // Admin sees all.
-  // Normal User cannot access page (handled by redirect in fetchUsers).
-  
-  // Prompt: "Manager : he can only see all users"
-  // Prompt: "Admin : ... admin cant see users file"
+  // Filter users based on role
+  const filteredUsers = users.filter(u => {
+    if (currentUser.role === "Owner") return true;
+    if (currentUser.role === "Admin") return u.role !== "Owner";
+    if (currentUser.role === "Manager") return u.role !== "Owner" && u.role !== "Admin";
+    return false;
+  });
+
+  // --- Stats ---
+  const totalUsers = filteredUsers.length;
+  const activeUsers = filteredUsers.filter((u) => !u.isDeleted).length;
+  const deletedUsers = filteredUsers.filter((u) => u.isDeleted).length;
+
+  // Action Permissions
+  const canLogoutUser = (targetUser) => {
+    if (targetUser.isDeleted) return false;
+    if (currentUser.role === "Owner") return true;
+    if (currentUser.role === "Admin") return targetUser.role !== "Owner"; // Admin can logout anyone except Owner? Usually lower rank.
+    // Prompt says: Admin can logout the user. Manager can logout that user.
+    // Let's assume they can logout anyone visible in their list (which is filtered above).
+    return true; 
+  };
+
+  const canDeleteUser = (targetUser) => {
+    if (currentUser.role === "Owner") return true;
+    if (currentUser.role === "Admin") return true; // Admin can soft or hard delete
+    return false; // Manager cannot delete
+  };
+
+  const canHardDeleteUser = (targetUser) => {
+    if (currentUser.role === "Owner") return true;
+    if (currentUser.role === "Admin") return true; // Admin can hard delete
+    return false;
+  };
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -548,7 +476,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                   <tr key={user._id || user.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -594,7 +522,7 @@ export default function UsersPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         {/* Logout */}
-                        {(currentUser.role === "Owner" || currentUser.role === "Admin") && !user.isDeleted && (
+                        {canLogoutUser(user) && !user.isDeleted && (
                           <button
                             onClick={() => handleLogoutClick(user)}
                             disabled={!user.isLoggedIn}
@@ -610,7 +538,7 @@ export default function UsersPage() {
                         )}
 
                         {/* Delete/Recover */}
-                        {(currentUser.role === "Owner" || currentUser.role === "Admin") && (
+                        {canDeleteUser(user) && (
                           <>
                             {!user.isDeleted ? (
                               <button
@@ -621,7 +549,7 @@ export default function UsersPage() {
                                 Delete
                               </button>
                             ) : (
-                              currentUser.role === "Owner" && (
+                              canHardDeleteUser(user) && (
                                 <button
                                   onClick={() => handleRecoverClick(user)}
                                   className="px-3 py-1.5 bg-green-100 text-green-700 text-xs font-medium rounded-lg hover:bg-green-200 transition-colors"
@@ -717,7 +645,7 @@ export default function UsersPage() {
               >
                 Delete
               </button>
-              {currentUser.role === "Owner" && (
+              {canHardDeleteUser(selectedUser) && (
                 <button
                   onClick={() => {
                     setShowDeleteModal(false);
@@ -785,143 +713,8 @@ export default function UsersPage() {
         </div>
       )}
 
-      {/* Files Modal */}
-      {showFilesModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full h-[80vh] flex flex-col">
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-gray-900">{selectedUser.name}'s Files</h3>
-              <button onClick={() => setShowFilesModal(false)} className="text-gray-400 hover:text-gray-600">
-                <span className="text-2xl">&times;</span>
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-6">
-              {loadingFiles ? (
-                <div className="flex justify-center items-center h-full">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : userFiles.length === 0 ? (
-                <div className="text-center text-gray-500 py-10">No files found.</div>
-              ) : (
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="text-xs uppercase text-gray-500 border-b border-gray-200">
-                      <th className="pb-3">Name</th>
-                      <th className="pb-3">Size</th>
-                      <th className="pb-3">Type</th>
-                      <th className="pb-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {userFiles.map(file => (
-                      <tr key={file._id || file.id} className="hover:bg-gray-50">
-                        <td className="py-3">
-                          <button 
-                            onClick={() => handleFileClick(file)}
-                            className="text-blue-600 hover:underline font-medium text-sm flex items-center gap-2"
-                          >
-                            <FaFile className="text-gray-400" />
-                            {file.name}
-                          </button>
-                        </td>
-                        <td className="py-3 text-sm text-gray-600">{formatBytes(file.size)}</td>
-                        <td className="py-3 text-sm text-gray-600">{file.type || "File"}</td>
-                        <td className="py-3 flex gap-2">
-                          {canRenameFiles && (
-                            <button 
-                              onClick={() => handleRenameClick(file)}
-                              className="p-1 text-gray-500 hover:text-blue-600"
-                              title="Rename"
-                            >
-                              <FaPen className="w-3 h-3" />
-                            </button>
-                          )}
-                          {canDeleteFiles && (
-                            <button 
-                              onClick={() => handleDeleteFileClick(file)}
-                              className="p-1 text-gray-500 hover:text-red-600"
-                              title="Delete"
-                            >
-                              <FaTrash className="w-3 h-3" />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-            
-            {!canDeleteFiles && !canRenameFiles && (
-              <div className="p-4 bg-gray-50 border-t border-gray-200 text-sm text-gray-600">
-                <FaExclamationTriangle className="inline w-4 h-4 mr-2 text-yellow-500" />
-                Read-only access
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* Rename File Modal */}
-      {showRenameModal && selectedFile && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
-            <h3 className="text-lg font-semibold mb-4">Rename File</h3>
-            <input
-              type="text"
-              value={newFileName}
-              onChange={(e) => setNewFileName(e.target.value)}
-              className="w-full border-gray-300 rounded-lg mb-6"
-              placeholder="New filename"
-            />
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setShowRenameModal(false)} className="px-4 py-2 bg-gray-100 rounded-lg">Cancel</button>
-              <button onClick={confirmRenameFile} className="px-4 py-2 bg-blue-600 text-white rounded-lg">Rename</button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Delete File Confirm */}
-      {showDeleteFileConfirm && selectedFile && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
-            <h3 className="text-lg font-semibold text-red-600 mb-4">Delete File</h3>
-            <p className="mb-6 text-sm text-gray-600">Delete <strong>{selectedFile.name}</strong>?</p>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setShowDeleteFileConfirm(false)} className="px-4 py-2 bg-gray-100 rounded-lg">Cancel</button>
-              <button onClick={confirmDeleteFile} className="px-4 py-2 bg-red-600 text-white rounded-lg">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* File Preview Modal */}
-      {showFilePreview && selectedFile && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setShowFilePreview(false)}>
-          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="font-semibold">{selectedFile.name}</h3>
-              <button onClick={() => setShowFilePreview(false)}>&times;</button>
-            </div>
-            <div className="flex-1 bg-gray-100 p-4 flex items-center justify-center overflow-auto">
-              {getFileType(selectedFile.name) === "image" ? (
-                <img src={previewFileUrl} alt="" className="max-w-full max-h-full object-contain" />
-              ) : getFileType(selectedFile.name) === "video" ? (
-                <video src={previewFileUrl} controls className="max-w-full max-h-full" />
-              ) : (
-                <div className="text-center">
-                  <FaFile className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p>Preview not available</p>
-                  <a href={previewFileUrl} download className="text-blue-600 hover:underline mt-2 inline-block">Download</a>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
