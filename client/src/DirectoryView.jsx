@@ -737,7 +737,7 @@ function DirectoryView() {
                 errorMessage ===
                 "Directory not found or you do not have access to it!"
               }
-              className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+              className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none font-medium text-sm shadow-md"
             >
               <FaUpload className="w-4 h-4" />
               Upload Files
@@ -750,7 +750,7 @@ function DirectoryView() {
                 errorMessage ===
                 "Directory not found or you do not have access to it!"
               }
-              className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+              className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none font-medium text-sm shadow-md"
             >
               <FaFolderPlus className="w-4 h-4" />
               Create Directory
@@ -759,7 +759,7 @@ function DirectoryView() {
             {/* Import from Drive Button - NEW */}
             <ImportFromDrive
               onFilesSelected={handleDriveFileImport}
-              className="flex items-center gap-2 px-5 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+              className="flex items-center gap-2 px-5 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none font-medium text-sm shadow-sm"
             />
           </div>
         </div>

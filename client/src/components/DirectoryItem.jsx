@@ -37,18 +37,18 @@ function DirectoryItem({
   function renderFileIcon(iconString) {
     switch (iconString) {
       case "pdf":
-        return <FaFilePdf />;
+        return <FaFilePdf className="text-red-600" />;
       case "image":
-        return <FaFileImage />;
+        return <FaFileImage className="text-purple-500" />;
       case "video":
-        return <FaFileVideo />;
+        return <FaFileVideo className="text-red-500" />;
       case "archive":
-        return <FaFileArchive />;
+        return <FaFileArchive className="text-yellow-600" />;
       case "code":
-        return <FaFileCode />;
+        return <FaFileCode className="text-blue-500" />;
       case "alt":
       default:
-        return <FaFileAlt />;
+        return <FaFileAlt className="text-gray-500" />;
     }
   }
 
@@ -64,9 +64,35 @@ function DirectoryItem({
     openDetailsPopup(item);
   };
 
+  // Helper to get file extension
+  const getFileExtension = (filename) => {
+    if (!filename || item.isDirectory) return null;
+    const parts = filename.split('.');
+    if (parts.length > 1) {
+      return parts[parts.length - 1].toUpperCase();
+    }
+    return null;
+  };
+
+  // Helper to format date
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  const fileExtension = getFileExtension(item.name);
+
   return (
     <div
-      className="flex flex-col relative gap-1 border border-[#ccc] rounded-[4px] bg-[#f9f9f9] cursor-pointer hover:bg-[#f0f0f0] group"
+      className="flex flex-col relative gap-1 border border-gray-200 rounded-lg bg-white cursor-pointer hover:bg-gray-50 group transition-colors"
       onClick={() =>
         !(activeContextMenu || isUploading)
           ? handleRowClick(item.isDirectory ? "directory" : "file", item.id)
@@ -76,23 +102,43 @@ function DirectoryItem({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div
-        className="flex items-center gap-2"
-        title={`Size: ${formatSize(
-          item.size
-        )}\nCreatedAt: ${new Date(item.createdAt).toLocaleString()}`}
-      >
-        <div className="flex items-center gap-2 p-[10px]">
+      <div className="flex items-start gap-3 p-3">
+        {/* Icon */}
+        <div className="flex-shrink-0 mt-0.5">
           {item.isDirectory ? (
-            <FaFolder className="text-[#ffa500] text-[1.2em]" />
+            <FaFolder className="text-blue-500 text-2xl" />
           ) : (
-            renderFileIcon(getFileIcon(item.name))
+            <div className="text-2xl">
+              {renderFileIcon(getFileIcon(item.name))}
+            </div>
           )}
-          <span>{item.name}</span>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Name and Type Badge */}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-medium text-gray-900 truncate">{item.name}</span>
+            {item.isDirectory ? (
+              <span className="px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded">
+                Folder
+              </span>
+            ) : fileExtension ? (
+              <span className="px-2 py-0.5 text-xs font-medium text-red-600 bg-red-50 rounded">
+                {fileExtension}
+              </span>
+            ) : null}
+          </div>
+
+          {/* Size and Modified Date */}
+          <div className="flex items-center gap-3 text-xs text-gray-500">
+            <span>Size: {formatSize(item.size || 0)}</span>
+            <span>Modified: {formatDate(item.updatedAt || item.createdAt)}</span>
+          </div>
         </div>
 
         {/* Hover Action Buttons - Show on hover */}
-        <div className="ml-auto flex items-center gap-1 mr-1">
+        <div className="flex items-center gap-1">
           {isHovered && !isUploadingItem && (
             <>
               {/* Download button - only for files */}
@@ -119,7 +165,7 @@ function DirectoryItem({
 
           {/* Three dots for context menu - always visible */}
           <div
-            className="flex items-center justify-center text-[1.2em] cursor-pointer text-[#2c2c2c] rounded-full p-2 hover:bg-[#dfdfdf]"
+            className="flex items-center justify-center text-xl cursor-pointer text-gray-700 rounded-full p-2 hover:bg-gray-200"
             onClick={(e) => handleContextMenu(e, item.id)}
           >
             <BsThreeDotsVertical />

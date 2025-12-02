@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaFileImport } from "react-icons/fa";
+import { FaGoogleDrive } from "react-icons/fa";
 import axios from "axios";
 
 // Ideally these should be in a config file or env variables
@@ -104,7 +104,7 @@ export default function ImportFromDrive({ onFilesSelected, className }) {
       onClick={handleAuth}
       className={className || "flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"}
     >
-      <FaFileImport className="w-4 h-4" />
+      <FaGoogleDrive className="w-4 h-4 text-blue-500" />
       Import from Drive
     </button>
   );

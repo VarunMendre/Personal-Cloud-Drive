@@ -1,3 +1,12 @@
+import {
+  FaInfoCircle,
+  FaDownload,
+  FaShareAlt,
+  FaPencilAlt,
+  FaTrashAlt,
+  FaTimes,
+} from "react-icons/fa";
+
 function ContextMenu({
   item,
   contextMenuPos,
@@ -25,22 +34,26 @@ function ContextMenu({
           className={itemClass}
           onClick={() => handleShare("directory", item.id, item.name)}
         >
-          Share
+          <FaShareAlt className="text-gray-600" />
+          <span>Share</span>
         </div>
         <div
           className={itemClass}
           onClick={() => openRenameModal("directory", item.id, item.name)}
         >
-          Rename
+          <FaPencilAlt className="text-gray-600" />
+          <span>Rename</span>
         </div>
         <div
           className={itemClass}
           onClick={() => handleDeleteDirectory(item.id)}
         >
-          Delete
+          <FaTrashAlt className="text-red-600" />
+          <span className="text-red-600">Delete</span>
         </div>
         <div className={itemClass} onClick={() => openDetailsPopup(item)}>
-          Details
+          <FaInfoCircle className="text-gray-600" />
+          <span>Details</span>
         </div>
       </div>
     );
@@ -57,7 +70,8 @@ function ContextMenu({
             className={itemClass}
             onClick={() => handleCancelUpload(item.id)}
           >
-            Cancel
+            <FaTimes className="text-red-600" />
+            <span className="text-red-600">Cancel</span>
           </div>
         </div>
       );
@@ -73,7 +87,8 @@ function ContextMenu({
             className={itemClass}
             onClick={() => handleShare("file", item.id, item.name)}
           >
-            Share
+            <FaShareAlt className="text-gray-600" />
+            <span>Share</span>
           </div>
           <div
             className={itemClass}
@@ -81,22 +96,26 @@ function ContextMenu({
               (window.location.href = `${BASE_URL}/file/${item.id}?action=download`)
             }
           >
-            Download
+            <FaDownload className="text-gray-600" />
+            <span>Download</span>
           </div>
           <div
             className={itemClass}
             onClick={() => openRenameModal("file", item.id, item.name)}
           >
-            Rename
+            <FaPencilAlt className="text-gray-600" />
+            <span>Rename</span>
           </div>
           <div
             className={itemClass}
             onClick={() => handleDeleteFile(item.id)}
           >
-            Delete
+            <FaTrashAlt className="text-red-600" />
+            <span className="text-red-600">Delete</span>
           </div>
           <div className={itemClass} onClick={() => openDetailsPopup(item)}>
-            Details
+            <FaInfoCircle className="text-gray-600" />
+            <span>Details</span>
           </div>
         </div>
       );
