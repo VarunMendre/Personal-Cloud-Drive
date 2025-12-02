@@ -10,20 +10,21 @@ import { updateDirectorySize } from "../utils/updateDirectorySize.js";
 const router = express.Router();
 
 router.post("/google-drive", async (req, res) => {
-  console.log("Received Google Drive import request");
   try {
     const { fileId, accessToken, parentDirId } = req.body;
-    console.log("Request body:", { fileId, hasAccessToken: !!accessToken, parentDirId });
     
     if (!req.user) {
-      console.error("req.user is missing!");
       return res.status(401).json({ error: "User not authenticated" });
     }
     const userId = req.user._id;
-    console.log("User ID:", userId);
 
     if (!fileId || !accessToken) {
       return res.status(400).json({ error: "Missing fileId or accessToken" });
+    }
+
+    // Validate access token format
+    if (typeof accessToken !== 'string' || accessToken.length < 10) {
+      return res.status(400).json({ error: "Invalid access token format" });
     }
 
     const oauth2Client = new google.auth.OAuth2();
@@ -32,12 +33,10 @@ router.post("/google-drive", async (req, res) => {
     const drive = google.drive({ version: "v3", auth: oauth2Client });
 
     // 1. Get file metadata
-    console.log("Fetching file metadata for:", fileId);
     const meta = await drive.files.get({
       fileId,
       fields: "id, name, mimeType, size",
     });
-    console.log("File metadata:", meta.data);
 
     const originalName = meta.data.name;
     const mimeType = meta.data.mimeType;
@@ -50,7 +49,6 @@ router.post("/google-drive", async (req, res) => {
 
     // 2. Handle Google Docs vs Binary Files
     if (mimeType.startsWith("application/vnd.google-apps.")) {
-      console.log("Handling Google Doc export");
       // It's a Google Doc, we need to export it
       let exportMimeType;
       if (mimeType === "application/vnd.google-apps.document") {
@@ -80,7 +78,6 @@ router.post("/google-drive", async (req, res) => {
       );
       driveStream = response.data;
     } else {
-      console.log("Handling binary file download");
       // Binary file
       const response = await drive.files.get(
         { fileId, alt: "media" },
@@ -88,8 +85,6 @@ router.post("/google-drive", async (req, res) => {
       );
       driveStream = response.data;
     }
-
-    console.log("Stream obtained. Preparing S3 upload...");
 
     // 3. Prepare File Object (to get ID for S3 Key)
     // Ensure extension has dot if it exists
@@ -108,7 +103,6 @@ router.post("/google-drive", async (req, res) => {
 
     // 4. Create S3 Key matching existing system pattern: fileId + extension
     const key = `${newFile._id}${extension}`;
-    console.log("S3 Key:", key);
 
     // 5. Upload to S3
     const parallelUploads3 = new Upload({
@@ -125,9 +119,7 @@ router.post("/google-drive", async (req, res) => {
       // console.log(progress);
     });
 
-    console.log("Starting S3 upload...");
     await parallelUploads3.done();
-    console.log("S3 upload complete.");
 
     // 6. Finalize File Record
     // If we didn't have size (exported doc), we might want to update it now if possible, 
@@ -136,7 +128,7 @@ router.post("/google-drive", async (req, res) => {
     
     newFile.isUploading = false;
     await newFile.save();
-    console.log("File record saved.");
+    
 
     // 7. Update Directory Size
     if (newFile.parentDirId) {
@@ -146,8 +138,25 @@ router.post("/google-drive", async (req, res) => {
     res.status(200).json({ success: true, file: newFile });
 
   } catch (error) {
-    console.error("Google Drive Import Error:", error);
-    res.status(500).json({ error: "Failed to import file from Google Drive" });
+    
+    // Provide more specific error messages
+    let errorMessage = "Failed to import file from Google Drive";
+    let statusCode = 500;
+    
+    if (error.code === 401 || error.message?.includes('invalid_grant') || error.message?.includes('Invalid Credentials')) {
+      errorMessage = "Invalid or expired Google Drive access token. Please try authenticating again.";
+      statusCode = 401;
+    } else if (error.code === 403 || error.message?.includes('insufficient permissions')) {
+      errorMessage = "Insufficient permissions to access this file. Please grant the required permissions.";
+      statusCode = 403;
+    } else if (error.code === 404 || error.message?.includes('File not found')) {
+      errorMessage = "File not found in Google Drive. It may have been deleted or you don't have access.";
+      statusCode = 404;
+    } else if (error.message?.includes('quota')) {
+      errorMessage = "Google Drive API quota exceeded. Please try again later.";
+      statusCode = 429;
+    }
+    res.status(statusCode).json({ error: errorMessage, details: error.message });
   }
 });
 
