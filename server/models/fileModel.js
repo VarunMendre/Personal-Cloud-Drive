@@ -30,6 +30,41 @@ const fileSchema = new Schema(
       default: false,
       required: true,
     },
+    sharedWith: [{
+      userId: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        ref: "User",
+      },
+      role: {
+        type: String,
+        enum: ["viewer", "editor"],
+        default: "viewer",
+        required: true,
+      },
+      sharedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    }],
+    shareLink: {
+      token: {
+        type: String,
+        unique: true,
+        sparse: true,
+      },
+      url: String,
+      role: {
+        type: String,
+        enum: ["viewer", "editor"],
+        default: "viewer",
+      },
+      enabled: {
+        type: Boolean,
+        default: false,
+      },
+      createdAt: Date,
+    }
   },
   {
     timestamps: true,

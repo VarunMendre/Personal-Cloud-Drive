@@ -26,6 +26,40 @@ const directorySchema = new Schema(
       ref: "Directory",
       required: true,
     },
+    sharedWith: [{
+      userId: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+      },
+      role: {
+        type: String,
+        enum: ["viewer", "editor"],
+        default: "viewer"
+      },
+      sharedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    shareLink: {
+      token: {
+        type: String,
+        unique: true,
+        sparse: true
+      },
+      url: String,
+      role: {
+        type: String,
+        enum: ["viewer", "editor"],
+        default: "viewer"
+      },
+      enabled: {
+        type: Boolean,
+        default: false
+      },
+      createdAt: Date
+    }
   },
   {
     strict: "throw",
