@@ -9,6 +9,9 @@ import UsersPage from "./UsersPage";
 import UserSettings from "./UserSettings";
 import SharedWithMe from "./SharedWithMe";
 import UserFilesPage from "./UserFilesPage";
+import FileSharingDashboard from "./FileSharingDashboard";
+import SharedWithMePage from "./SharedWithMePage";
+import SharedByMePage from "./SharedByMePage";
 
 const router = createBrowserRouter([
   {
@@ -43,6 +46,18 @@ const router = createBrowserRouter([
   {
     path: "/shared-with-me",
     element: <SharedWithMe />,
+  },
+  {
+    path: "/share",
+    element: <FileSharingDashboard />,
+  },
+  {
+    path: "/share/shared-with-me",
+    element: <SharedWithMePage />,
+  },
+  {
+    path: "/share/shared-by-me",
+    element: <SharedByMePage />,
   },
   {
     path: "/github-callback",

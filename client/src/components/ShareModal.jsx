@@ -4,31 +4,41 @@ import {
   FaLink,
   FaCopy,
   FaTrash,
-  FaEdit,
   FaEye,
   FaGlobe,
   FaShare,
-  FaUserPlus,
+  FaEnvelope,
+  FaUsers,
+  FaPencilAlt,
+  FaUserCheck,
 } from "react-icons/fa";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
+  const [activeTab, setActiveTab] = useState("shareLink");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("viewer");
   const [sharedUsers, setSharedUsers] = useState([]);
   const [owner, setOwner] = useState(null);
   const [shareLink, setShareLink] = useState(null);
   const [linkRole, setLinkRole] = useState("viewer");
+  const [linkEnabled, setLinkEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSharing, setIsSharing] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  
+  // For Email Invite tab - user selection
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch shared users on mount
   useEffect(() => {
     fetchSharedUsers();
+    fetchAllUsers();
   }, []);
 
   const fetchSharedUsers = async () => {
@@ -45,6 +55,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
         setShareLink(data.shareLink);
         if (data.shareLink) {
           setLinkRole(data.shareLink.role);
+          setLinkEnabled(true);
         }
       } else {
         const data = await response.json();
@@ -55,6 +66,21 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
       setError("Error loading sharing information");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllUsers = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/users/list`, {
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAllUsers(data);
+      }
+    } catch (err) {
+      console.error("Error fetching users:", err);
     }
   };
 
@@ -87,7 +113,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
         setSuccess(`Shared with ${email} successfully!`);
         setEmail("");
         setRole("viewer");
-        fetchSharedUsers(); // Refresh list
+        fetchSharedUsers();
         setTimeout(() => setSuccess(""), 3000);
       } else {
         setError(data.error || "Failed to share");
@@ -154,6 +180,16 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
     }
   };
 
+  const handleToggleLink = async () => {
+    if (!linkEnabled) {
+      // Generate link
+      await handleGenerateLink();
+    } else {
+      // Disable link
+      await handleDisableLink();
+    }
+  };
+
   const handleGenerateLink = async () => {
     try {
       const response = await fetch(
@@ -170,6 +206,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
 
       if (response.ok) {
         setShareLink(data.shareLink);
+        setLinkEnabled(true);
         setSuccess("Share link generated!");
         setTimeout(() => setSuccess(""), 3000);
       } else {
@@ -209,10 +246,6 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
   };
 
   const handleDisableLink = async () => {
-    if (!confirm("Are you sure you want to disable this share link?")) {
-      return;
-    }
-
     try {
       const response = await fetch(
         `${BASE_URL}/share/${resourceType}/${resourceId}/share-link`,
@@ -224,6 +257,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
 
       if (response.ok) {
         setShareLink(null);
+        setLinkEnabled(false);
         setSuccess("Share link disabled!");
         setTimeout(() => setSuccess(""), 3000);
       } else {
@@ -244,6 +278,54 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
     }
   };
 
+  const handleUserSelect = (user) => {
+    if (selectedUsers.find((u) => u.userId === user.userId)) {
+      setSelectedUsers(selectedUsers.filter((u) => u.userId !== user.userId));
+    } else {
+      setSelectedUsers([...selectedUsers, user]);
+    }
+  };
+
+  const handleSendInvites = async () => {
+    if (selectedUsers.length === 0) {
+      setError("Please select users to invite");
+      return;
+    }
+
+    setIsSharing(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      // Send invites to all selected users
+      const promises = selectedUsers.map((user) =>
+        fetch(`${BASE_URL}/share/${resourceType}/${resourceId}/share`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email: user.email, role: "viewer" }),
+        })
+      );
+
+      await Promise.all(promises);
+      setSuccess(`Invites sent to ${selectedUsers.length} user(s)!`);
+      setSelectedUsers([]);
+      fetchSharedUsers();
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      console.error("Error sending invites:", err);
+      setError("Error sending invites");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const filteredUsers = allUsers.filter(
+    (user) =>
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
@@ -256,25 +338,72 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-slideUp" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-slideUp"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-xl z-10">
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FaShare className="w-5 h-5 text-blue-600" />
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+              <FaUsers className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Share</h3>
-              <p className="text-sm text-gray-500 mt-0.5 truncate max-w-md" title={resourceName}>"{resourceName}"</p>
+              <h3 className="text-xl font-bold text-gray-900">Share Document</h3>
+              <p className="text-sm text-gray-500 mt-0.5">Collaborate with others</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-2">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+          >
             <FaTimes className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="px-6 py-5">
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200 bg-gray-50 px-6">
+          <button
+            onClick={() => setActiveTab("shareLink")}
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative ${
+              activeTab === "shareLink"
+                ? "text-blue-600 border-b-2 border-blue-600 bg-white"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            }`}
+          >
+            <FaLink className="w-4 h-4" />
+            Share Link
+          </button>
+          <button
+            onClick={() => setActiveTab("emailInvite")}
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative ${
+              activeTab === "emailInvite"
+                ? "text-blue-600 border-b-2 border-blue-600 bg-white"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            }`}
+          >
+            <FaEnvelope className="w-4 h-4" />
+            Email Invite
+          </button>
+          <button
+            onClick={() => setActiveTab("sharedWith")}
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative ${
+              activeTab === "sharedWith"
+                ? "text-blue-600 border-b-2 border-blue-600 bg-white"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            }`}
+          >
+            <FaUserCheck className="w-4 h-4" />
+            Shared With
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
           {/* Messages */}
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -287,191 +416,227 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
             </div>
           )}
 
-          {/* Share with specific user */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <FaUserPlus className="w-4 h-4 text-gray-600" />
-              <h4 className="text-sm font-semibold text-gray-900">Add People</h4>
+          {/* Share Link Tab */}
+          {activeTab === "shareLink" && (
+            <div className="space-y-6">
+              {/* Toggle Share Link */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <FaGlobe className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900">Share with link</h4>
+                    <p className="text-xs text-gray-500">Anyone with the link can access</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleToggleLink}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    linkEnabled ? "bg-blue-600" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      linkEnabled ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {linkEnabled && shareLink && (
+                <>
+                  {/* Permission Level */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Permission level
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleUpdateLinkRole("viewer")}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                          linkRole === "viewer"
+                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                        }`}
+                      >
+                        <FaEye className="w-4 h-4" />
+                        <span className="font-medium">Viewer</span>
+                      </button>
+                      <button
+                        onClick={() => handleUpdateLinkRole("editor")}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                          linkRole === "editor"
+                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                        }`}
+                      >
+                        <FaPencilAlt className="w-4 h-4" />
+                        <span className="font-medium">Editor</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Share Link */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Share link
+                    </label>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <FaLink className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <input
+                        type="text"
+                        value={shareLink.url}
+                        readOnly
+                        className="flex-1 bg-transparent border-none text-sm text-gray-700 focus:outline-none"
+                      />
+                      <button
+                        onClick={handleCopyLink}
+                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                      >
+                        <FaCopy className="w-3 h-3" />
+                        {copiedLink ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-            <form onSubmit={handleShareWithUser} className="flex gap-2">
-              <input
-                type="email"
-                placeholder="Enter email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900"
-              />
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900"
-              >
-                <option value="viewer">Viewer</option>
-                <option value="editor">Editor</option>
-              </select>
+          )}
+
+          {/* Email Invite Tab */}
+          {activeTab === "emailInvite" && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select users to invite
+                </label>
+                <input
+                  type="text"
+                  placeholder="Choose users to invite"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900"
+                />
+              </div>
+
+              {/* User List */}
+              <div className="border border-gray-200 rounded-lg max-h-64 overflow-y-auto">
+                {filteredUsers.map((user) => {
+                  const isSelected = selectedUsers.find((u) => u.userId === user.userId);
+                  return (
+                    <div
+                      key={user.userId}
+                      onClick={() => handleUserSelect(user)}
+                      className={`flex items-center gap-3 p-3 cursor-pointer transition-colors ${
+                        isSelected ? "bg-blue-50" : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center text-white font-semibold">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {user.name}
+                        </div>
+                        <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                      </div>
+                      {isSelected && (
+                        <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Send Invites Button */}
               <button
-                type="submit"
-                disabled={isSharing}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                onClick={handleSendInvites}
+                disabled={selectedUsers.length === 0 || isSharing}
+                className="w-full px-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                {isSharing ? "Sharing..." : "Share"}
+                {isSharing
+                  ? "Sending..."
+                  : selectedUsers.length > 0
+                  ? `Select users to send invites`
+                  : "Select users to send invites"}
               </button>
-            </form>
-          </div>
+            </div>
+          )}
 
-          {/* People with access */}
-          <div className="mb-6 pb-6 border-b border-gray-100">
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">People with Access</h4>
-            <div className="space-y-2">
-              {/* Owner */}
-              {owner && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <img
-                    src={owner.picture}
-                    alt={owner.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">{owner.name}</div>
-                    <div className="text-xs text-gray-500 truncate">{owner.email}</div>
+          {/* Shared With Tab */}
+          {activeTab === "sharedWith" && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                  <FaUserCheck className="w-4 h-4 text-green-600" />
+                </div>
+                <h4 className="text-base font-semibold text-gray-900">Users with Access</h4>
+              </div>
+
+              {sharedUsers.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FaUserCheck className="w-8 h-8 text-gray-400" />
                   </div>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                    Owner
-                  </span>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No users shared yet</h3>
+                  <p className="text-sm text-gray-500">
+                    Use the Email Invite tab to share this document with others.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {sharedUsers.map((user) => (
+                    <div
+                      key={user.userId}
+                      className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                    >
+                      {user.picture ? (
+                        <img
+                          src={user.picture}
+                          alt={user.name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {user.name}
+                        </div>
+                        <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                      </div>
+                      <select
+                        value={user.role}
+                        onChange={(e) => handleUpdateAccess(user.userId, e.target.value)}
+                        className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="viewer">Viewer</option>
+                        <option value="editor">Editor</option>
+                      </select>
+                      <button
+                        onClick={() => handleRemoveAccess(user.userId)}
+                        title="Remove access"
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <FaTrash className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
-
-              {/* Shared users */}
-              {sharedUsers.map((user) => (
-                <div key={user.userId} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                  <img
-                    src={user.picture}
-                    alt={user.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">{user.name}</div>
-                    <div className="text-xs text-gray-500 truncate">{user.email}</div>
-                  </div>
-                  <select
-                    value={user.role}
-                    onChange={(e) => handleUpdateAccess(user.userId, e.target.value)}
-                    className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="viewer">Viewer</option>
-                    <option value="editor">Editor</option>
-                  </select>
-                  <button
-                    onClick={() => handleRemoveAccess(user.userId)}
-                    title="Remove access"
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <FaTrash className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-
-              {sharedUsers.length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">Not shared with anyone yet</p>
-              )}
             </div>
-          </div>
-
-          {/* Share link section */}
-          <div className="mb-6 pb-6 border-b border-gray-100">
-            <div className="flex items-center gap-2 mb-3">
-              <FaGlobe className="w-4 h-4 text-gray-600" />
-              <h4 className="text-sm font-semibold text-gray-900">Get Link</h4>
-            </div>
-            {shareLink ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                  <FaLink className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <input
-                    type="text"
-                    value={shareLink.url}
-                    readOnly
-                    className="flex-1 bg-transparent border-none text-sm text-gray-700 focus:outline-none"
-                  />
-                  <button
-                    onClick={handleCopyLink}
-                    title="Copy link"
-                    className="px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1.5"
-                  >
-                    {copiedLink ? (
-                      <>
-                        <FaCopy className="w-3 h-3" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <FaCopy className="w-3 h-3" />
-                        Copy
-                      </>
-                    )}
-                  </button>
-                </div>
-                <div className="flex gap-2">
-                  <select
-                    value={shareLink.role}
-                    onChange={(e) => handleUpdateLinkRole(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="viewer">Anyone with link can view</option>
-                    <option value="editor">Anyone with link can edit</option>
-                  </select>
-                  <button
-                    onClick={handleDisableLink}
-                    className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
-                  >
-                    Disable
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-sm text-gray-600">Create a shareable link for this {resourceType}</p>
-                <div className="flex gap-2">
-                  <select
-                    value={linkRole}
-                    onChange={(e) => setLinkRole(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="viewer">Viewer</option>
-                    <option value="editor">Editor</option>
-                  </select>
-                  <button
-                    onClick={handleGenerateLink}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                  >
-                    <FaLink className="w-4 h-4" />
-                    Generate Link
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Permission descriptions */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">Permission Levels</h4>
-            <div className="space-y-2">
-              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                <FaEye className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm">
-                  <strong className="text-gray-900">Viewer:</strong>
-                  <span className="text-gray-600"> Can view and download</span>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                <FaEdit className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm">
-                  <strong className="text-gray-900">Editor:</strong>
-                  <span className="text-gray-600"> Can view, download, edit, and delete</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
@@ -479,4 +644,3 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
 }
 
 export default ShareModal;
-
