@@ -11,6 +11,7 @@ import {
   getCurrentUser,
   getUserFiles,
   getUserFileView,
+  getUserList,
   getUserPassword,
   hardDeleteUser,
   login,
@@ -27,6 +28,7 @@ import {
 } from "../controllers/userController.js";
 import { rateLimiters } from "../utils/rateLimiting.js";
 import { throttlers } from "../utils/throttler.js";
+import { check } from "zod";
 
 const router = express.Router();
 
@@ -182,5 +184,10 @@ router.put(
   throttlers.updateUserRole,
   updateUserRole
 );
+
+
+// User List for sharing feature
+
+router.get("/list", checkAuth, checkUserDeleted, getUserList)
 
 export default router;

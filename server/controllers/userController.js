@@ -571,3 +571,9 @@ export const updateUserFile = async (req, res, next) => {
     next(err);
   }
 };
+
+
+
+export const getUserList = async (req, res, next) => {
+    
+}
