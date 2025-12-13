@@ -35,11 +35,13 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch shared users on mount
+  // Fetch shared users on mount or when resource changes
   useEffect(() => {
-    fetchSharedUsers();
+    if (resourceType && resourceId) {
+      fetchSharedUsers();
+    }
     fetchAllUsers();
-  }, []);
+  }, [resourceType, resourceId]);
 
   const fetchSharedUsers = async () => {
     try {
@@ -71,13 +73,20 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
 
   const fetchAllUsers = async () => {
     try {
-      const response = await fetch(`${BASE_URL}/users/list`, {
+      // Correct endpoint for user list
+      const response = await fetch(`${BASE_URL}/list`, {
         credentials: "include",
       });
 
       if (response.ok) {
         const data = await response.json();
-        setAllUsers(data);
+        // Safety check to ensure data is an array
+        if (Array.isArray(data)) {
+          setAllUsers(data);
+        } else {
+          console.error("User list is not an array:", data);
+          setAllUsers([]);
+        }
       }
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -320,22 +329,15 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
     }
   };
 
-  const filteredUsers = allUsers.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = Array.isArray(allUsers) 
+    ? allUsers.filter(
+        (user) =>
+          user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-8 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-gray-700">Loading...</span>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div
@@ -419,86 +421,94 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
           {/* Share Link Tab */}
           {activeTab === "shareLink" && (
             <div className="space-y-6">
-              {/* Toggle Share Link */}
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <FaGlobe className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-900">Share with link</h4>
-                    <p className="text-xs text-gray-500">Anyone with the link can access</p>
-                  </div>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
-                <button
-                  onClick={handleToggleLink}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    linkEnabled ? "bg-blue-600" : "bg-gray-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      linkEnabled ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {linkEnabled && shareLink && (
+              ) : (
                 <>
-                  {/* Permission Level */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Permission level
-                    </label>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleUpdateLinkRole("viewer")}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                          linkRole === "viewer"
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                        }`}
-                      >
-                        <FaEye className="w-4 h-4" />
-                        <span className="font-medium">Viewer</span>
-                      </button>
-                      <button
-                        onClick={() => handleUpdateLinkRole("editor")}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                          linkRole === "editor"
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                        }`}
-                      >
-                        <FaPencilAlt className="w-4 h-4" />
-                        <span className="font-medium">Editor</span>
-                      </button>
+                  {/* Toggle Share Link */}
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <FaGlobe className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900">Share with link</h4>
+                        <p className="text-xs text-gray-500">Anyone with the link can access</p>
+                      </div>
                     </div>
+                    <button
+                      onClick={handleToggleLink}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        linkEnabled ? "bg-blue-600" : "bg-gray-300"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          linkEnabled ? "translate-x-6" : "translate-x-1"
+                        }`}
+                      />
+                    </button>
                   </div>
 
-                  {/* Share Link */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Share link
-                    </label>
-                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <FaLink className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <input
-                        type="text"
-                        value={shareLink.url}
-                        readOnly
-                        className="flex-1 bg-transparent border-none text-sm text-gray-700 focus:outline-none"
-                      />
-                      <button
-                        onClick={handleCopyLink}
-                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                      >
-                        <FaCopy className="w-3 h-3" />
-                        {copiedLink ? "Copied!" : "Copy"}
-                      </button>
-                    </div>
-                  </div>
+                  {linkEnabled && shareLink && (
+                    <>
+                      {/* Permission Level */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Permission level
+                        </label>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleUpdateLinkRole("viewer")}
+                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                              linkRole === "viewer"
+                                ? "border-blue-500 bg-blue-50 text-blue-700"
+                                : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                            }`}
+                          >
+                            <FaEye className="w-4 h-4" />
+                            <span className="font-medium">Viewer</span>
+                          </button>
+                          <button
+                            onClick={() => handleUpdateLinkRole("editor")}
+                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                              linkRole === "editor"
+                                ? "border-blue-500 bg-blue-50 text-blue-700"
+                                : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                            }`}
+                          >
+                            <FaPencilAlt className="w-4 h-4" />
+                            <span className="font-medium">Editor</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Share Link */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Share link
+                        </label>
+                        <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <FaLink className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <input
+                            type="text"
+                            value={shareLink.url}
+                            readOnly
+                            className="flex-1 bg-transparent border-none text-sm text-gray-700 focus:outline-none"
+                          />
+                          <button
+                            onClick={handleCopyLink}
+                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                          >
+                            <FaCopy className="w-3 h-3" />
+                            {copiedLink ? "Copied!" : "Copy"}
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -582,7 +592,11 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                 <h4 className="text-base font-semibold text-gray-900">Users with Access</h4>
               </div>
 
-              {sharedUsers.length === 0 ? (
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : sharedUsers.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <FaUserCheck className="w-8 h-8 text-gray-400" />

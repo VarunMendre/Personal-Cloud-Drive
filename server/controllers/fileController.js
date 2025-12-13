@@ -22,8 +22,7 @@ export const getFile = async (req, res) => {
 
   const fileData = await File.findOne({
     _id: fileId,
-    userId: req.user._id,
-  }).lean();
+  });
 
   // Check if file exists
   if (!fileData) {

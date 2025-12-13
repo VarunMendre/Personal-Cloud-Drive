@@ -575,5 +575,22 @@ export const updateUserFile = async (req, res, next) => {
 
 
 export const getUserList = async (req, res, next) => {
-    
-}
+  try {
+    // Exclude deleted users and return only the basic fields needed by the UI
+    const users = await User.find(
+      { isDeleted: false },
+      { _id: 1, name: 1, email: 1, picture: 1 }
+    );
+
+    const usersList = users.map((user) => ({
+      userId: user._id,
+      name: user.name,
+      email: user.email,
+      picture: user.picture || "",
+    }));
+
+    res.json(usersList);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+};
