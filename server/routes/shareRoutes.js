@@ -5,6 +5,7 @@ import {
   generateShareLink,
   getCollaborators,
   getDashboardStats,
+  getPublicSharedResource,
   getRecentActivity,
   getSharedByMe,
   getSharedUsers,
@@ -60,4 +61,6 @@ router.delete(
     disableShareLink
 );
 
+
+router.get("/link/:token", getPublicSharedResource);
 export default router;

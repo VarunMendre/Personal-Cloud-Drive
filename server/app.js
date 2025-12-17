@@ -14,7 +14,7 @@ import { connectDB } from "./config/db.js";
 
 const mySecretKey = process.env.MY_SECRET_KEY;
 
-await connectDB();
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -51,7 +51,7 @@ app.use("/file", checkAuth, fileRoutes);
 app.use("/", userRoutes);
 app.use("/auth", authRoutes);
 app.use("/import", checkAuth, importRoutes);
-app.use("/share", checkAuth, shareRoutes);
+app.use("/share", shareRoutes);
 
 app.use((err, req, res, next) => {
   console.log(err);

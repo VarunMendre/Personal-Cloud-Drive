@@ -12,6 +12,7 @@ import UserFilesPage from "./UserFilesPage";
 import FileSharingDashboard from "./FileSharingDashboard";
 import SharedWithMePage from "./SharedWithMePage";
 import SharedByMePage from "./SharedByMePage";
+import SharedLinkPage from "./SharedLinkPage";
 
 const router = createBrowserRouter([
   {
@@ -62,6 +63,10 @@ const router = createBrowserRouter([
   {
     path: "/github-callback",
     element: <GitHubCallbackHandler />,
+  },
+  {
+    path: "/shared/link/:token",
+    element: <SharedLinkPage />,
   },
 ]);
 

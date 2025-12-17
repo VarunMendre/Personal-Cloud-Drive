@@ -1,6 +1,7 @@
 import User from "../models/userModel.js";
 import File from "../models/fileModel.js";
 import Directory from "../models/directoryModel.js";
+import { createCloudFrontSignedGetUrl } from "../services/cloudFront.js";
 
 export const getSharedUsers = async (req, res) => {
   try {
@@ -28,29 +29,28 @@ export const getSharedUsers = async (req, res) => {
     // Usually only owner or editors should see this. For now, strict check for owner.
     // However, if I am a shared user opening this, I might need to see it too?
     // Let's stick to Owner + Shared users can see who else is on it.
-    
+
     const isOwner = resource.userId._id.toString() === currentUserId.toString();
     const isShared = resource.sharedWith.some(
-        s => s.userId && s.userId._id.toString() === currentUserId.toString()
+      (s) => s.userId && s.userId._id.toString() === currentUserId.toString()
     );
 
     if (!isOwner && !isShared) {
-         return res.status(403).json({ error: "Unauthorized" });
+      return res.status(403).json({ error: "Unauthorized" });
     }
 
     res.json({
       owner: resource.userId,
-      sharedWith: resource.sharedWith.map(s => ({
+      sharedWith: resource.sharedWith.map((s) => ({
         userId: s.userId._id,
         name: s.userId.name,
         email: s.userId.email,
         picture: s.userId.picture,
         role: s.role,
-        sharedAt: s.sharedAt
+        sharedAt: s.sharedAt,
       })),
-      shareLink: resource.shareLink
+      shareLink: resource.shareLink,
     });
-
   } catch (err) {
     console.error("Get Shared Users Error:", err);
     res.status(500).json({ error: "Failed to fetch shared users" });
@@ -121,8 +121,14 @@ export const shareWithUser = async (req, res) => {
     }
 
     const savedResource = await resource.save();
-    console.log("Resource saved. SharedWith length:", savedResource.sharedWith.length);
-    console.log("Saved sharedWith array:", JSON.stringify(savedResource.sharedWith));
+    console.log(
+      "Resource saved. SharedWith length:",
+      savedResource.sharedWith.length
+    );
+    console.log(
+      "Saved sharedWith array:",
+      JSON.stringify(savedResource.sharedWith)
+    );
 
     return res.status(200).json({ message: "Shared successfully" });
   } catch (err) {
@@ -208,18 +214,20 @@ export const generateShareLink = async (req, res) => {
     }
 
     // Generate random token
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    
+    const token =
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15);
+
     // In a real app, you might want to use a more robust URL gen
     // For now, let's assume a frontend route structure like /shared/link/:token
-    const linkUrl = `${req.get('origin')}/shared/link/${token}`;
+    const linkUrl = `${req.get("origin")}/shared/link/${token}`;
 
     resource.shareLink = {
       token,
       url: linkUrl,
       role: role || "viewer",
       enabled: true,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     await resource.save();
@@ -286,7 +294,7 @@ export const getDashboardStats = async (req, res) => {
       "sharedWith.userId": currentUserId,
     });
     const sharedFoldersCount = await Directory.countDocuments({
-       "sharedWith.userId": currentUserId,
+      "sharedWith.userId": currentUserId,
     });
 
     // 2. Shared By Me (Counts)
@@ -303,23 +311,30 @@ export const getDashboardStats = async (req, res) => {
     const collaborators = new Set();
 
     // A. Peope I shared with (Receivers)
-    const myFiles = await File.find({ userId: currentUserId, "sharedWith.0": { $exists: true } }).select("sharedWith.userId");
-    myFiles.forEach(f => f.sharedWith.forEach(s => collaborators.add(s.userId.toString())));
-    
+    const myFiles = await File.find({
+      userId: currentUserId,
+      "sharedWith.0": { $exists: true },
+    }).select("sharedWith.userId");
+    myFiles.forEach((f) =>
+      f.sharedWith.forEach((s) => collaborators.add(s.userId.toString()))
+    );
+
     // B. People who shared with me (Senders)
-    const filesSharedWithMe = await File.find({ "sharedWith.userId": currentUserId }).select("userId");
-    filesSharedWithMe.forEach(f => {
-        if (f.userId) collaborators.add(f.userId.toString());
+    const filesSharedWithMe = await File.find({
+      "sharedWith.userId": currentUserId,
+    }).select("userId");
+    filesSharedWithMe.forEach((f) => {
+      if (f.userId) collaborators.add(f.userId.toString());
     });
-    
+
     // Do the same for folders if you want consistency, usually users prioritize files
-    
+
     const stats = {
       sharedWithMe: sharedWithMeCount + sharedFoldersCount,
       sharedByMe: sharedByMeCount + sharedFoldersByMeCount,
       collaborators: collaborators.size,
     };
-    
+
     console.log("DEBUG: Dashboard Stats calculated:", stats);
 
     res.json(stats);
@@ -332,45 +347,55 @@ export const getDashboardStats = async (req, res) => {
 export const getRecentActivity = async (req, res) => {
   try {
     const currentUserId = req.user._id;
-    
+
     // Get recent files shared WITH me
     const files = await File.find({ "sharedWith.userId": currentUserId })
       .sort({ "sharedWith.sharedAt": -1 })
       .limit(5)
       .populate("userId", "name");
 
-    const activities = files.map(f => ({
+    const activities = files.map((f) => ({
       id: f._id,
       text: `Shared "${f.name}" with you`,
-      date: f.sharedWith.find(s => s.userId.toString() === currentUserId.toString())?.sharedAt || f.createdAt,
-      user: f.userId.name
+      date:
+        f.sharedWith.find(
+          (s) => s.userId.toString() === currentUserId.toString()
+        )?.sharedAt || f.createdAt,
+      user: f.userId.name,
     }));
 
     res.json(activities);
   } catch (err) {
-      console.error("Recent Activity Error:", err);
-      res.status(500).json({ error: "Failed to load activity" });
+    console.error("Recent Activity Error:", err);
+    res.status(500).json({ error: "Failed to load activity" });
   }
 };
 
 export const getSharedWithMe = async (req, res) => {
   try {
     const currentUserId = req.user._id;
-    console.log("DEBUG: Fetching shared with me. Current User ID:", currentUserId);
+    console.log(
+      "DEBUG: Fetching shared with me. Current User ID:",
+      currentUserId
+    );
 
     // 1. Find Files
-    // Debug: log the query we are about to run
-    console.log("DEBUG: Querying Files with:", { "sharedWith.userId": currentUserId });
-    
+    console.log("DEBUG: Querying Files with:", {
+      "sharedWith.userId": currentUserId,
+    });
+
     const sharedFiles = await File.find({
       "sharedWith.userId": currentUserId,
     })
-      .populate("userId", "name email picture") 
+      .populate("userId", "name email picture")
       .lean();
-      
+
     console.log("DEBUG: Raw Files Found:", sharedFiles.length);
     if (sharedFiles.length > 0) {
-        console.log("DEBUG: First file sharedWith:", JSON.stringify(sharedFiles[0].sharedWith));
+      console.log(
+        "DEBUG: First file sharedWith:",
+        JSON.stringify(sharedFiles[0].sharedWith)
+      );
     }
 
     // 2. Find Folders
@@ -379,10 +404,12 @@ export const getSharedWithMe = async (req, res) => {
     })
       .populate("userId", "name email picture")
       .lean();
-      
+
     console.log("DEBUG: Raw Folders Found:", sharedFolders.length);
 
-    console.log(`Found ${sharedFiles.length} files and ${sharedFolders.length} folders`);
+    console.log(
+      `Found ${sharedFiles.length} files and ${sharedFolders.length} folders`
+    );
 
     // 3. Format Files for Frontend
     const formattedFiles = sharedFiles.map((file) => {
@@ -390,16 +417,20 @@ export const getSharedWithMe = async (req, res) => {
       const myShare = file.sharedWith.find(
         (s) => s.userId.toString() === currentUserId.toString()
       );
-      
+
       // Debug if myShare is missing but file was found (should not happen normally)
-      if (!myShare) console.log("WARN: Share object not found in array for file:", file._id);
+      if (!myShare)
+        console.log(
+          "WARN: Share object not found in array for file:",
+          file._id
+        );
 
       return {
         fileId: file._id,
         fileName: file.name,
-        fileType: "file", 
+        fileType: "file",
         size: file.size,
-        sharedBy: file.userId?.name || "Unknown", 
+        sharedBy: file.userId?.name || "Unknown",
         sharedAt: myShare ? myShare.sharedAt : file.createdAt,
         permission: myShare ? myShare.role : "viewer",
       };
@@ -412,7 +443,7 @@ export const getSharedWithMe = async (req, res) => {
       );
 
       return {
-        fileId: folder._id, 
+        fileId: folder._id,
         fileName: folder.name,
         fileType: "directory",
         size: folder.size,
@@ -435,59 +466,140 @@ export const getSharedWithMe = async (req, res) => {
 };
 
 export const getSharedByMe = async (req, res) => {
-    try {
-        const currentUserId = req.user._id;
-        
-        // Find files shared by me
-        const files = await File.find({ userId: currentUserId, "sharedWith.0": { $exists: true } })
-          .populate("sharedWith.userId", "name email picture")
-          .lean();
+  try {
+    const currentUserId = req.user._id;
 
-        // Find folders shared by me (optional, but good for completeness)
-        const folders = await Directory.find({ userId: currentUserId, "sharedWith.0": { $exists: true } })
-          .populate("sharedWith.userId", "name email picture")
-          .lean();
+    // Find files shared by me
+    const files = await File.find({
+      userId: currentUserId,
+      "sharedWith.0": { $exists: true },
+    })
+      .populate("sharedWith.userId", "name email picture")
+      .lean();
 
-        const formattedFiles = files.map(f => ({
-            fileId: f._id,
-            fileName: f.name,
-            fileType: "file",
-            size: f.size,
-            sharedWith: f.sharedWith.map(s => ({
-                userId: s.userId?._id,
-                name: s.userId?.name || "Unknown",
-                email: s.userId?.email,
-                role: s.role
-            })),
-            sharedAt: f.createdAt,
-            permission: "editor" // I am owner
-        }));
+    // Find folders shared by me (optional, but good for completeness)
+    const folders = await Directory.find({
+      userId: currentUserId,
+      "sharedWith.0": { $exists: true },
+    })
+      .populate("sharedWith.userId", "name email picture")
+      .lean();
 
-        const formattedFolders = folders.map(f => ({
-            fileId: f._id,
-            fileName: f.name,
-            fileType: "directory",
-            size: f.size,
-            sharedWith: f.sharedWith.map(s => ({
-                userId: s.userId?._id,
-                name: s.userId?.name || "Unknown",
-                email: s.userId?.email,
-                role: s.role
-            })),
-            sharedAt: f.createdAt,
-            permission: "editor"
-        }));
+    const formattedFiles = files.map((f) => ({
+      fileId: f._id,
+      fileName: f.name,
+      fileType: "file",
+      size: f.size,
+      sharedWith: f.sharedWith.map((s) => ({
+        userId: s.userId?._id,
+        name: s.userId?.name || "Unknown",
+        email: s.userId?.email,
+        role: s.role,
+      })),
+      sharedAt: f.createdAt,
+      permission: "editor", // I am owner
+    }));
 
-        const combined = [...formattedFiles, ...formattedFolders].sort((a,b) => new Date(b.sharedAt) - new Date(a.sharedAt));
+    const formattedFolders = folders.map((f) => ({
+      fileId: f._id,
+      fileName: f.name,
+      fileType: "directory",
+      size: f.size,
+      sharedWith: f.sharedWith.map((s) => ({
+        userId: s.userId?._id,
+        name: s.userId?.name || "Unknown",
+        email: s.userId?.email,
+        role: s.role,
+      })),
+      sharedAt: f.createdAt,
+      permission: "editor",
+    }));
 
-        res.json(combined);
-    } catch (err) {
-        console.error("Shared By Me Error", err);
-        res.status(500).json({ error: "Failed to fetch" });
-    }
+    const combined = [...formattedFiles, ...formattedFolders].sort(
+      (a, b) => new Date(b.sharedAt) - new Date(a.sharedAt)
+    );
+
+    res.json(combined);
+  } catch (err) {
+    console.error("Shared By Me Error", err);
+    res.status(500).json({ error: "Failed to fetch" });
+  }
 };
 
 export const getCollaborators = async (req, res) => {
-    // Already partly implemented in stats, skipping full list for now if not used by UI
-    res.json([]);
+  res.json([]);
+};
+
+export const getPublicSharedResource = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // 1. Search in Files
+    let resource = await File.findOne({
+      "shareLink.token": token,
+      "shareLink.enabled": true,
+    }).populate("userId", "name email");
+
+    let resourceType = "file";
+
+    // 2. If not found in Files, search in Directories
+    if (!resource) {
+      resource = await Directory.findOne({
+        "shareLink.token": token,
+        "shareLink.enabled": true,
+      }).populate("userId", "name email");
+      resourceType = "folder";
+    }
+
+    if (!resource) {
+      return res.status(404).json({ error: "Link invalid or disabled" });
+    }
+
+    // 3. Generate Signed URL (Essential for S3/CloudFront)
+    let signedUrl = null;
+    if (resourceType === "file") {
+      const s3Key = `${resource._id}${resource.extension}`;
+      try {
+        signedUrl = createCloudFrontSignedGetUrl({
+          key: s3Key,
+          filename: resource.name,
+        });
+      } catch (urlErr) {
+        console.error("Error generating signed URL:", urlErr);
+      }
+    }
+
+    // 4. Determine MIME type from extension
+    const extension = resource.extension
+      ? resource.extension.toLowerCase().replace(".", "")
+      : "";
+    const isImage = [
+      "jpg",
+      "jpeg",
+      "png",
+      "gif",
+      "webp",
+      "svg",
+      "bmp",
+    ].includes(extension);
+    const mimeType = isImage
+      ? `image/${extension}`
+      : "application/octet-stream";
+
+    // 5. Construct response
+    res.json({
+      name: resource.name,
+      fileType: "file",
+      mimeType: mimeType,
+      size: resource.size,
+      owner: resource.userId,
+      createdAt: resource.createdAt,
+      downloadUrl: signedUrl, // This sends the actual working link
+      previewUrl: signedUrl, // This sends the actual working link
+      role: resource.shareLink.role,
+    });
+  } catch (err) {
+    console.error("Public Share Error:", err);
+    res.status(500).json({ error: "Failed to load shared resource" });
+  }
 };
