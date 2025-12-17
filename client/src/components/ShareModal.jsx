@@ -39,11 +39,14 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
   useEffect(() => {
     if (resourceType && resourceId) {
       fetchSharedUsers();
+    } else {
+      setLoading(false);
     }
     fetchAllUsers();
   }, [resourceType, resourceId]);
 
   const fetchSharedUsers = async () => {
+    setLoading(true);
     try {
       const response = await fetch(
         `${BASE_URL}/share/${resourceType}/${resourceId}/shared-users`,
@@ -70,6 +73,8 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
       setLoading(false);
     }
   };
+
+
 
   const fetchAllUsers = async () => {
     try {
@@ -319,7 +324,8 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
       await Promise.all(promises);
       setSuccess(`Invites sent to ${selectedUsers.length} user(s)!`);
       setSelectedUsers([]);
-      fetchSharedUsers();
+      await fetchSharedUsers();
+      setActiveTab("sharedWith");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       console.error("Error sending invites:", err);

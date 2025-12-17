@@ -2,7 +2,60 @@ import User from "../models/userModel.js";
 import File from "../models/fileModel.js";
 import Directory from "../models/directoryModel.js";
 
-export const getSharedUsers = async (req, res) => {};
+export const getSharedUsers = async (req, res) => {
+  try {
+    const { resourceType, resourceId } = req.params;
+    const currentUserId = req.user._id;
+
+    let Model;
+    if (resourceType === "file") {
+      Model = File;
+    } else if (resourceType === "folder") {
+      Model = Directory;
+    } else {
+      return res.status(400).json({ error: "Invalid Resource Type" });
+    }
+
+    const resource = await Model.findById(resourceId)
+      .populate("userId", "name email picture")
+      .populate("sharedWith.userId", "name email picture");
+
+    if (!resource) {
+      return res.status(404).json({ error: "Resource not found" });
+    }
+
+    // Allow owner OR anyone who has access to view the shared list?
+    // Usually only owner or editors should see this. For now, strict check for owner.
+    // However, if I am a shared user opening this, I might need to see it too?
+    // Let's stick to Owner + Shared users can see who else is on it.
+    
+    const isOwner = resource.userId._id.toString() === currentUserId.toString();
+    const isShared = resource.sharedWith.some(
+        s => s.userId && s.userId._id.toString() === currentUserId.toString()
+    );
+
+    if (!isOwner && !isShared) {
+         return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    res.json({
+      owner: resource.userId,
+      sharedWith: resource.sharedWith.map(s => ({
+        userId: s.userId._id,
+        name: s.userId.name,
+        email: s.userId.email,
+        picture: s.userId.picture,
+        role: s.role,
+        sharedAt: s.sharedAt
+      })),
+      shareLink: resource.shareLink
+    });
+
+  } catch (err) {
+    console.error("Get Shared Users Error:", err);
+    res.status(500).json({ error: "Failed to fetch shared users" });
+  }
+};
 
 export const shareWithUser = async (req, res) => {
   try {
