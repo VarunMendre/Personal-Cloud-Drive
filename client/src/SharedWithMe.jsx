@@ -48,8 +48,9 @@ function SharedWithMe() {
 
       if (response.ok) {
         const data = await response.json();
-        setDirectories(data.directories);
-        setFiles(data.files);
+        // Backend returns a combined array, so we filter it here
+        setDirectories(data.filter((item) => item.fileType === "directory"));
+        setFiles(data.filter((item) => item.fileType === "file"));
       } else {
         const data = await response.json();
         setError(data.error || "Failed to fetch shared resources");

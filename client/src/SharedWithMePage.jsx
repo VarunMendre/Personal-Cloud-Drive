@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DirectoryHeader from "./components/DirectoryHeader";
-import { FaArrowLeft, FaFileAlt, FaSearch, FaUserCircle } from "react-icons/fa";
+import { FaArrowLeft, FaFileAlt, FaSearch, FaUserCircle, FaDownload, FaEye } from "react-icons/fa";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -214,9 +214,22 @@ function SharedWithMePage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                          Manage
-                        </button>
+                        <div className="flex justify-end gap-2">
+                          <button 
+                            onClick={() => window.open(`${BASE_URL}/file/${file.fileId}`, '_blank')}
+                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                            title="View File"
+                          >
+                           <FaEye className="w-5 h-5" />
+                          </button>
+                          <button 
+                            onClick={() => window.location.href = `${BASE_URL}/file/${file.fileId}?action=download`}
+                            className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-full transition-colors"
+                            title="Download File"
+                          >
+                            <FaDownload className="w-5 h-5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

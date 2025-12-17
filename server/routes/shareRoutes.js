@@ -20,8 +20,8 @@ const router = express.Router();
 // Dashboard
 router.get("/dashboard/stats", checkAuth, getDashboardStats);
 router.get("/dashboard/activity", checkAuth, getRecentActivity);
-router.get("/share-with-me", checkAuth, getSharedWithMe);
-router.get("/share-by-me", checkAuth, getSharedByMe);
+router.get("/shared-with-me", checkAuth, getSharedWithMe);
+router.get("/shared-by-me", checkAuth, getSharedByMe);
 router.get("/collaborators", checkAuth, getCollaborators);
 
 // Resource sharring routes
