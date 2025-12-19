@@ -2,6 +2,7 @@ import User from "../models/userModel.js";
 import File from "../models/fileModel.js";
 import Directory from "../models/directoryModel.js";
 import { createCloudFrontSignedGetUrl } from "../services/cloudFront.js";
+import { getFileUrl } from "../services/s3.js";
 
 export const getSharedUsers = async (req, res) => {
   try {
@@ -12,7 +13,7 @@ export const getSharedUsers = async (req, res) => {
     if (resourceType === "file") {
       Model = File;
     } else if (resourceType === "folder") {
-      Model = Directory;
+      return res.status(400).json({ error: "Folder sharing is disabled" });
     } else {
       return res.status(400).json({ error: "Invalid Resource Type" });
     }
@@ -85,7 +86,7 @@ export const shareWithUser = async (req, res) => {
     if (resourceType === "file") {
       Model = File;
     } else if (resourceType === "folder") {
-      Model = Directory;
+      return res.status(400).json({ error: "Folder sharing is disabled" });
     } else {
       return res.status(400).json({ error: "Invalid Resource Type" });
     }
@@ -202,7 +203,10 @@ export const generateShareLink = async (req, res) => {
     const { role } = req.body;
     const currentUserId = req.user._id;
 
-    let Model = resourceType === "file" ? File : Directory;
+    if (resourceType !== "file") {
+      return res.status(400).json({ error: "Only files can be shared" });
+    }
+    let Model = File;
     const resource = await Model.findById(resourceId);
 
     if (!resource) {
@@ -542,26 +546,37 @@ export const getPublicSharedResource = async (req, res) => {
 
     let resourceType = "file";
 
-    // 2. If not found in Files, search in Directories
-    if (!resource) {
-      resource = await Directory.findOne({
-        "shareLink.token": token,
-        "shareLink.enabled": true,
-      }).populate("userId", "name email");
-      resourceType = "folder";
-    }
+    // 2. If not found in Files, return error (Folder sharing disabled)
+    // if (!resource) {
+    //   resource = await Directory.findOne({
+    //     "shareLink.token": token,
+    //     "shareLink.enabled": true,
+    //   }).populate("userId", "name email");
+    //   resourceType = "folder";
+    // }
 
     if (!resource) {
       return res.status(404).json({ error: "Link invalid or disabled" });
     }
 
-    // 3. Generate Signed URL (Essential for S3/CloudFront)
-    let signedUrl = null;
+    // 3. Generate Signed URLs
+    let downloadUrl = null;
+    let previewUrl = null;
+
     if (resourceType === "file") {
       const s3Key = `${resource._id}${resource.extension}`;
       try {
-        signedUrl = createCloudFrontSignedGetUrl({
+        // Preview: Use CloudFront (Faster, Inline)
+        previewUrl = createCloudFrontSignedGetUrl({
           key: s3Key,
+          filename: resource.name,
+          disposition: 'inline'
+        });
+
+        // Download: Use Direct S3 (User requested fallback)
+        downloadUrl = await getFileUrl({
+          Key: s3Key,
+          download: true,
           filename: resource.name,
         });
       } catch (urlErr) {
@@ -581,7 +596,9 @@ export const getPublicSharedResource = async (req, res) => {
       "webp",
       "svg",
       "bmp",
+      "pdf"
     ].includes(extension);
+
     const mimeType = isImage
       ? `image/${extension}`
       : "application/octet-stream";
@@ -594,8 +611,8 @@ export const getPublicSharedResource = async (req, res) => {
       size: resource.size,
       owner: resource.userId,
       createdAt: resource.createdAt,
-      downloadUrl: signedUrl, // This sends the actual working link
-      previewUrl: signedUrl, // This sends the actual working link
+      downloadUrl: downloadUrl, // S3 Signed URL
+      previewUrl: previewUrl,   // CloudFront Signed URL
       role: resource.shareLink.role,
     });
   } catch (err) {

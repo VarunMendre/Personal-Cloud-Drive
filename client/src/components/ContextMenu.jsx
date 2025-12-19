@@ -29,14 +29,7 @@ function ContextMenu({
         className="fixed bg-white shadow-[0_2px_6px_rgba(0,0,0,0.2)] rounded-[4px] z-[999] py-[5px] min-w-[160px]"
         style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
       >
-        {/* Share option */}
-        <div
-          className={itemClass}
-          onClick={() => handleShare("directory", item.id, item.name)}
-        >
-          <FaShareAlt className="text-gray-600" />
-          <span>Share</span>
-        </div>
+
         <div
           className={itemClass}
           onClick={() => openRenameModal("directory", item.id, item.name)}
