@@ -13,6 +13,7 @@ import FileSharingDashboard from "./FileSharingDashboard";
 import SharedWithMePage from "./SharedWithMePage";
 import SharedByMePage from "./SharedByMePage";
 import SharedLinkPage from "./SharedLinkPage";
+import ManagePermissionsPage from "./ManagePermissionsPage";
 
 const router = createBrowserRouter([
   {
@@ -67,6 +68,10 @@ const router = createBrowserRouter([
   {
     path: "/shared/link/:token",
     element: <SharedLinkPage />,
+  },
+  {
+    path: "/share/manage/:resourceType/:resourceId",
+    element: <ManagePermissionsPage />,
   },
 ]);
 

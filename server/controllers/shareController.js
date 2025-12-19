@@ -40,6 +40,8 @@ export const getSharedUsers = async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
+    console.log("DEBUG: getSharedUsers returning shareLink:", resource.shareLink ? "FOUND" : "NULL", resource.shareLink);
+    
     res.json({
       owner: resource.userId,
       sharedWith: resource.sharedWith.map((s) => ({
@@ -199,6 +201,10 @@ export const removeUserAccess = async (req, res) => {
 
 export const generateShareLink = async (req, res) => {
   try {
+    console.log("DEBUG: generateShareLink HIT");
+    console.log("DEBUG: Params:", req.params);
+    console.log("DEBUG: Body:", req.body);
+
     const { resourceType, resourceId } = req.params;
     const { role } = req.body;
     const currentUserId = req.user._id;
@@ -222,9 +228,12 @@ export const generateShareLink = async (req, res) => {
       Math.random().toString(36).substring(2, 15) +
       Math.random().toString(36).substring(2, 15);
 
-    // In a real app, you might want to use a more robust URL gen
-    // For now, let's assume a frontend route structure like /shared/link/:token
-    const linkUrl = `${req.get("origin")}/shared/link/${token}`;
+    // Use origin or fallback to env/localhost
+    const origin = req.get("origin") || process.env.CLIENT_URL || "http://localhost:5173";
+    const linkUrl = `${origin}/shared/link/${token}`;
+    
+    console.log("DEBUG: Generating Link for:", resourceId);
+    console.log("DEBUG: Link URL:", linkUrl);
 
     resource.shareLink = {
       token,
@@ -233,8 +242,12 @@ export const generateShareLink = async (req, res) => {
       enabled: true,
       createdAt: new Date(),
     };
+    
+    console.log("DEBUG: Saving resource with shareLink:", JSON.stringify(resource.shareLink));
 
     await resource.save();
+    
+    console.log("DEBUG: Save successful. Token:", resource.shareLink.token);
 
     res.json({ shareLink: resource.shareLink });
   } catch (err) {

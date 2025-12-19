@@ -223,7 +223,10 @@ function SharedByMePage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="text-sm text-green-600 hover:text-green-700 font-medium">
+                        <button 
+                          onClick={() => navigate(`/share/manage/${file.fileType === 'directory' ? 'folder' : 'file'}/${file.fileId}`)}
+                          className="text-sm text-green-600 hover:text-green-700 font-medium hover:underline"
+                        >
                           Manage
                         </button>
                       </td>

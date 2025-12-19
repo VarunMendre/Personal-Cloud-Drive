@@ -58,9 +58,11 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
         setOwner(data.owner);
         setSharedUsers(data.sharedWith);
         setShareLink(data.shareLink);
-        if (data.shareLink) {
+        if (data.shareLink && data.shareLink.enabled) {
           setLinkRole(data.shareLink.role);
           setLinkEnabled(true);
+        } else {
+             setLinkEnabled(false);
         }
       } else {
         const data = await response.json();
