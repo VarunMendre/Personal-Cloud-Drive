@@ -618,6 +618,7 @@ export const getPublicSharedResource = async (req, res) => {
 
     // 5. Construct response
     res.json({
+      _id: resource._id,
       name: resource.name,
       fileType: "file",
       mimeType: mimeType,

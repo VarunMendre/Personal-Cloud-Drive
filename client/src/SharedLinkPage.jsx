@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { FaFile, FaFileImage, FaDownload, FaExclamationTriangle, FaPencilAlt, FaEye } from "react-icons/fa";
+import RenameModal from "./components/RenameModal";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -9,6 +10,11 @@ function SharedLinkPage() {
   const [fileData, setFileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [extensionError, setExtensionError] = useState("");
+  const [originalExtension, setOriginalExtension] = useState("");
 
   useEffect(() => {
     const fetchSharedFile = async () => {
@@ -55,6 +61,78 @@ function SharedLinkPage() {
       </div>
     );
   }
+
+  const openRenameModal = () => {
+      setRenameValue(fileData.name);
+      // Extract and store the original extension
+      const dotIndex = fileData.name.lastIndexOf(".");
+      if (dotIndex > 0) {
+        setOriginalExtension(fileData.name.substring(dotIndex));
+      } else {
+        setOriginalExtension("");
+      }
+      setExtensionError("");
+      setShowRenameModal(true);
+  };
+
+  // Validate that extension hasn't changed
+  const validateExtension = (newName) => {
+    if (!originalExtension) return true; // No extension to validate
+    
+    const newDotIndex = newName.lastIndexOf(".");
+    if (newDotIndex === -1) {
+      setExtensionError(`File extension "${originalExtension}" is required`);
+      return false;
+    }
+    
+    const newExtension = newName.substring(newDotIndex);
+    if (newExtension !== originalExtension) {
+      setExtensionError(`Extension must remain "${originalExtension}"`);
+      return false;
+    }
+    
+    setExtensionError("");
+    return true;
+  };
+
+  // Handle rename value change with validation
+  const handleRenameChange = (newValue) => {
+    setRenameValue(newValue);
+    validateExtension(newValue);
+  };
+
+  const handleRenameSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Final validation before submit
+    if (!validateExtension(renameValue)) {
+      return;
+    }
+    
+    try {
+        const response = await fetch(`${BASE_URL}/file/${fileData._id}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Share-Token": token, // Pass the share link token
+            },
+            body: JSON.stringify({ newFilename: renameValue }),
+            credentials: "include", 
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || "Failed to rename file");
+        }
+
+        setFileData(prev => ({ ...prev, name: renameValue }));
+        setShowRenameModal(false);
+
+    } catch (err) {
+        console.error("Rename failed:", err);
+        alert(`Rename failed: ${err.message}`);
+    }
+  };
 
   const isImage = fileData?.fileType?.startsWith("image/") || fileData?.mimeType?.startsWith("image/");
 
@@ -104,11 +182,11 @@ function SharedLinkPage() {
                         </a>
                     )}
                     <button
-                        onClick={() => alert("Edit functionality coming soon!")}
+                        onClick={openRenameModal}
                         className="flex items-center gap-2 px-6 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all font-medium shadow-sm hover:shadow-md text-sm"
                     >
                         <FaPencilAlt className="w-3.5 h-3.5" />
-                        Edit File
+                        Rename File
                     </button>
                   </>
                 ) : (
@@ -136,6 +214,17 @@ function SharedLinkPage() {
           )}
         </div>
       </div>
+
+      {showRenameModal && (
+        <RenameModal
+            renameType="file"
+            renameValue={renameValue}
+            setRenameValue={handleRenameChange}
+            onClose={() => setShowRenameModal(false)}
+            onRenameSubmit={handleRenameSubmit}
+            extensionError={extensionError}
+        />
+      )}
     </div>
   );
 }

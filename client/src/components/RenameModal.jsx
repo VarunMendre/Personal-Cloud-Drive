@@ -18,6 +18,7 @@ function RenameModal({
   setRenameValue,
   onClose,
   onRenameSubmit,
+  extensionError, // New prop for extension validation error
 }) {
   const inputRef = useRef(null);
 
@@ -119,9 +120,17 @@ function RenameModal({
                 type="text"
                 value={renameValue}
                 onChange={(e) => setRenameValue(e.target.value)}
-                className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900"
+                className={`w-full px-3 py-2.5 bg-white border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900 ${
+                  extensionError ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                }`}
                 placeholder={`Enter new ${renameType === "file" ? "file" : "folder"} name`}
               />
+              {extensionError && (
+                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                  <span>⚠️</span>
+                  <span>{extensionError}</span>
+                </p>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -135,7 +144,7 @@ function RenameModal({
               </button>
               <button
                 type="submit"
-                disabled={!renameValue.trim()}
+                disabled={!renameValue.trim() || !!extensionError}
                 className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 Save

@@ -59,15 +59,39 @@ export const renameFile = async (req, res, next) => {
   }
   const { fileId, newFilename, userId } = validateData.data;
 
-  // const { id } = req.params;
-  const file = await File.findOne({
-    _id: fileId,
-    userId: userId,
-  });
+  // Find the file 
+  const file = await File.findById(fileId);
 
   // Check if file exists
   if (!file) {
     return res.status(404).json({ error: "File not found!" });
+  }
+
+  // Check if this is a share link request (token in query or header)
+  const shareToken = req.query.shareToken || req.headers['x-share-token'];
+  
+  if (shareToken) {
+    // Validate share link token and permissions
+    if (!file.shareLink || 
+        file.shareLink.token !== shareToken || 
+        !file.shareLink.enabled) {
+      return res.status(403).json({ error: "Invalid or disabled share link" });
+    }
+    
+    if (file.shareLink.role !== "editor") {
+      return res.status(403).json({ error: "Share link does not have editor permissions" });
+    }
+    // Share link is valid with editor permissions, allow rename
+  } else {
+    // Regular request - check if user is owner OR has editor permission
+    const isOwner = file.userId.toString() === userId;
+    const hasEditorAccess = file.sharedWith.some(
+      (share) => share.userId.toString() === userId && share.role === "editor"
+    );
+
+    if (!isOwner && !hasEditorAccess) {
+      return res.status(403).json({ error: "You don't have permission to rename this file" });
+    }
   }
 
   try {
