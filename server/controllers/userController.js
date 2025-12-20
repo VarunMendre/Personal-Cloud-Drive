@@ -252,6 +252,50 @@ export const setUserPassword = async (req, res, next) => {
   }
 };
 
+export const changeUserPassword = async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res
+      .status(400)
+      .json({ error: "Current and new passwords are required" });
+  }
+
+  if (newPassword.length < 4) {
+    return res
+      .status(400)
+      .json({ error: "New password must be at least 4 characters long" });
+  }
+
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (!user.password || user.password.length === 0) {
+      return res
+        .status(400)
+        .json({
+          error: "No existing password set. Please set a password first.",
+        });
+    }
+
+    const isPasswordValid = await user.comparePassword(currentPassword);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({ error: "Current password is incorrect" });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Error changing password" });
+  }
+};
+
 export const getAllUsers = async (req, res) => {
   const requestorRole = req.user.role;
 
@@ -572,8 +616,6 @@ export const updateUserFile = async (req, res, next) => {
   }
 };
 
-
-
 export const getUserList = async (req, res, next) => {
   try {
     // Exclude deleted users and return only the basic fields needed by the UI
@@ -594,3 +636,4 @@ export const getUserList = async (req, res, next) => {
     res.status(500).json({ error: "Failed to fetch users" });
   }
 };
+

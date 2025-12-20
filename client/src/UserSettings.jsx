@@ -36,13 +36,33 @@ function UserSettings() {
 
   // UI states
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(""); // Global page errors
+  const [passwordError, setPasswordError] = useState(""); // Password form errors
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  
+  // Custom modal states
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [pendingPasswordData, setPendingPasswordData] = useState(null);
+
+  // Format storage size helper
+  const formatStorage = (bytes) => {
+    const MB = 1024 * 1024;
+    const GB = 1024 * 1024 * 1024;
+    
+    if (bytes >= GB) {
+      return `${(bytes / GB).toFixed(2)} GB`;
+    } else if (bytes >= MB) {
+      return `${(bytes / MB).toFixed(2)} MB`;
+    } else if (bytes >= 1024) {
+      return `${(bytes / 1024).toFixed(2)} KB`;
+    } else {
+      return `${bytes} B`;
+    }
+  };
 
   // Calculate storage stats
-  const usedGB = usedStorageInBytes / 1024 ** 3;
-  const totalGB = maxStorageLimit / 1024 ** 3;
   const usagePercentage = (usedStorageInBytes / maxStorageLimit) * 100;
 
   // Fetch user data on mount
@@ -67,23 +87,51 @@ function UserSettings() {
           setMaxStorageLimit(userData.maxStorageLimit);
           setUsedStorageInBytes(userData.usedStorageInBytes);
 
-          // Detect connected provider from email domain or other logic
-          // This is a simple heuristic - adjust based on your backend
-          if (userData.email.includes("gmail.com")) {
-            setConnectedProvider("google");
-          } else if (userData.email.includes("github")) {
-            setConnectedProvider("github");
+          // Check password status from backend
+          const passwordResponse = await fetch(`${BASE_URL}/user/has-password`, {
+            credentials: "include",
+          });
+
+          let passwordStatus = false;
+          if (passwordResponse.ok) {
+            const passwordData = await passwordResponse.json();
+            passwordStatus = passwordData.hasPassword;
+          } else {
+            console.error("Failed to fetch password status:", passwordResponse.status);
           }
-        }
 
-        // Check password status
-        const passwordResponse = await fetch(`${BASE_URL}/user/has-password`, {
-          credentials: "include",
-        });
+          // WORKAROUND: Backend /user/has-password is broken (doesn't include password field in req.user)
+          // Use localStorage to track if user has set a password
+          const storedPasswordStatus = localStorage.getItem(`hasPassword_${userData.email}`);
+          if (storedPasswordStatus !== null) {
+            passwordStatus = storedPasswordStatus === 'true';
+          }
+          
+          setHasPassword(passwordStatus);
 
-        if (passwordResponse.ok) {
-          const passwordData = await passwordResponse.json();
-          setHasPassword(passwordData.hasPassword);
+          // Detect connected provider - improved logic
+          const isGoogleImage = userData.picture?.includes("googleusercontent.com");
+          const isGithubImage = userData.picture?.includes("githubusercontent.com") || userData.picture?.includes("avatars.github");
+
+          // If user has no password and has a picture, they likely logged in via OAuth
+          if (!passwordStatus && userData.picture) {
+            // Check email domain or image URL to determine provider
+            if (userData.email.includes("@gmail.com") || userData.email.includes("@googlemail.com") || isGoogleImage) {
+              setConnectedProvider("google");
+            } else if (userData.email.includes("@users.noreply.github.com") || userData.email.includes("github") || isGithubImage) {
+              setConnectedProvider("github");
+            } else {
+              // Generic OAuth user - default to google if they have a picture
+              setConnectedProvider("google");
+            }
+          } else if (userData.picture) {
+            // User has password but also has picture - might have set password after OAuth login (or is a regular user with an avatar, but in this app picture usually comes from OAuth)
+            if (userData.email.includes("@gmail.com") || userData.email.includes("@googlemail.com") || isGoogleImage) {
+              setConnectedProvider("google");
+            } else if (userData.email.includes("@users.noreply.github.com") || userData.email.includes("github") || isGithubImage) {
+              setConnectedProvider("github");
+            }
+          }
         }
       } catch (err) {
         console.error("Error fetching user data:", err);
@@ -99,29 +147,56 @@ function UserSettings() {
   // Handle password change/set
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setPasswordError("");
     setSuccess("");
 
     // Validation
     if (newPassword.length < 4) {
-      setError("Password must be at least 4 characters long");
+      setPasswordError("Password must be at least 4 characters long");
+      setTimeout(() => setPasswordError(""), 3000);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      setPasswordError("Passwords do not match");
+      setTimeout(() => setPasswordError(""), 3000);
       return;
     }
 
+    // Store data and show custom confirmation modal
+    const dataToStore = { currentPassword, newPassword };
+    console.log("=== PASSWORD FORM SUBMISSION ===");
+    console.log("hasPassword:", hasPassword);
+    console.log("currentPassword:", currentPassword);
+    console.log("newPassword:", newPassword);
+    console.log("confirmPassword:", confirmPassword);
+    console.log("Data to store:", dataToStore);
+    
+    setPendingPasswordData(dataToStore);
+    setShowConfirmModal(true);
+  };
+
+  // Actual password change after confirmation
+  const confirmPasswordChange = async () => {
+    setShowConfirmModal(false);
+    
+    // Validate pending data exists
+    if (!pendingPasswordData) {
+      setPasswordError("Error: No password data found. Please try again.");
+      setTimeout(() => setPasswordError(""), 3000);
+      return;
+    }
+    
     setSubmitting(true);
 
     try {
-      const endpoint = hasPassword
-        ? "/user/change-password"
-        : "/user/set-password";
+      const endpoint = hasPassword ? "/user/change-password" : "/user/set-password";
       const body = hasPassword
-        ? { currentPassword, newPassword }
-        : { newPassword };
+        ? { currentPassword: pendingPasswordData.currentPassword, newPassword: pendingPasswordData.newPassword }
+        : { newPassword: pendingPasswordData.newPassword };
+
+      console.log("Sending request to:", `${BASE_URL}${endpoint}`);
+      console.log("Request body:", body);
 
       const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: "POST",
@@ -132,24 +207,54 @@ function UserSettings() {
         body: JSON.stringify(body),
       });
 
+      console.log("Response status:", response.status);
+      
+      // Handle rate limiting (429) - returns plain text, not JSON
+      if (response.status === 429) {
+        const errorText = await response.text();
+        setPasswordError(errorText || "Too many password change attempts. Please try again later.");
+        setTimeout(() => setPasswordError(""), 5000);
+        setSubmitting(false);
+        return;
+      }
+      
       const data = await response.json();
+      console.log("Response data:", data);
 
       if (response.ok) {
-        setSuccess(
-          hasPassword
-            ? "Password changed successfully!"
-            : "Password set successfully! You can now login with email and password."
-        );
+        const successMessage = hasPassword
+          ? "Password changed successfully!"
+          : "Password set successfully! You can now login with email and password.";
+        
+        setSuccess(successMessage);
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
         setHasPassword(true);
+        
+        // Store password status in localStorage
+        localStorage.setItem(`hasPassword_${userEmail}`, 'true');
+        
+        // Show custom success notification
+        setShowSuccessNotification(true);
+        
+        // Auto-dismiss after 4 seconds
+        setTimeout(() => {
+          setShowSuccessNotification(false);
+          setSuccess("");
+        }, 4000);
       } else {
-        setError(data.message || "Error updating password");
+        // Show the actual error from backend
+        const errorMessage = data.message || data.error || "Error updating password";
+        setPasswordError(errorMessage);
+        // Auto-dismiss after 3 seconds
+        setTimeout(() => setPasswordError(""), 3000);
       }
     } catch (err) {
       console.error("Error updating password:", err);
-      setError("Error updating password. Please try again.");
+      setPasswordError(`Network error: ${err.message}. Please try again.`);
+      // Auto-dismiss after 3 seconds
+      setTimeout(() => setPasswordError(""), 3000);
     } finally {
       setSubmitting(false);
     }
@@ -266,7 +371,7 @@ function UserSettings() {
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-2xl font-bold text-gray-900">
-                {usedGB.toFixed(2)} GB of {totalGB.toFixed(2)} GB used
+                {formatStorage(usedStorageInBytes)} of {formatStorage(maxStorageLimit)} used
               </span>
               <span
                 className={`text-sm font-medium px-3 py-1 rounded-full ${
@@ -300,13 +405,31 @@ function UserSettings() {
             <div>
               <div className="text-sm text-gray-600">Used Space</div>
               <div className="text-lg font-semibold text-gray-900">
-                {usedGB.toFixed(2)} GB
+                {formatStorage(usedStorageInBytes)}
               </div>
             </div>
             <div>
               <div className="text-sm text-gray-600">Available Space</div>
               <div className="text-lg font-semibold text-gray-900">
-                {(totalGB - usedGB).toFixed(2)} GB
+                {formatStorage(maxStorageLimit - usedStorageInBytes)}
+              </div>
+            </div>
+          </div>
+
+          {/* Debug Info - Shows raw byte values */}
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="text-xs text-gray-600 space-y-1">
+              <div className="flex justify-between">
+                <span className="font-medium">Raw Used (bytes):</span>
+                <span className="font-mono">{usedStorageInBytes.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Raw Limit (bytes):</span>
+                <span className="font-mono">{maxStorageLimit.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Percentage:</span>
+                <span className="font-mono">{usagePercentage.toFixed(4)}%</span>
               </div>
             </div>
           </div>
@@ -397,6 +520,13 @@ function UserSettings() {
               ? "Update your password for manual login access."
               : "Set a password to enable login with email and password."}
           </p>
+
+          {/* Password-specific error message */}
+          {passwordError && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+              {passwordError}
+            </div>
+          )}
 
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             {hasPassword && (
@@ -547,6 +677,68 @@ function UserSettings() {
         </div>
       </div>
       </div>
+
+      {/* Custom Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-slideUp">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">
+                {hasPassword ? "Change Password?" : "Set Password?"}
+              </h3>
+            </div>
+            <p className="text-gray-600 mb-6">
+              {hasPassword 
+                ? "Are you sure you want to change your password? You'll need to use the new password to login." 
+                : "Are you sure you want to set a password for your account? You'll be able to login with email and password."}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmPasswordChange}
+                className="flex-1 px-4 py-2.5 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Success Notification */}
+      {showSuccessNotification && (
+        <div className="fixed top-4 right-4 z-50 animate-slideDown">
+          <div className="bg-white rounded-lg shadow-2xl p-4 flex items-center gap-3 border-l-4 border-green-500 min-w-[320px]">
+            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-gray-900">Success!</h4>
+              <p className="text-sm text-gray-600">{success}</p>
+            </div>
+            <button
+              onClick={() => setShowSuccessNotification(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

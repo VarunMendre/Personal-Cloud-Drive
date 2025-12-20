@@ -91,6 +91,7 @@ const throttleConfig = {
 
   // Password operations - high security, minimal retries
   setPassword: [_3Second, 300, 1, 15000], // 3s delay, 1 free req, 15s window
+  changePassword: [_3Second, 300, 1, 15000], // 3s delay, 1 free req, 15s window
 
   // Logout operations - very permissive
   logout: [_500MS, 60, 10, 30000], // 500ms delay, 10 free req, 30s window

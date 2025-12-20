@@ -6,6 +6,7 @@ import checkAuth, {
   checkUserDeleted,
 } from "../middlewares/authMiddleware.js";
 import {
+  changeUserPassword,
   deleteUserFiles,
   getAllUsers,
   getCurrentUser,
@@ -64,6 +65,15 @@ router.post(
   rateLimiters.setPassword,
   throttlers.setPassword,
   setUserPassword
+);
+
+router.post(
+  "/user/change-password",
+  checkAuth,
+  checkUserDeleted,
+  rateLimiters.changePassword,
+  throttlers.changePassword,
+  changeUserPassword
 );
 
 router.post(

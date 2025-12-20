@@ -26,6 +26,7 @@ export default async function checkAuth(req, res, next) {
     role: user.role,
     isDeleted: user.isDeleted,
     rootDirId: user.rootDirId,
+    password: user.password,
   };
 
   next();

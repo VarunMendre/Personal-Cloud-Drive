@@ -84,6 +84,14 @@ const limiterConfig = {
     "Too many password change attempts. Please try again later",
   ],
 
+  changePassword: [
+    _15Minute,
+    3,
+    56,
+    false,
+    "Too many password change attempts. Please try again later",
+  ],
+
   // Logout operations - generous (legitimate users might logout frequently)
   logout: [_5Minute, 20, 56, false, "Too many logout requests"],
   logoutAll: [
