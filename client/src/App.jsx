@@ -14,6 +14,7 @@ import SharedWithMePage from "./SharedWithMePage";
 import SharedByMePage from "./SharedByMePage";
 import SharedLinkPage from "./SharedLinkPage";
 import ManagePermissionsPage from "./ManagePermissionsPage";
+import Plans from "./Plans";
 
 const router = createBrowserRouter([
   {
@@ -44,6 +45,10 @@ const router = createBrowserRouter([
   {
     path: "/settings",
     element: <UserSettings />,
+  },
+  {
+    path: "/plans",
+    element: <Plans />,
   },
   {
     path: "/shared-with-me",

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { FaShare, FaUsers } from "react-icons/fa";
+import { FaShare, FaUsers, FaCrown } from "react-icons/fa";
 
 // Use a constant for the API base URL
 export const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -44,6 +44,15 @@ function DirectoryHeader({
           <div className="flex items-center gap-6">
             {/* Action Buttons Group */}
             <div className="flex items-center gap-4">
+              {/* Subscription Link */}
+              <button
+                onClick={() => navigate("/plans")}
+                className="flex items-center gap-2 px-3 py-1.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <FaCrown className="w-4 h-4 text-yellow-500" />
+                <span className="text-sm font-medium">Subscription</span>
+              </button>
+
               {/* Share Link */}
               <button
                 onClick={() => navigate("/share")}

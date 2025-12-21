@@ -7,6 +7,8 @@ import userRoutes from "./routes/userRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import importRoutes from "./routes/importRoutes.js";
 import shareRoutes from "./routes/shareRoutes.js";
+import webhookRoutes from "./routes/webhookRoutes.js";
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import checkAuth from "./middlewares/authMiddleware.js";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
@@ -52,6 +54,8 @@ app.use("/", userRoutes);
 app.use("/auth", authRoutes);
 app.use("/import", checkAuth, importRoutes);
 app.use("/share", shareRoutes);
+app.use("/webhooks", webhookRoutes);
+app.use("/subscriptions", checkAuth, subscriptionRoutes);
 
 app.use((err, req, res, next) => {
   console.log(err);
