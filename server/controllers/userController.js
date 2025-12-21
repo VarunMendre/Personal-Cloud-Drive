@@ -13,15 +13,22 @@ import createDOMPurify from "dompurify";
 import { getFileUrl } from "../services/s3.js";
 import { createCloudFrontSignedGetUrl } from "../services/cloudFront.js";
 
-const window = new JSDOM("").window;
-const DOMPurify = createDOMPurify(window);
+let DOMPurify;
+
+const getDOMPurify = () => {
+  if (!DOMPurify) {
+    const window = new JSDOM("").window;
+    DOMPurify = createDOMPurify(window);
+  }
+  return DOMPurify;
+};
 
 export const register = async (req, res, next) => {
   const sanitizedBody ={
-    name: DOMPurify.sanitize(req.body.name),
-    email: DOMPurify.sanitize(req.body.email),
-    password: DOMPurify.sanitize(req.body.password),
-    otp: DOMPurify.sanitize(req.body.otp),
+    name: getDOMPurify().sanitize(req.body.name),
+    email: getDOMPurify().sanitize(req.body.email),
+    password: getDOMPurify().sanitize(req.body.password),
+    otp: getDOMPurify().sanitize(req.body.otp),
   };
   
   const {
@@ -96,8 +103,8 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   const sanitizedBody = {
-    email: DOMPurify.sanitize(req.body.email),
-    password: DOMPurify.sanitize(req.body.password),
+    email: getDOMPurify().sanitize(req.body.email),
+    password: getDOMPurify().sanitize(req.body.password),
   };
 
   const { success, data, error } = loginSchema.safeParse(sanitizedBody);
@@ -398,7 +405,6 @@ export const hardDeleteUser = async (req, res, next) => {
 
     await File.deleteMany({ userId }, { session });
     await Directory.deleteMany({ userId }, { session });
-    await Session.deleteOne({ userId }, { session });
     await User.deleteOne({ _id: userId }, { session });
 
     await session.commitTransaction();

@@ -38,6 +38,14 @@ const userSchema = new Schema(
       required: true,
       default: 524288000,
     },
+    maxDevices: {
+      type: Number,
+      default: 1,
+    },
+    maxFileSize: {
+      type: Number,
+      default: 104857600, // 100 MB
+    },
     role: {
       type: String,
       enum: ["Owner", "Admin", "Manager", "User"],

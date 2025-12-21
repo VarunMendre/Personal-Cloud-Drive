@@ -60,14 +60,32 @@ export const handleRazorpayWebhook = async (req, res) => {
       razorpaySubscriptionId: rzpSubscription.id,
     });
 
-    subscription.status = rzpSubscription.status;
-    await subscription.save();
+    if (subscription) {
+      subscription.status = rzpSubscription.status;
+      subscription.currentPeriodStart = new Date(
+        rzpSubscription.current_start * 1000
+      );
+      subscription.currentPeriodEnd = new Date(
+        rzpSubscription.current_end * 1000
+      );
+      subscription.startDate = rzpSubscription.start_at
+        ? new Date(rzpSubscription.start_at * 1000)
+        : null;
+      subscription.endDate = rzpSubscription.end_at
+        ? new Date(rzpSubscription.end_at * 1000)
+        : null;
 
-    const storageQuotaInBytes = PLANS[planId].storageQuotaInBytes;
-    const user = await User.findById(subscription.userId);
+      await subscription.save();
 
-    user.maxStorageLimit = storageQuotaInBytes;
-    await user.save();
+      const planInfo = PLANS[planId];
+      if (planInfo) {
+        const user = await User.findById(subscription.userId);
+        if (user) {
+          user.maxStorageLimit = planInfo.storageQuotaInBytes;
+          await user.save();
+        }
+      }
+    }
   }
   res.end("OK");
 };

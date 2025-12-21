@@ -5,6 +5,11 @@ const subscriptionSchema = new Schema(
     razorpaySubscriptionId: {
       type: String,
       required: true,
+      unique: true,
+    },
+    planId: {
+      type: String,
+      required: true,
     },
     userId: {
       type: Schema.Types.ObjectId,
@@ -20,11 +25,35 @@ const subscriptionSchema = new Schema(
         "past_due",
         "paused",
         "completed",
-        "in_grace",
         "pending",
+        "renewal_failed"
       ],
       default: "created",
     },
+    currentPeriodStart: {
+      type: Date,
+      default: null,
+    },
+    currentPeriodEnd: {
+      type: Date, 
+      default: null,
+    },
+    startDate: {
+      type: Date,
+      default:null
+    },
+    endDate: {
+      type: Date,
+      default: null,
+    },
+    invoiceId: {
+      type: String,
+      default: null,
+    },
+    cancelledAt: {
+      type: Date,
+      default: null
+    }
   },
   {
     strict: "throw",
