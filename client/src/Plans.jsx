@@ -294,10 +294,12 @@ export default function Plans() {
       openRazorPayPopup({
         subscriptionId: res.subscriptionId,
         planName: plan.name,
-        planDescription: `${plan.storage} Storage - ${plan.tagline}`
+        planDescription: `${plan.storage} Storage - ${plan.tagline}`,
+        onClose: () => setLoadingPlanId(null), // Clear loading if they close the modal
       });
-      // Optionally clear loading here or let the page redirect clear it
-      setLoadingPlanId(null);
+      
+      // Note: We DON'T call setLoadingPlanId(null) here because 
+      // we want it to stay disabled until they finish or cancel.
     } catch (error) {
       console.error("Failed to start subscription:", error);
       alert("Something went wrong. Please try again.");
@@ -306,8 +308,8 @@ export default function Plans() {
   }
 
   return (
-    // ... UI same as before ...
     <div className="mx-auto max-w-6xl px-4 py-12">
+      {/* Rest of the UI remains the same */}
       <header className="mb-12 text-center relative">
         <Link 
           to="/" 
@@ -375,22 +377,21 @@ export default function Plans() {
   );
 }
 
-
 function openRazorPayPopup({
   subscriptionId,
   planName,
   planDescription,
+  onClose,
 }) {
   console.log("Opening Razorpay for:", subscriptionId);
-  const rzp = new Razorpay({
-    key: "rzp_test_RnAnjbXG3sqHWQ", // Replace this with your production Key ID if different
+  const rzp = new window.Razorpay({
+    key: "rzp_test_RnAnjbXG3sqHWQ",
     name: "Storage App",
     description: planName + " - " + planDescription,
     subscription_id: subscriptionId,
     theme: {
-      color: "#2563eb", // Balanced blue
+      color: "#2563eb",
     },
-    // The handler will be called on successful payment
     handler: async function (response) {
       console.log("Payment successful!", response);
       alert("Subscription activated successfully! Redirecting...");
@@ -399,6 +400,7 @@ function openRazorPayPopup({
     modal: {
       ondismiss: function() {
         console.log("Checkout modal closed");
+        onClose?.(); // Reset loading state when modal is closed
       }
     }
   });
@@ -406,11 +408,8 @@ function openRazorPayPopup({
   rzp.on("payment.failed", function (response) {
     console.error("Payment failed:", response.error);
     alert("Payment failed: " + response.error.description);
+    onClose?.();
   });
 
-  /**
-   * NOTE: In Razorpay Test Mode, you might see a ₹1 amount for verification.
-   * This is normal for subscriptions to authorize recurring payments.
-   */
   rzp.open();
 }

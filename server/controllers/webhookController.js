@@ -17,18 +17,26 @@ export const PLANS = {
   // Standard Monthly - 100 GB
   plan_RuC1EiZlwurf5N: {
     storageQuotaInBytes: 100 * 1024 ** 3,
+    maxDevices: 2,
+    maxFileSize: 1 * 1024 ** 3, // 1 GB
   },
   // Premium Monthly - 200 GB
   plan_RuC2evjqwSxHOH: {
     storageQuotaInBytes: 200 * 1024 ** 3,
+    maxDevices: 3,
+    maxFileSize: 2 * 1024 ** 3, // 2 GB
   },
   // Standard Yearly - 200 GB
   plan_RuC3yiXd7cecny: {
     storageQuotaInBytes: 200 * 1024 ** 3,
+    maxDevices: 2,
+    maxFileSize: 1 * 1024 ** 3, // 1 GB
   },
   // Premium Yearly - 300 GB
   plan_RuC5FeIwTTfUSh: {
     storageQuotaInBytes: 300 * 1024 ** 3,
+    maxDevices: 3,
+    maxFileSize: 2 * 1024 ** 3, // 2 GB
   },
 };
 
@@ -82,7 +90,10 @@ export const handleRazorpayWebhook = async (req, res) => {
         const user = await User.findById(subscription.userId);
         if (user) {
           user.maxStorageLimit = planInfo.storageQuotaInBytes;
+          user.maxDevices = planInfo.maxDevices;
+          user.maxFileSize = planInfo.maxFileSize;
           await user.save();
+          console.log(`Updated user ${user._id} limits: Storage=${planInfo.storageQuotaInBytes}, Devices=${planInfo.maxDevices}, FileSize=${planInfo.maxFileSize}`);
         }
       }
     }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   BsLightningChargeFill, 
   BsInboxesFill, 
@@ -43,33 +43,39 @@ const MOCK_DATA = {
 };
 
 export default function SubscriptionDetails() {
-  const [data, setData] = useState(MOCK_DATA);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchDetails() {
       try {
         setLoading(true);
         const res = await getSubscriptionDetails();
-        if (res) {
+        if (res && res.activePlan) {
           setData(res);
+        } else {
+          // If response is successful but empty/invalid plan
+          navigate("/plans");
         }
       } catch (err) {
         console.error("Failed to fetch subscription details:", err);
-        // Fallback to mock data for preview if user hasn't implemented BE yet
-        // setError("Failed to load subscription details. Showing preview data.");
+        // If 404 or any error occurs, they likely don't have a plan
+        navigate("/plans");
       } finally {
         setLoading(false);
       }
     }
     fetchDetails();
-  }, []);
+  }, [navigate]);
 
-  if (loading) {
+  if (loading || !data) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+      <div className="flex min-h-[400px] items-center justify-center bg-slate-50 min-h-screen">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent shadow-sm"></div>
+          <p className="text-slate-500 font-medium animate-pulse text-sm">Verifying subscription...</p>
+        </div>
       </div>
     );
   }
