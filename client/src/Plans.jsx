@@ -394,7 +394,7 @@ function openRazorPayPopup({
     handler: async function (response) {
       console.log("Payment successful!", response);
       alert("Subscription activated successfully! Redirecting...");
-      window.location.href = "/";
+      window.location.href = "/subscription";
     },
     modal: {
       ondismiss: function() {
