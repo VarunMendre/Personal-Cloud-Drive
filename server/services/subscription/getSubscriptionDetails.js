@@ -5,10 +5,10 @@ import { getRootDirectorySize } from "../../utils/rootDirectorySize.js";
 import redisClient from "../../config/redis.js";
 
 const PLAN_INFO = {
-  plan_RuC1EiZlwurf5N: { name: "Standard Plan", tagline: "For Students & Freelancers", billingPeriod: "Monthly", price: 349 },
-  plan_RuC2evjqwSxHOH: { name: "Premium Plan", tagline: "For Professionals & Creators", billingPeriod: "Monthly", price: 699 },
-  plan_RuC3yiXd7cecny: { name: "Standard Plan", tagline: "For Students & Freelancers", billingPeriod: "Yearly", price: 3999 },
-  plan_RuC5FeIwTTfUSh: { name: "Premium Plan", tagline: "For Professionals & Creators", billingPeriod: "Yearly", price: 7999 },
+  plan_RuC1EiZlwurf5N: { name: "Standard Plan", tagline: "For Students & Freelancers", billingPeriod: "Monthly", price: 349, storage: "100 GB" },
+  plan_RuC2evjqwSxHOH: { name: "Premium Plan", tagline: "For Professionals & Creators", billingPeriod: "Monthly", price: 999, storage: "200 GB" },
+  plan_RuC3yiXd7cecny: { name: "Standard Plan", tagline: "For Students & Freelancers", billingPeriod: "Yearly", price: 3999, storage: "200 GB" },
+  plan_RuC5FeIwTTfUSh: { name: "Premium Plan", tagline: "For Professionals & Creators", billingPeriod: "Yearly", price: 7999, storage: "300 GB" },
 };
 
 const formatBytes = (bytes) => {
@@ -22,14 +22,18 @@ const formatBytes = (bytes) => {
 export const getSubscriptionDetailsService = async (userId) => {
   const subscription = await Subscription.findOne({
     userId,
-    status: "active",
-  });
+    status: { $in: ["active", "created", "pending", "past_due"] },
+  }).sort({ createdAt: -1 });
 
   if (!subscription) {
     return null;
   }
 
   const user = await User.findById(userId);
+  if (!user) {
+    console.warn("User not found in getSubscriptionDetailsService for ID:", userId);
+    return null;
+  }
   const planInfo = PLAN_INFO[subscription.planId] || {
     name: "Pro Plan",
     tagline: "For Students & Freelancers",

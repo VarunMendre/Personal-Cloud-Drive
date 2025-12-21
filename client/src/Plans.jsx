@@ -266,6 +266,7 @@ function PlanCard({ plan, onSelect, isLoading, isDisabled }) {
 export default function Plans() {
   const [mode, setMode] = useState("monthly");
   const [loadingPlanId, setLoadingPlanId] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const plans = PLAN_CATALOG[mode];
 
   useEffect(() => {
@@ -295,11 +296,18 @@ export default function Plans() {
         subscriptionId: res.subscriptionId,
         planName: plan.name,
         planDescription: `${plan.storage} Storage - ${plan.tagline}`,
-        onClose: () => setLoadingPlanId(null), // Clear loading if they close the modal
+        onSuccess: () => {
+          setLoadingPlanId(null);
+          setShowSuccessModal(true);
+        },
+        onFailure: (msg) => {
+          setLoadingPlanId(null);
+          alert(msg);
+        },
+        onClose: () => {
+          setLoadingPlanId(null);
+        }
       });
-      
-      // Note: We DON'T call setLoadingPlanId(null) here because 
-      // we want it to stay disabled until they finish or cancel.
     } catch (error) {
       console.error("Failed to start subscription:", error);
       alert("Something went wrong. Please try again.");
@@ -308,7 +316,10 @@ export default function Plans() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
+    <div className="mx-auto max-w-6xl px-4 py-12 relative">
+      {showSuccessModal && (
+        <SuccessModal onClose={() => window.location.href = "/subscription"} />
+      )}
       {/* Rest of the UI remains the same */}
       <header className="mb-12 text-center relative">
         <Link 
@@ -377,11 +388,45 @@ export default function Plans() {
   );
 }
 
+function SuccessModal({ onClose }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"></div>
+      
+      {/* Modal Content */}
+      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 text-center animate-in zoom-in-95 fade-in duration-300 slide-in-from-bottom-4 border border-slate-100">
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 shadow-inner">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500 text-white shadow-lg shadow-green-200">
+            <svg className="h-7 w-7 animate-in zoom-in duration-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+        
+        <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">Woohoo!</h2>
+        <p className="text-slate-600 mb-8 leading-relaxed font-medium">
+          Your kingdom just got bigger! Your Premium Storage is now active.
+        </p>
+        
+        <button
+          onClick={onClose}
+          className="w-full rounded-2xl bg-blue-600 py-4 text-lg font-bold text-white shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-xl hover:-translate-y-0.5 transition-all active:translate-y-0 cursor-pointer"
+        >
+          View My Dashboard
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function openRazorPayPopup({
   subscriptionId,
   planName,
   planDescription,
   onClose,
+  onSuccess,
+  onFailure,
 }) {
   console.log("Opening Razorpay for:", subscriptionId);
   const rzp = new window.Razorpay({
@@ -394,8 +439,7 @@ function openRazorPayPopup({
     },
     handler: async function (response) {
       console.log("Payment successful!", response);
-      alert("Subscription activated successfully! Redirecting...");
-      window.location.href = "/subscription";
+      onSuccess?.();
     },
     modal: {
       ondismiss: function() {
@@ -407,8 +451,7 @@ function openRazorPayPopup({
 
   rzp.on("payment.failed", function (response) {
     console.error("Payment failed:", response.error);
-    alert("Payment failed: " + response.error.description);
-    onClose?.();
+    onFailure?.("Payment failed: " + response.error.description);
   });
 
   rzp.open();

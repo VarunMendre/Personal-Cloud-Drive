@@ -11,3 +11,8 @@ export const getSubscriptionDetails = async () => {
   const { data } = await axiosWithCreds.get("/subscriptions/details");
   return data;
 };
+
+export const getInvoiceUrl = async () => {
+  const { data } = await axiosWithCreds.get("/subscriptions/invoice");
+  return data;
+};
