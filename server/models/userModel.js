@@ -36,7 +36,7 @@ const userSchema = new Schema(
     maxStorageLimit: {
       type: Number,
       required: true,
-      default: 1 * 1024 ** 3,
+      default: 524288000,
     },
     role: {
       type: String,

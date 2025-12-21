@@ -10,10 +10,12 @@ const rzpInstance = new Razorpay({
 export const createSubscription = async (req, res,next ) => {
 
     try {
+        const isYearly = ["plan_RuC3yiXd7cecny", "plan_RuC5FeIwTTfUSh"].includes(req.body.planId);
+        
         const newSubscription = await rzpInstance.subscriptions.create({
           plan_id: req.body.planId,
-            total_count: 120,
-            notes: {
+          total_count: isYearly ? 10 : 60, // 10 years for yearly, 5 years for monthly
+          notes: {
               user: req.user._id
           }
         });

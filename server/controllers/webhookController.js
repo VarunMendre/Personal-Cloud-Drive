@@ -2,35 +2,33 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import Subscription from "../models/subscriptionModel.js";
 import User from "../models/userModel.js";
-/**
- * Monthly
- * Yearly
- *
- *Monthly
- * Yearly
- *
- * Monthly
- * Yearly
- */
+// /**
+//  * Monthly
+//  * Yearly
+//  *
+//  *Monthly
+//  * Yearly
+//  *
+//  * Monthly
+//  * Yearly
+//  *
 
 export const PLANS = {
-  plan_Ru3jDykYh0gNRc: {
-    storageQuotaInBytes: 2 * 1024 ** 3,
+  // Standard Monthly - 100 GB
+  plan_RuC1EiZlwurf5N: {
+    storageQuotaInBytes: 100 * 1024 ** 3,
   },
-  plan_Ru3i26Gd3gyVqu: {
-    storageQuotaInBytes: 2 * 1024 ** 3,
+  // Premium Monthly - 200 GB
+  plan_RuC2evjqwSxHOH: {
+    storageQuotaInBytes: 200 * 1024 ** 3,
   },
-  plan_Ru3gKytERw7sDx: {
-    storageQuotaInBytes: 5 * 1024 ** 3,
+  // Standard Yearly - 200 GB
+  plan_RuC3yiXd7cecny: {
+    storageQuotaInBytes: 200 * 1024 ** 3,
   },
-  plan_Ru3fRpu6PZE4ex: {
-    storageQuotaInBytes: 5 * 1024 ** 3,
-  },
-  plan_Ru3dfYH472oEwi: {
-    storageQuotaInBytes: 10 * 1024 ** 4,
-  },
-  plan_Ru3bLudarN1V9a: {
-    storageQuotaInBytes: 10 * 1024 ** 4,
+  // Premium Yearly - 300 GB
+  plan_RuC5FeIwTTfUSh: {
+    storageQuotaInBytes: 300 * 1024 ** 3,
   },
 };
 
