@@ -267,6 +267,9 @@ export default function Plans() {
   const [mode, setMode] = useState("monthly");
   const [loadingPlanId, setLoadingPlanId] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showCountdownModal, setShowCountdownModal] = useState(false);
+  const [countdown, setCountdown] = useState(3);
+  const [pendingPlan, setPendingPlan] = useState(null);
   const plans = PLAN_CATALOG[mode];
 
   useEffect(() => {
@@ -280,9 +283,31 @@ export default function Plans() {
   }, []);
 
   async function handleSelect(plan) {
-    if (plan.price === 0 || loadingPlanId) return;
+    if (plan.price === 0 || showCountdownModal) return;
+    
+    // Show BOTH countdown modal AND processing state at the same time
+    setLoadingPlanId(plan.id);  // ← Button shows "Processing..."
+    setPendingPlan(plan);
+    setShowCountdownModal(true);  // ← Modal appears
+    setCountdown(3);
+    
+    // Start countdown
+    let count = 3;
+    const countdownInterval = setInterval(() => {
+      count -= 1;
+      setCountdown(count);
+      
+      if (count === 0) {
+        clearInterval(countdownInterval);
+        // Close countdown modal and open Razorpay
+        setShowCountdownModal(false);
+        startSubscription(plan);
+      }
+    }, 1000);
+  }
+  
+  async function startSubscription(plan) {
     try {
-      setLoadingPlanId(plan.id);
       console.log("Creating subscription for plan:", plan.id);
       const res = await createSubscription(plan.id);
       
@@ -317,6 +342,13 @@ export default function Plans() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 relative">
+      {showCountdownModal && (
+        <CountdownModal countdown={countdown} onCancel={() => {
+          setShowCountdownModal(false);
+          setLoadingPlanId(null);
+          setPendingPlan(null);
+        }} />
+      )}
       {showSuccessModal && (
         <SuccessModal onClose={() => window.location.href = "/subscription"} />
       )}
@@ -389,32 +421,125 @@ export default function Plans() {
 }
 
 function SuccessModal({ onClose }) {
+  // Auto-redirect after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 2000); // 2 second delay before redirect
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"></div>
       
       {/* Modal Content */}
-      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 text-center animate-in zoom-in-95 fade-in duration-300 slide-in-from-bottom-4 border border-slate-100">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 shadow-inner">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500 text-white shadow-lg shadow-green-200">
-            <svg className="h-7 w-7 animate-in zoom-in duration-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 text-center animate-in zoom-in-95 fade-in duration-300 border border-slate-100">
+        {/* Icon */}
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-600 text-white">
+            <svg className="w-6 h-6 animate-in zoom-in duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
         </div>
         
-        <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">Woohoo!</h2>
-        <p className="text-slate-600 mb-8 leading-relaxed font-medium">
-          Your kingdom just got bigger! Your Premium Storage is now active.
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">Payment Successful</h2>
+        <p className="text-sm text-slate-500 mb-8 max-w-xs mx-auto">
+          Your subscription has been activated successfully. Redirecting you to your dashboard...
         </p>
-        
-        <button
-          onClick={onClose}
-          className="w-full rounded-2xl bg-blue-600 py-4 text-lg font-bold text-white shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-xl hover:-translate-y-0.5 transition-all active:translate-y-0 cursor-pointer"
-        >
-          View My Dashboard
-        </button>
+
+        {/* Loading spinner */}
+        <div className="flex justify-center mb-2">
+          <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CountdownModal({ countdown, onCancel }) {
+  // Use local state for smooth progress animation
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    // Small delay to ensure the browser has painted the 0% width before transitioning
+    const timer = setTimeout(() => {
+      setProgress(100);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+  
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"></div>
+      
+      {/* Modal Content */}
+      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300 border border-slate-100">
+        {/* Progress Bar at Top - Continuous Smooth Animation */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-slate-100">
+          <div 
+            className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all ease-linear"
+            style={{ 
+              width: `${progress}%`, 
+              transitionDuration: '3000ms' // Match exact countdown total time
+            }}
+          ></div>
+        </div>
+
+        <div className="p-8 text-center">
+          {/* Close button */}
+          <button
+            onClick={onCancel}
+            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {/* Icon */}
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M7 17L17 7M17 7H7M17 7v10" />
+              </svg>
+            </div>
+          </div>
+          
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Redirecting you now</h2>
+          <p className="text-sm text-slate-500 mb-8">
+            You are being redirected to a <strong className="text-slate-700">secure payment gateway</strong> for subscription
+          </p>
+          
+          {/* Countdown */}
+          <div className="mb-8">
+            <div className="text-6xl font-bold text-slate-900 mb-2 animate-pulse">
+              {countdown}
+            </div>
+            <div className="text-sm text-slate-500">seconds remaining</div>
+          </div>
+
+          {/* Security badge */}
+          <div className="flex items-center justify-center gap-2 text-xs text-slate-500 mb-6">
+            <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            Secure connection
+          </div>
+          
+          <button
+            onClick={onCancel}
+            className="text-sm text-slate-500 hover:text-slate-700 transition font-medium"
+          >
+            Cancel and stay on this page
+          </button>
+        </div>
       </div>
     </div>
   );
