@@ -270,6 +270,7 @@ export default function Plans() {
   const [showCountdownModal, setShowCountdownModal] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [pendingPlan, setPendingPlan] = useState(null);
+  const [createdSubscriptionId, setCreatedSubscriptionId] = useState(null);
   const plans = PLAN_CATALOG[mode];
 
   useEffect(() => {
@@ -317,6 +318,8 @@ export default function Plans() {
         return;
       }
 
+      setCreatedSubscriptionId(res.subscriptionId);
+
       openRazorPayPopup({
         subscriptionId: res.subscriptionId,
         planName: plan.name,
@@ -350,7 +353,10 @@ export default function Plans() {
         }} />
       )}
       {showSuccessModal && (
-        <SuccessModal onClose={() => window.location.href = "/subscription"} />
+        <SuccessModal 
+          subscriptionId={createdSubscriptionId} 
+          onClose={() => window.location.href = "/subscription"} 
+        />
       )}
       {/* Rest of the UI remains the same */}
       <header className="mb-12 text-center relative">
@@ -420,14 +426,35 @@ export default function Plans() {
   );
 }
 
-function SuccessModal({ onClose }) {
-  // Auto-redirect after 3 seconds
+import { checkSubscriptionStatus } from "./apis/subscriptionApi";
+
+// ... existing imports
+
+function SuccessModal({ subscriptionId, onClose }) {
+  const [activating, setActivating] = useState(true);
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 2000); // 2 second delay before redirect
-    return () => clearTimeout(timer);
-  }, [onClose]);
+    if (!subscriptionId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const status = await checkSubscriptionStatus(subscriptionId);
+        // Check both potential response formats
+        if (status && (status.active || status.status === 'active')) {
+          clearInterval(interval);
+          setActivating(false);
+          // Small delay to show success state before redirecting
+          setTimeout(() => {
+             onClose();
+          }, 1500);
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+    }, 2000); // Poll every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [subscriptionId, onClose]);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -437,26 +464,36 @@ function SuccessModal({ onClose }) {
       {/* Modal Content */}
       <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 text-center animate-in zoom-in-95 fade-in duration-300 border border-slate-100">
         {/* Icon */}
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-600 text-white">
-            <svg className="w-6 h-6 animate-in zoom-in duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
+        <div className={`mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full transition-colors duration-500 ${activating ? 'bg-blue-50' : 'bg-green-50'}`}>
+          <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-colors duration-500 ${activating ? 'bg-blue-600' : 'bg-green-600'}`}>
+            {activating ? (
+               <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+               </svg>
+            ) : (
+              <svg className="w-6 h-6 animate-in zoom-in duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            )}
           </div>
         </div>
         
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Payment Successful</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">
+          {activating ? "Activating Subscription..." : "Payment Successful!"}
+        </h2>
         <p className="text-sm text-slate-500 mb-8 max-w-xs mx-auto">
-          Your subscription has been activated successfully. Redirecting you to your dashboard...
+          {activating 
+            ? "Please wait while we confirm your payment and set up your account." 
+            : "Your subscription is now active. Redirecting you to your dashboard..."}
         </p>
 
-        {/* Loading spinner */}
-        <div className="flex justify-center mb-2">
-          <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-        </div>
+        {/* Loading bar only when activating */}
+        {activating && (
+           <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-2">
+             <div className="h-full bg-blue-600 animate-progress-indeterminate"></div>
+           </div>
+        )}
       </div>
     </div>
   );

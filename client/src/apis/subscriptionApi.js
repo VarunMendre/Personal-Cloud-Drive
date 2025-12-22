@@ -21,3 +21,8 @@ export const cancelSubscription = async (planId) => {
   const { data } = await axiosWithCreds.post("/subscriptions/cancel", { planId });
   return data;
 };
+
+export const checkSubscriptionStatus = async (subscriptionId) => {
+  const { data } = await axiosWithCreds.get(`/subscriptions/status/${subscriptionId}`);
+  return data;
+};

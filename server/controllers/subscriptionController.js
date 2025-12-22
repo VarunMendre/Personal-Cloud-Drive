@@ -1,3 +1,4 @@
+import Webhook from "../models/rzpwebhookModel.js";
 import Subscription from "../models/subscriptionModel.js";
 import { rzpInstance } from "../services/subscription/createSubscription.js";
 import {
@@ -103,3 +104,28 @@ export const resumeSubscription = async (req, res, next) => {
     next(error);
   }
 };
+
+export const checkSubscriptionStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // check subscription status from razorpay
+
+    const activationevent = await Webhook.findOne({
+      razorpaySubscriptionId: id,
+      eventType: "subscription.activated",
+      status: "processed",
+    });
+
+    if (activationevent) {
+      return res.json({
+        status: "active",
+      });
+    }
+
+    return res.json({ active: false });
+  } catch (error) {
+    console.error("Error checking subscription status:", error);
+    next(error);
+  }
+}
