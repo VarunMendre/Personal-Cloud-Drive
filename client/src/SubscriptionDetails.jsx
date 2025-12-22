@@ -268,12 +268,26 @@ export default function SubscriptionDetails() {
                 "View invoice"
               )}
             </button>
-            <button 
-              onClick={handleCancelSubscription}
-              className="px-5 py-2.5 bg-white text-red-600 border border-red-100 rounded-lg text-sm font-bold hover:bg-red-50 transition-all"
-            >
-              Cancel Subscription
-            </button>
+            {data.activePlan.cancelledAt ? (
+              <div className="flex items-center gap-3 px-5 py-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-700">
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-bold leading-tight">Cancelled - Pending Expiry</p>
+                  <p className="text-[11px] opacity-80 mt-0.5">Your access remains active until {data.activePlan.nextBillingDate}. Files will be deleted after this date.</p>
+                </div>
+              </div>
+            ) : (
+              <button 
+                onClick={handleCancelSubscription}
+                className="px-5 py-2.5 bg-white text-red-600 border border-red-100 rounded-lg text-sm font-bold hover:bg-red-50 transition-all"
+              >
+                Cancel Subscription
+              </button>
+            )}
           </div>
         </div>
 

@@ -41,17 +41,14 @@ export const cancelSubscriptionService = async (userId, planId) => {
 
     // Cancel in Razorpay
     const rzpResponse = await rzpInstance.subscriptions.cancel(subscriptionId, {
-      cancel_at_cycle_end: false,
+      cancel_at_cycle_end: 1,
     });
     console.log("DEBUG: Razorpay Cancellation Response:", rzpResponse);
 
     // Update subscription in DB
-    subscription.status = "cancelled";
+    subscription.status = "active";
     subscription.cancelledAt = new Date().toISOString();
     await subscription.save();
-
-    // 2. Delete files which have haveSubscription = true and Update user model back to default
-    await resetUserToDefault(userId);
 
     return { success: true, message: "Subscription cancelled successfully", subscription };
   } catch (error) {

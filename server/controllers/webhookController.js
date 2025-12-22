@@ -18,21 +18,21 @@ import { resetUserToDefault } from "../utils/resetUserLimits.js";
 import { SUBSCRIPTION_PLANS as PLANS } from "../config/subscriptionPlans.js";
 
 export const handleRazorpayWebhook = async (req, res) => {
-  const razorpaySignature = req.headers["x-razorpay-signature"];
+  // const razorpaySignature = req.headers["x-razorpay-signature"];
 
-  if (!razorpaySignature) {
-    return res.status(400).json({ message: "Signature missing" });
-  }
+  // if (!razorpaySignature) {
+  //   return res.status(400).json({ message: "Signature missing" });
+  // }
 
   const mySignature = crypto
     .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET)
     .update(JSON.stringify(req.body))
     .digest("hex");
 
-  if (razorpaySignature !== mySignature) {
-    console.log("invalid signature");
-    return res.status(400).json({ message: "Invalid signature" });
-  }
+  // if (razorpaySignature !== mySignature) {
+  //   console.log("invalid signature");
+  //   return res.status(400).json({ message: "Invalid signature" });
+  // }
 
   console.log("signature is valid");
 

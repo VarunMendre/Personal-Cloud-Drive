@@ -83,6 +83,7 @@ export const getSubscriptionDetailsService = async (userId) => {
       billingPeriod: planInfo.billingPeriod,
       status: subscription.status,
       planId: subscription.planId,
+      cancelledAt: subscription.cancelledAt,
     },
     storage: {
       usedInBytes,
