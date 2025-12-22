@@ -36,7 +36,7 @@ const RazorpayWebhookSchema = new Schema(
         receivedAt: {
             type: Date,
             default: Date.now,
-            index: { expires: "7d" },
+            index: { expires: "1d" }, // Auto-delete after 1 day
         },
         processedAt: {
             type: Date,
