@@ -19,7 +19,8 @@ import {
   FaFileAlt,
   FaDownload,
   FaBolt,
-
+  FaPause,
+  FaPlay,
 } from "react-icons/fa";
 
 export default function UsersPage() {
@@ -326,9 +327,56 @@ export default function UsersPage() {
     }
   };
 
+  const handlePauseSubscription = async (user) => {
+    if (!user.razorpaySubscriptionId) {
+      alert("No active subscription found for this user");
+      return;
+    }
+    if (!confirm(`Are you sure you want to PAUSE the subscription for ${user.name}? This will block their uploads and downloads.`)) return;
+    
+    try {
+      const response = await fetch(`${BASE_URL}/subscriptions/${user.razorpaySubscriptionId}/pause`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (response.ok) {
+        alert("Subscription paused successfully");
+        fetchUsers();
+      } else {
+        const err = await response.json();
+        alert(err.message || "Failed to pause subscription");
+      }
+    } catch (err) {
+      console.error("Pause error:", err);
+    }
+  };
+
+  const handleResumeSubscription = async (user) => {
+    if (!user.razorpaySubscriptionId) {
+      alert("No active subscription found for this user");
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${BASE_URL}/subscriptions/${user.razorpaySubscriptionId}/resume`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (response.ok) {
+        alert("Subscription resumed successfully");
+        fetchUsers();
+      } else {
+        const err = await response.json();
+        alert(err.message || "Failed to resume subscription");
+      }
+    } catch (err) {
+      console.error("Resume error:", err);
+    }
+  };
+
   // --- Permissions ---
   const canViewFiles = currentUser.role === "Owner" || currentUser.role === "Admin";
-  const canDeleteFiles = currentUser.role === "Owner"; // Only Owner can delete files (from prompt: Admin can't open or rename, doesn't say delete file, but usually implied no write access if no rename)
+  const canDeleteFiles = currentUser.role === "Owner"; // Only Owner can delete files
   const canRenameFiles = currentUser.role === "Owner";
 
   // Filter users based on role
@@ -348,9 +396,7 @@ export default function UsersPage() {
   const canLogoutUser = (targetUser) => {
     if (targetUser.isDeleted) return false;
     if (currentUser.role === "Owner") return true;
-    if (currentUser.role === "Admin") return targetUser.role !== "Owner"; // Admin can logout anyone except Owner? Usually lower rank.
-    // Prompt says: Admin can logout the user. Manager can logout that user.
-    // Let's assume they can logout anyone visible in their list (which is filtered above).
+    if (currentUser.role === "Admin") return targetUser.role !== "Owner";
     return true; 
   };
 
@@ -489,6 +535,7 @@ export default function UsersPage() {
                   <th className="px-4 py-2">Storage Used</th>
                   <th className="px-4 py-2">Role</th>
                   <th className="px-4 py-2">Status</th>
+                  <th className="px-4 py-2">Subscription</th>
                   <th className="px-4 py-2">Actions</th>
                 </tr>
               </thead>
@@ -535,6 +582,56 @@ export default function UsersPage() {
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.isLoggedIn, user.isDeleted)}`}>
                         {user.isDeleted ? "Deleted" : user.isLoggedIn ? "Logged In" : "Logged Out"}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {user.razorpaySubscriptionId ? (
+                          <>
+                            {user.subscriptionStatus === "paused" ? (
+                              <button
+                                onClick={() => handleResumeSubscription(user)}
+                                className="p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-1 shadow-sm"
+                                title="Resume Subscription"
+                              >
+                                <FaPlay className="w-3 h-3" />
+                                <span className="text-[10px] font-bold uppercase">Resume</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handlePauseSubscription(user)}
+                                className="p-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg transition-all flex items-center gap-1 shadow-sm"
+                                title="Pause Subscription"
+                              >
+                                <FaPause className="w-3 h-3" />
+                                <span className="text-[10px] font-bold uppercase">Pause</span>
+                              </button>
+                            )}
+                            
+                            {/* Status Label */}
+                            <div className="flex items-center ml-1">
+                              {user.subscriptionStatus === "paused" ? (
+                                <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
+                                   <FaExclamationTriangle className="w-2.5 h-2.5 animate-pulse" />
+                                   <span className="text-[9px] font-bold uppercase">Paused</span>
+                                </div>
+                              ) : user.subscriptionStatus === "active" ? (
+                                <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">
+                                   <FaCheckCircle className="w-2.5 h-2.5" />
+                                   <span className="text-[9px] font-bold uppercase">Active</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1 text-gray-400 opacity-60">
+                                  <span className="text-[9px] font-medium italic">Basic Account</span>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex items-center gap-1 text-gray-400 opacity-60">
+                             <span className="text-[9px] font-medium italic">Basic Account</span>
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -604,15 +701,11 @@ export default function UsersPage() {
       {showRoleModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
-            {/* Header */}
             <div className="px-6 py-5 border-b border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900">Change User Role</h3>
               <p className="text-sm text-gray-500 mt-1">Update role for {selectedUser.name}</p>
             </div>
-
-            {/* Content */}
             <div className="px-6 py-5">
-              {/* Current User Info */}
               <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
                 {selectedUser.picture ? (
                   <img src={selectedUser.picture} alt="" className="w-10 h-10 rounded-full object-cover" />
@@ -629,12 +722,8 @@ export default function UsersPage() {
                   {selectedUser.role}
                 </span>
               </div>
-
-              {/* Role Selection */}
               <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  New Role
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">New Role</label>
                 <select
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
@@ -646,8 +735,6 @@ export default function UsersPage() {
                   ))}
                 </select>
               </div>
-
-              {/* Action Buttons */}
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowRoleModal(false)}
@@ -672,7 +759,6 @@ export default function UsersPage() {
       {showDeleteModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
-            {/* Header */}
             <div className="px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -684,15 +770,10 @@ export default function UsersPage() {
                 </div>
               </div>
             </div>
-
-            {/* Content */}
             <div className="px-6 py-5">
               <p className="text-sm text-gray-600 mb-5">
-                Are you sure you want to delete <strong className="text-gray-900">{selectedUser.name}</strong>? 
-                This will move the user to the deleted list.
+                Are you sure you want to delete <strong className="text-gray-900">{selectedUser.name}</strong>? This will move the user to the deleted list.
               </p>
-
-              {/* Action Buttons */}
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDeleteModal(false)}
@@ -727,7 +808,6 @@ export default function UsersPage() {
       {showHardDeleteConfirm && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
-            {/* Header */}
             <div className="px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -739,14 +819,10 @@ export default function UsersPage() {
                 </div>
               </div>
             </div>
-
-            {/* Content */}
             <div className="px-6 py-5">
               <p className="text-sm text-gray-600 mb-5">
                 This action is <strong className="text-red-600">irreversible</strong>. All data for <strong className="text-gray-900">{selectedUser.name}</strong> will be permanently wiped.
               </p>
-
-              {/* Action Buttons */}
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowHardDeleteConfirm(false)}
@@ -770,7 +846,6 @@ export default function UsersPage() {
       {showLogoutModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
-            {/* Header */}
             <div className="px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -782,14 +857,8 @@ export default function UsersPage() {
                 </div>
               </div>
             </div>
-
-            {/* Content */}
             <div className="px-6 py-5">
-              <p className="text-sm text-gray-600 mb-5">
-                Force logout for <strong className="text-gray-900">{selectedUser.name}</strong>?
-              </p>
-
-              {/* Action Buttons */}
+              <p className="text-sm text-gray-600 mb-5">Force logout for <strong className="text-gray-900">{selectedUser.name}</strong>?</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowLogoutModal(false)}
@@ -801,15 +870,13 @@ export default function UsersPage() {
                   onClick={confirmLogout}
                   className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Logout User
+                  Logout
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-
-
 
     </div>
   );

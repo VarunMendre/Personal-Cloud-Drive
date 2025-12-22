@@ -8,7 +8,7 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || process.env.REACT_APP
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || process.env.REACT_APP_GOOGLE_API_KEY;
 const SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 
-export default function ImportFromDrive({ onFilesSelected, className }) {
+export default function ImportFromDrive({ onFilesSelected, className, disabled }) {
   const [pickerApiLoaded, setPickerApiLoaded] = useState(false);
   const [gisLoaded, setGisLoaded] = useState(false);
   const [tokenClient, setTokenClient] = useState(null);
@@ -162,7 +162,7 @@ export default function ImportFromDrive({ onFilesSelected, className }) {
     <div className="relative">
       <button
         onClick={handleAuth}
-        disabled={isAuthenticating || !gisLoaded || !pickerApiLoaded}
+        disabled={disabled || isAuthenticating || !gisLoaded || !pickerApiLoaded}
         className={className || "flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"}
       >
         {isAuthenticating ? (

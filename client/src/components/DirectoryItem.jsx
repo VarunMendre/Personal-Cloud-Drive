@@ -9,6 +9,7 @@ import {
   FaFileAlt,
   FaDownload,
   FaInfoCircle,
+  FaExclamationTriangle,
 } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import ContextMenu from "../components/ContextMenu";
@@ -27,9 +28,11 @@ function DirectoryItem({
   handleDeleteFile,
   handleDeleteDirectory,
   openRenameModal,
-  handleShare,
   openDetailsPopup,
+  handleShare,
   BASE_URL,
+  subscriptionStatus,
+  showToast,
 }) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -56,6 +59,11 @@ function DirectoryItem({
 
   const handleDownload = (e) => {
     e.stopPropagation();
+    console.log("DirectoryItem handleDownload - status:", subscriptionStatus);
+    if (subscriptionStatus?.toLowerCase() === "paused") {
+      showToast("Your account is paused. Downloads are restricted.", "warning");
+      return;
+    }
     window.location.href = `${BASE_URL}/file/${item.id}?action=download`;
   };
 
@@ -143,13 +151,25 @@ function DirectoryItem({
             <>
               {/* Download button - only for files */}
               {!item.isDirectory && (
-                <button
-                  onClick={handleDownload}
-                  className="flex items-center justify-center p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
-                  title="Download"
-                >
-                  <FaDownload className="text-sm" />
-                </button>
+                <div className="relative group/tooltip">
+                  <button
+                    onClick={handleDownload}
+                    className={`flex items-center justify-center p-2 rounded-full transition-colors ${
+                      subscriptionStatus === "paused"
+                        ? "text-gray-400 cursor-not-allowed bg-gray-100"
+                        : "text-blue-600 hover:bg-blue-100"
+                    }`}
+                    title={subscriptionStatus === "paused" ? "" : "Download"}
+                  >
+                    <FaDownload className="text-sm" />
+                  </button>
+                  {subscriptionStatus === "paused" && (
+                    <div className="absolute -top-8 right-0 bg-gray-900 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none flex items-center gap-1 shadow-lg z-50 border border-gray-700">
+                      <FaExclamationTriangle className="text-amber-500 w-2.5 h-2.5" />
+                      Paused ⚠️
+                    </div>
+                  )}
+                </div>
               )}
               
               {/* Details button - for both files and folders */}
@@ -200,6 +220,8 @@ function DirectoryItem({
           handleShare={handleShare}
           openDetailsPopup={openDetailsPopup}
           BASE_URL={BASE_URL}
+          subscriptionStatus={subscriptionStatus}
+          showToast={showToast}
         />
       )}
     </div>

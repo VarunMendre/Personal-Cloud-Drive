@@ -1,6 +1,7 @@
 import File from "../models/fileModel.js";
 import User from "../models/userModel.js";
 import Directory from "../models/directoryModel.js";
+import Subscription from "../models/subscriptionModel.js";
 import { resolveFilePath } from "../utils/resolveFilePath.js";
 import { updateDirectorySize } from "../utils/updateDirectorySize.js";
 import { createCloudFrontSignedGetUrl } from "../services/cloudFront.js";
@@ -27,6 +28,18 @@ export const getFile = async (req, res) => {
   // Check if file exists
   if (!fileData) {
     return res.status(404).json({ error: "File not found!" });
+  }
+
+  // CHECK: If subscription is paused, block download
+  const subscription = await Subscription.findOne({
+    userId: fileData.userId,
+    status: "paused",
+  });
+  if (subscription) {
+    return res.status(403).json({ 
+      error: "Subscription Paused", 
+      message: "Your account is paused. Please contact support or resume your subscription." 
+    });
   }
 
   const s3Key = `${fileId}${fileData.extension}`;
@@ -171,6 +184,18 @@ export const uploadFileInitiate = async (req, res, next) => {
   const rootDir = await Directory.findById(req.user.rootDirId);
 
   const fullUser = await User.findById(req.user._id);
+
+  // CHECK: If subscription is paused, block upload
+  const subscription = await Subscription.findOne({
+    userId: req.user._id,
+    status: "paused",
+  });
+  if (subscription) {
+    return res.status(403).json({ 
+      error: "Subscription Paused", 
+      message: "Your account is paused. Please contact support or resume your subscription." 
+    });
+  }
 
   const availableSpace = fullUser.maxStorageLimit - rootDir.size;
 

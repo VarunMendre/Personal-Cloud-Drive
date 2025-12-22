@@ -16,6 +16,8 @@ function DirectoryList({
   handleShare,
   openDetailsPopup, 
   BASE_URL,
+  subscriptionStatus,
+  showToast,
 }) {
   return (
     <div className="flex flex-col gap-[10px] mt-5">
@@ -37,9 +39,10 @@ function DirectoryList({
             handleDeleteFile={handleDeleteFile}
             handleDeleteDirectory={handleDeleteDirectory}
             openRenameModal={openRenameModal}
-            handleShare={handleShare}
             openDetailsPopup={openDetailsPopup} 
             BASE_URL={BASE_URL}
+            subscriptionStatus={subscriptionStatus}
+            showToast={showToast}
           />
         );
       })}

@@ -4,6 +4,7 @@ import User from "../models/userModel.js";
 import { rm } from "fs/promises";
 import mongoose, { Types } from "mongoose";
 import OTP from "../models/otpModel.js";
+import Subscription from "../models/subscriptionModel.js";
 import { getEditableRoles } from "../utils/permissions.js";
 import redisClient from "../config/redis.js";
 import { loginSchema, registerSchema } from "../validators/authSchema.js";
@@ -56,32 +57,38 @@ export const register = async (req, res, next) => {
 
     session.startTransaction();
 
-    await Directory.insertOne(
-      {
-        _id: rootDirId,
-        name: `root-${email}`,
-        parentDirId: null,
-        userId,
-      },
+    await Directory.create(
+      [
+        {
+          _id: rootDirId,
+          name: `root-${email}`,
+          parentDirId: null,
+          userId,
+        },
+      ],
       { session }
     );
 
-    await User.insertOne(
-      {
-        _id: userId,
-        name,
-        email,
-        password,
-        rootDirId,
-      },
+    await User.create(
+      [
+        {
+          _id: userId,
+          name,
+          email,
+          password,
+          rootDirId,
+        },
+      ],
       { session }
     );
 
-    session.commitTransaction();
+    await session.commitTransaction();
+    session.endSession();
 
     res.status(201).json({ message: "User Registered" });
   } catch (err) {
-    session.abortTransaction();
+    await session.abortTransaction();
+    session.endSession();
     console.log(err);
     if (err.code === 121) {
       res
@@ -188,6 +195,7 @@ export const getCurrentUser = async (req, res) => {
     subscriptionId: user.subscriptionId,
     maxStorageLimit: user.maxStorageLimit,
     usedStorageInBytes: userDir ? userDir.size : 0,
+    subscriptionStatus: user.subscriptionId ? (await Subscription.findOne({ razorpaySubscriptionId: user.subscriptionId }))?.status || "none" : "none",
   });
 };
 
@@ -344,16 +352,30 @@ export const getAllUsers = async (req, res) => {
     });
   }
 
-  const transformedUsers = allUsers.map(({ _id, name, email, role, isDeleted, maxStorageLimit }) => ({
+  // Fetch subscription data for these users
+  const subscriptions = await Subscription.find({ userId: { $in: userIds } }).sort({ createdAt: -1 }).lean();
+  const subscriptionMap = {};
+  subscriptions.forEach(sub => {
+    // Only keep the most recent one per user (since we sorted by createdAt: -1)
+    if (!subscriptionMap[sub.userId.toString()]) {
+      subscriptionMap[sub.userId.toString()] = {
+        status: sub.status,
+        razorpaySubscriptionId: sub.razorpaySubscriptionId
+      };
+    }
+  });
+
+  const transformedUsers = allUsers.map(({ _id, name, email, role, isDeleted, maxStorageLimit, subscriptionId }) => ({
     id: _id,
     name,
     email,
     role,
     isLoggedIn: allSessionsUserIdSet.has(_id.toString()),
     isDeleted: isDeleted || false,
-
     usedStorageInBytes: storageMap[_id.toString()] || 0,
-    maxStorageLimit: maxStorageLimit || 0
+    maxStorageLimit: maxStorageLimit || 0,
+    subscriptionStatus: subscriptionMap[_id.toString()]?.status || "none",
+    razorpaySubscriptionId: subscriptionMap[_id.toString()]?.razorpaySubscriptionId || subscriptionId || null
   }));
 
   res.status(200).json(transformedUsers);
@@ -575,7 +597,7 @@ export const getUserFileView = async (req, res, next) => {
           Key: s3Key,
           download: true,
           filename: fileData.name,
-        });
+         });
         return res.redirect(getUrl);
       }
     
@@ -643,4 +665,3 @@ export const getUserList = async (req, res, next) => {
     res.status(500).json({ error: "Failed to fetch users" });
   }
 };
-

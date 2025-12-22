@@ -7,7 +7,7 @@ import DirectoryList from "./components/DirectoryList";
 import ShareModal from "./components/ShareModal";
 import DetailsPopup from "./components/DetailsPopup";
 import ImportFromDrive from "./components/ImportFromDrive";
-import { FaUpload, FaFolderPlus, FaFileImport } from "react-icons/fa";
+import { FaUpload, FaFolderPlus, FaFileImport, FaExclamationTriangle, FaInfoCircle, FaTimes } from "react-icons/fa";
 
 
 function DirectoryView() {
@@ -21,6 +21,7 @@ function DirectoryView() {
   const [userPicture, setUserPicture] = useState("");
   const [userRole, setUserRole] = useState("User");
   const [subscriptionId, setSubscriptionId] = useState(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
 
   // Displayed directory name
   const [directoryName, setDirectoryName] = useState("My Drive");
@@ -63,6 +64,13 @@ function DirectoryView() {
   // Storage refresh ref
   const refreshStorageRef = useRef(null);
 
+  // Toast state
+  const [toast, setToast] = useState({ show: false, message: "", type: "info" });
+  const showToast = (message, type = "info") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "info" }), 3000);
+  };
+
   // Context menu
   const [activeContextMenu, setActiveContextMenu] = useState(null);
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
@@ -80,6 +88,7 @@ function DirectoryView() {
         setUserPicture(data.picture);
         setUserRole(data.role);
         setSubscriptionId(data.subscriptionId);
+        setSubscriptionStatus(data.subscriptionStatus || "active");
       } else if (response.status === 401) {
         setUserName("Guest User");
         setUserEmail("guest@example.com");
@@ -191,9 +200,14 @@ function DirectoryView() {
    * Click row to open directory or file
    */
   function handleRowClick(type, id) {
+    console.log("handleRowClick - status:", subscriptionStatus);
     if (type === "directory") {
       navigate(`/directory/${id}`);
     } else {
+      if (subscriptionStatus?.toLowerCase() === "paused") {
+        showToast("Your account is paused. Downloads are restricted.", "warning");
+        return;
+      }
       window.location.href = `${BASE_URL}/file/${id}`;
     }
   }
@@ -376,6 +390,11 @@ function DirectoryView() {
    * Select multiple files
    */
   function handleFileSelect(e) {
+    if (subscriptionStatus?.toLowerCase() === "paused") {
+      showToast("Your account is paused. Uploads are restricted.", "warning");
+      e.target.value = "";
+      return;
+    }
     const selectedFiles = Array.from(e.target.files);
     if (selectedFiles.length === 0) return;
 
@@ -476,6 +495,7 @@ function DirectoryView() {
       setErrorMessage(
         `Upload failed for ${currentItem.name}: ${error.message}`
       );
+      showToast(`Upload failed for ${currentItem.name}`, "error");
 
       processUploadQueue();
     }
@@ -583,6 +603,10 @@ function DirectoryView() {
    */
   async function handleCreateDirectory(e) {
     e.preventDefault();
+    if (subscriptionStatus?.toLowerCase() === "paused") {
+      showToast("Your account is paused. Folder creation is restricted.", "warning");
+      return;
+    }
     setErrorMessage("");
     try {
       const response = await fetch(`${BASE_URL}/directory/${dirId || ""}`, {
@@ -707,7 +731,34 @@ function DirectoryView() {
         userPicture={userPicture}
         userRole={userRole}
         subscriptionId={subscriptionId}
+        subscriptionStatus={subscriptionStatus}
       />
+
+      {/* PAUSED ACCOUNT BANNER - PROMINENT DESIGN */}
+      {subscriptionStatus?.toLowerCase() === "paused" && (
+        <div className="mx-6 mt-6 p-6 bg-amber-100 border-2 border-amber-400 rounded-xl shadow-md">
+           <div className="flex flex-col sm:flex-row items-center gap-5 text-amber-900 text-center sm:text-left">
+             <div className="p-4 bg-amber-200 rounded-2xl">
+               <FaExclamationTriangle className="w-10 h-10 text-amber-700 animate-bounce" />
+             </div>
+             <div>
+               <h2 className="text-2xl font-bold">Your Account is Currently Paused</h2>
+               <p className="text-sm text-amber-800 mt-2 max-w-2xl">
+                 An administrator has temporarily restricted your account. <strong>New uploads, directory creation, and file downloads are currently disabled.</strong> 
+                 Your existing files are safe and will be fully accessible once the account is resumed.
+               </p>
+               <div className="mt-4 flex gap-4 justify-center sm:justify-start">
+                  <button 
+                    onClick={() => navigate("/subscription")}
+                    className="px-4 py-2 bg-amber-700 text-white rounded-lg font-bold text-sm hover:bg-amber-800 transition-colors"
+                  >
+                    View Status
+                  </button>
+               </div>
+             </div>
+           </div>
+        </div>
+      )}
 
       {/* Hidden file input */}
       <input
@@ -734,36 +785,85 @@ function DirectoryView() {
 
           <div className="flex items-center justify-center gap-4">
             {/* Upload Files Button */}
-            <button
-              onClick={() => fileInputRef.current.click()}
-              disabled={
-                errorMessage ===
-                "Directory not found or you do not have access to it!"
-              }
-              className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none font-medium text-sm shadow-md"
-            >
-              <FaUpload className="w-4 h-4" />
-              Upload Files
-            </button>
+            <div className="relative group/btn cursor-not-allowed">
+              <button
+                onClick={() => {
+                  if (subscriptionStatus?.toLowerCase() === "paused") {
+                    showToast("Your account is paused. Uploads are restricted.", "warning");
+                    return;
+                  }
+                  fileInputRef.current.click();
+                }}
+                disabled={errorMessage === "Directory not found or you do not have access to it!"}
+                className={`flex items-center gap-2 px-5 py-2 text-white rounded-lg transition-all duration-200 font-medium text-sm shadow-md ${
+                  subscriptionStatus?.toLowerCase() === "paused" 
+                    ? "bg-gray-400 cursor-not-allowed grayscale" 
+                    : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg hover:scale-105"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                <FaUpload className="w-4 h-4" />
+                Upload Files {subscriptionStatus?.toLowerCase() === "paused" && "⚠️"}
+              </button>
+              {subscriptionStatus?.toLowerCase() === "paused" && (
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none flex items-center gap-1 shadow-lg z-50">
+                  <FaExclamationTriangle className="text-amber-400 w-3 h-3" />
+                  Paused: Uploads Disabled ⚠️
+                </div>
+              )}
+            </div>
 
             {/* Create Directory Button */}
-            <button
-              onClick={() => setShowCreateDirModal(true)}
-              disabled={
-                errorMessage ===
-                "Directory not found or you do not have access to it!"
-              }
-              className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none font-medium text-sm shadow-md"
-            >
-              <FaFolderPlus className="w-4 h-4" />
-              Create Directory
-            </button>
+            <div className="relative group/btn cursor-not-allowed">
+              <button
+                onClick={() => {
+                  if (subscriptionStatus?.toLowerCase() === "paused") {
+                    showToast("Your account is paused. Folder creation is restricted.", "warning");
+                    return;
+                  }
+                  setShowCreateDirModal(true);
+                }}
+                disabled={errorMessage === "Directory not found or you do not have access to it!"}
+                className={`flex items-center gap-2 px-5 py-2 text-white rounded-lg transition-all duration-200 font-medium text-sm shadow-md ${
+                  subscriptionStatus?.toLowerCase() === "paused" 
+                    ? "bg-gray-400 cursor-not-allowed grayscale" 
+                    : "bg-green-600 hover:bg-green-700 hover:shadow-lg hover:scale-105"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                <FaFolderPlus className="w-4 h-4" />
+                Create Directory {subscriptionStatus?.toLowerCase() === "paused" && "⚠️"}
+              </button>
+              {subscriptionStatus?.toLowerCase() === "paused" && (
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none flex items-center gap-1 shadow-lg z-50">
+                  <FaExclamationTriangle className="text-amber-400 w-3 h-3" />
+                  Paused: Folders Disabled ⚠️
+                </div>
+              )}
+            </div>
 
             {/* Import from Drive Button - NEW */}
-            <ImportFromDrive
-              onFilesSelected={handleDriveFileImport}
-              className="flex items-center gap-2 px-5 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none font-medium text-sm shadow-sm"
-            />
+            <div className="relative group/btn cursor-not-allowed">
+              <div onClick={() => {
+                if (subscriptionStatus === "paused") {
+                  showToast("Your account is paused. Imports are restricted.", "warning");
+                }
+              }}>
+                <ImportFromDrive
+                  onFilesSelected={handleDriveFileImport}
+                  disabled={subscriptionStatus?.toLowerCase() === "paused"}
+                  className={`flex items-center gap-2 px-5 py-2 text-gray-700 border border-gray-300 rounded-lg shadow-sm transition-all duration-200 font-medium text-sm ${
+                    subscriptionStatus?.toLowerCase() === "paused"
+                      ? "bg-gray-100 cursor-not-allowed opacity-50 grayscale pointer-events-none"
+                      : "bg-white hover:bg-gray-50 hover:border-gray-400 hover:shadow-lg hover:scale-105"
+                  }`}
+                />
+              </div>
+              {subscriptionStatus?.toLowerCase() === "paused" && (
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none flex items-center gap-1 shadow-lg z-50">
+                  <FaExclamationTriangle className="text-amber-400 w-3 h-3" />
+                  Paused: Imports Disabled ⚠️
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -852,6 +952,9 @@ function DirectoryView() {
           item={detailsItem}
           onClose={closeDetailsPopup}
           BASE_URL={BASE_URL}
+          handleShare={handleShare}
+          openDetailsPopup={openDetailsPopup} 
+          subscriptionStatus={subscriptionStatus}
         />
       )}
 
@@ -873,6 +976,7 @@ function DirectoryView() {
             items={combinedItems}
             handleRowClick={handleRowClick}
             activeContextMenu={activeContextMenu}
+            subscriptionStatus={subscriptionStatus}
             contextMenuPos={contextMenuPos}
             handleContextMenu={handleContextMenu}
             getFileIcon={getFileIcon}
@@ -885,9 +989,25 @@ function DirectoryView() {
             openDetailsPopup={openDetailsPopup}
             handleShare={handleShare}
             BASE_URL={BASE_URL}
+            showToast={showToast}
           />
         )}
       </div>
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed bottom-6 right-6 z-[100] animate-slideUp">
+          <div className={`flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl border ${
+            toast.type === "warning" ? "bg-amber-50 border-amber-200 text-amber-800" :
+            toast.type === "error" ? "bg-red-50 border-red-200 text-red-800" :
+            "bg-blue-50 border-blue-200 text-blue-800"
+          }`}>
+            {toast.type === "warning" && <FaExclamationTriangle className="w-5 h-5 text-amber-600" />}
+            {toast.type === "error" && <FaTimes className="w-5 h-5 text-red-600" />}
+            {toast.type === "info" && <FaInfoCircle className="w-5 h-5 text-blue-600" />}
+            <span className="font-semibold">{toast.message}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

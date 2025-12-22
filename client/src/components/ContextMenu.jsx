@@ -16,11 +16,13 @@ function ContextMenu({
   handleDeleteDirectory,
   openRenameModal,
   openDetailsPopup,
-  handleShare,
   BASE_URL,
+  subscriptionStatus,
+  showToast,
 }) {
   // FIXED - Define the missing itemClass
   const itemClass = "flex items-center gap-3 px-5 py-2 cursor-pointer whitespace-nowrap text-[#333] hover:bg-[#eee] transition-colors duration-200 text-sm";
+  const disabledClass = "flex items-center gap-3 px-5 py-2 cursor-not-allowed whitespace-nowrap text-gray-400 bg-gray-50 opacity-60 text-sm";
 
   // Directory context menu
   if (item.isDirectory) {
@@ -31,18 +33,18 @@ function ContextMenu({
       >
 
         <div
-          className={itemClass}
-          onClick={() => openRenameModal("directory", item.id, item.name)}
+          className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
+          onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && openRenameModal("directory", item.id, item.name)}
         >
-          <FaPencilAlt className="text-gray-600" />
+          <FaPencilAlt className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-gray-600"} />
           <span>Rename</span>
         </div>
         <div
-          className={itemClass}
-          onClick={() => handleDeleteDirectory(item.id)}
+          className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
+          onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && handleDeleteDirectory(item.id)}
         >
-          <FaTrashAlt className="text-red-600" />
-          <span className="text-red-600">Delete</span>
+          <FaTrashAlt className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-red-600"} />
+          <span className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-400" : "text-red-600"}>Delete</span>
         </div>
         <div className={itemClass} onClick={() => openDetailsPopup(item)}>
           <FaInfoCircle className="text-gray-600" />
@@ -77,34 +79,38 @@ function ContextMenu({
         >
           {/* Share option */}
           <div
-            className={itemClass}
-            onClick={() => handleShare("file", item.id, item.name)}
+            className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
+            onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && handleShare("file", item.id, item.name)}
           >
-            <FaShareAlt className="text-gray-600" />
+            <FaShareAlt className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-gray-600"} />
             <span>Share</span>
           </div>
           <div
-            className={itemClass}
-            onClick={() =>
-              (window.location.href = `${BASE_URL}/file/${item.id}?action=download`)
-            }
+            className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
+            onClick={() => {
+              if (subscriptionStatus?.toLowerCase() === "paused") {
+                showToast("Your account is paused. Downloads are restricted.", "warning");
+                return;
+              }
+              window.location.href = `${BASE_URL}/file/${item.id}?action=download`;
+            }}
           >
-            <FaDownload className="text-gray-600" />
+            <FaDownload className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-gray-600"} />
             <span>Download</span>
           </div>
           <div
-            className={itemClass}
-            onClick={() => openRenameModal("file", item.id, item.name)}
+            className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
+            onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && openRenameModal("file", item.id, item.name)}
           >
-            <FaPencilAlt className="text-gray-600" />
+            <FaPencilAlt className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-gray-600"} />
             <span>Rename</span>
           </div>
           <div
-            className={itemClass}
-            onClick={() => handleDeleteFile(item.id)}
+            className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
+            onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && handleDeleteFile(item.id)}
           >
-            <FaTrashAlt className="text-red-600" />
-            <span className="text-red-600">Delete</span>
+            <FaTrashAlt className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-red-600"} />
+            <span className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-400" : "text-red-600"}>Delete</span>
           </div>
           <div className={itemClass} onClick={() => openDetailsPopup(item)}>
             <FaInfoCircle className="text-gray-600" />

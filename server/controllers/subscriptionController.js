@@ -4,6 +4,8 @@ import {
   cancelSubscriptionService,
   createSubscriptionService,
   getSubscriptionDetailsService,
+  pauseSubscriptionService,
+  resumeSubscriptionService,
 } from "../services/subscription/index.js";
 
 export const createSubscription = async (req, res, next) => {
@@ -68,14 +70,36 @@ export const cancelSubscription = async (req, res, next) => {
   try {
     const { planId } = req.body;
     const result = await cancelSubscriptionService(req.user._id, planId);
-    
+
     if (result && result.success === false) {
       return res.status(400).json(result);
     }
-    
+
     return res.json(result);
   } catch (error) {
     console.error("Error while canceling subscription", error);
+    next(error);
+  }
+};
+
+export const pauseSubscription = async (req, res, next) => {
+  try {
+    const { id } = req.params; // razorpaySubscriptionId
+    const result = await pauseSubscriptionService(id);
+    return res.json(result);
+  } catch (error) {
+    console.error("Error pausing subscription:", error);
+    next(error);
+  }
+};
+
+export const resumeSubscription = async (req, res, next) => {
+  try {
+    const { id } = req.params; // razorpaySubscriptionId
+    const result = await resumeSubscriptionService(id);
+    return res.json(result);
+  } catch (error) {
+    console.error("Error resuming subscription:", error);
     next(error);
   }
 };
