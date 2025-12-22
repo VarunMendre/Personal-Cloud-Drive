@@ -2,6 +2,7 @@ import { handleActivationEvent } from "./webhookActivationEvent.js";
 import { handleCancelledEvent } from "./webhookCancelledEvent.js";
 import { handlePauseEvent } from "./webhookPauseEvent.js";
 import { handleResumeEvent } from "./webhookResumeEvent.js";
+import { handleInvoicePaidEvent } from "./webhookInvoicePaidEvent.js";
 
 export async function WebhookEventHandler(event, webhookBody) {
   switch (event) {
@@ -19,6 +20,10 @@ export async function WebhookEventHandler(event, webhookBody) {
 
     case "subscription.resumed":
       await handleResumeEvent(webhookBody);
+      break;
+    
+    case "invoice.paid":
+      await handleInvoicePaidEvent(webhookBody);
       break;
 
     default:

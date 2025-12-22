@@ -28,9 +28,9 @@ export default function SubscriptionDetails() {
   async function handleViewInvoice() {
     try {
       setLoadingInvoice(true);
-      const url = await getInvoiceUrl();
-      if (url) {
-        window.open(url, "_blank");
+      const response = await getInvoiceUrl();
+      if (response?.invoiceUrl) {
+        window.open(response.invoiceUrl, "_blank");
       }
     } catch (err) {
       console.error("Failed to fetch invoice:", err);

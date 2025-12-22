@@ -35,7 +35,7 @@ export const createSubscriptionService = async (userId, planId) => {
             plan_id: planId,
             total_count: isYearly ? 10 : 60,
             notes: {
-                user: userId.toString(),
+                userId: userId.toString(),
             },
         });
 
