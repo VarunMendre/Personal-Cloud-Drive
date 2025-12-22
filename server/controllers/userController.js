@@ -25,13 +25,13 @@ const getDOMPurify = () => {
 };
 
 export const register = async (req, res, next) => {
-  const sanitizedBody ={
+  const sanitizedBody = {
     name: getDOMPurify().sanitize(req.body.name),
     email: getDOMPurify().sanitize(req.body.email),
     password: getDOMPurify().sanitize(req.body.password),
     otp: getDOMPurify().sanitize(req.body.otp),
   };
-  
+
   const {
     success,
     data = content,
@@ -115,7 +115,7 @@ export const login = async (req, res, next) => {
   };
 
   const { success, data, error } = loginSchema.safeParse(sanitizedBody);
-  
+
   if (!success) {
     return res.status(404).json({ error: "Invalid Credentials" });
   }
@@ -184,9 +184,9 @@ export const getCurrentUser = async (req, res) => {
   if (!user) {
     return res.status(404).json({ error: "User not found" });
   }
-  
+
   const userDir = await Directory.findById(user.rootDirId);
-  
+
   res.status(200).json({
     name: user.name,
     email: user.email,
@@ -328,7 +328,7 @@ export const getAllUsers = async (req, res) => {
   const allUsers = await User.find(query).lean();
 
   const userIds = allUsers.map(u => u._id);
-  const rootDirs = await Directory.find({userId: {$in: userIds}, parentDirId: null}).lean();
+  const rootDirs = await Directory.find({ userId: { $in: userIds }, parentDirId: null }).lean();
 
   const storageMap = {};
   rootDirs.forEach((dir) => {
@@ -593,23 +593,23 @@ export const getUserFileView = async (req, res, next) => {
     const s3Key = `${fileId}${fileData.extension}`;
 
     if (req.query.action === "download") {
-        const getUrl = await getFileUrl({
-          Key: s3Key,
-          download: true,
-          filename: fileData.name,
-         });
-        return res.redirect(getUrl);
-      }
-    
-      const getUrl = createCloudFrontSignedGetUrl({
-        key: s3Key,
+      const getUrl = await getFileUrl({
+        Key: s3Key,
+        download: true,
         filename: fileData.name,
       });
+      return res.redirect(getUrl);
+    }
+
+    const getUrl = createCloudFrontSignedGetUrl({
+      key: s3Key,
+      filename: fileData.name,
+    });
 
     if (req.query.format === "json") {
       return res.json({ url: getUrl });
     }
-    
+
     return res.redirect(getUrl);
   } catch (err) {
     next(err);

@@ -87,10 +87,17 @@ function ContextMenu({
           </div>
           <div
             className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
-            onClick={() => {
-              if (subscriptionStatus?.toLowerCase() === "paused") {
-                showToast("Your account is paused. Downloads are restricted.", "warning");
-                return;
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              const statusStr = String(subscriptionStatus || "").toLowerCase().trim();
+              const isPaused = statusStr === "paused";
+              console.log("ContextMenu download - statusStr:", statusStr, "isPaused:", isPaused);
+              
+              if (isPaused) {
+                showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
+                return false;
               }
               window.location.href = `${BASE_URL}/file/${item.id}?action=download`;
             }}

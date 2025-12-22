@@ -41,11 +41,19 @@ export default function UsersPage() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showHardDeleteConfirm, setShowHardDeleteConfirm] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showPauseModal, setShowPauseModal] = useState(false);
+  const [showResumeModal, setShowResumeModal] = useState(false);
   
   // File Modals
   const [showDeleteFileConfirm, setShowDeleteFileConfirm] = useState(false);
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showFilePreview, setShowFilePreview] = useState(false);
+
+  // Toast notifications
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Selection
   const [selectedUser, setSelectedUser] = useState(null);
@@ -327,50 +335,83 @@ export default function UsersPage() {
     }
   };
 
-  const handlePauseSubscription = async (user) => {
+  const handlePauseSubscription = (user) => {
     if (!user.razorpaySubscriptionId) {
-      alert("No active subscription found for this user");
+      setErrorMessage("No active subscription found for this user");
+      setShowErrorToast(true);
+      setTimeout(() => setShowErrorToast(false), 3000);
       return;
     }
-    if (!confirm(`Are you sure you want to PAUSE the subscription for ${user.name}? This will block their uploads and downloads.`)) return;
-    
+    setSelectedUser(user);
+    setShowPauseModal(true);
+  };
+
+  const confirmPause = async () => {
+    if (!selectedUser) return;
     try {
-      const response = await fetch(`${BASE_URL}/subscriptions/${user.razorpaySubscriptionId}/pause`, {
+      const response = await fetch(`${BASE_URL}/subscriptions/${selectedUser.razorpaySubscriptionId}/pause`, {
         method: "POST",
         credentials: "include",
       });
       if (response.ok) {
-        alert("Subscription paused successfully");
+        setShowPauseModal(false);
+        setSuccessMessage("Subscription paused successfully");
+        setShowSuccessToast(true);
+        setTimeout(() => setShowSuccessToast(false), 3000);
         fetchUsers();
       } else {
         const err = await response.json();
-        alert(err.message || "Failed to pause subscription");
+        setShowPauseModal(false);
+        setErrorMessage(err.message || "Failed to pause subscription");
+        setShowErrorToast(true);
+        setTimeout(() => setShowErrorToast(false), 3000);
       }
     } catch (err) {
       console.error("Pause error:", err);
+      setShowPauseModal(false);
+      setErrorMessage("An error occurred while pausing subscription");
+      setShowErrorToast(true);
+      setTimeout(() => setShowErrorToast(false), 3000);
     }
   };
 
-  const handleResumeSubscription = async (user) => {
+  const handleResumeSubscription = (user) => {
     if (!user.razorpaySubscriptionId) {
-      alert("No active subscription found for this user");
+      setErrorMessage("No active subscription found for this user");
+      setShowErrorToast(true);
+      setTimeout(() => setShowErrorToast(false), 3000);
       return;
     }
-    
+    setSelectedUser(user);
+    setShowResumeModal(true);
+  };
+
+  const confirmResume = async () => {
+    if (!selectedUser) return;
     try {
-      const response = await fetch(`${BASE_URL}/subscriptions/${user.razorpaySubscriptionId}/resume`, {
+      const response = await fetch(`${BASE_URL}/subscriptions/${selectedUser.razorpaySubscriptionId}/resume`, {
         method: "POST",
         credentials: "include",
       });
       if (response.ok) {
-        alert("Subscription resumed successfully");
+        setShowResumeModal(false);
+        setSuccessMessage("Subscription resumed successfully");
+        setShowSuccessToast(true);
+        setTimeout(() => setShowSuccessToast(false), 3000);
         fetchUsers();
       } else {
         const err = await response.json();
-        alert(err.message || "Failed to resume subscription");
+        setShowResumeModal(false);
+        setErrorMessage(err.message || "Failed to resume subscription");
+        setShowErrorToast(true);
+        setTimeout(() => setShowErrorToast(false), 3000);
       }
     } catch (err) {
       console.error("Resume error:", err);
+      setShowResumeModal(false);
+      setErrorMessage("An error occurred while resuming subscription");
+      setShowErrorToast(true);
+      setTimeout(() => setShowErrorToast(false), 3000);
     }
   };
 
@@ -535,7 +576,7 @@ export default function UsersPage() {
                   <th className="px-4 py-2">Storage Used</th>
                   <th className="px-4 py-2">Role</th>
                   <th className="px-4 py-2">Status</th>
-                  <th className="px-4 py-2">Subscription</th>
+                  {currentUser.role === "Owner" && <th className="px-4 py-2">Subscription</th>}
                   <th className="px-4 py-2">Actions</th>
                 </tr>
               </thead>
@@ -583,56 +624,58 @@ export default function UsersPage() {
                         {user.isDeleted ? "Deleted" : user.isLoggedIn ? "Logged In" : "Logged Out"}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {user.razorpaySubscriptionId ? (
-                          <>
-                            {user.subscriptionStatus === "paused" ? (
-                              <button
-                                onClick={() => handleResumeSubscription(user)}
-                                className="p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-1 shadow-sm"
-                                title="Resume Subscription"
-                              >
-                                <FaPlay className="w-3 h-3" />
-                                <span className="text-[10px] font-bold uppercase">Resume</span>
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handlePauseSubscription(user)}
-                                className="p-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg transition-all flex items-center gap-1 shadow-sm"
-                                title="Pause Subscription"
-                              >
-                                <FaPause className="w-3 h-3" />
-                                <span className="text-[10px] font-bold uppercase">Pause</span>
-                              </button>
-                            )}
-                            
-                            {/* Status Label */}
-                            <div className="flex items-center ml-1">
+                    {currentUser.role === "Owner" && (
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {user.razorpaySubscriptionId ? (
+                            <>
                               {user.subscriptionStatus === "paused" ? (
-                                <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
-                                   <FaExclamationTriangle className="w-2.5 h-2.5 animate-pulse" />
-                                   <span className="text-[9px] font-bold uppercase">Paused</span>
-                                </div>
-                              ) : user.subscriptionStatus === "active" ? (
-                                <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">
-                                   <FaCheckCircle className="w-2.5 h-2.5" />
-                                   <span className="text-[9px] font-bold uppercase">Active</span>
-                                </div>
+                                <button
+                                  onClick={() => handleResumeSubscription(user)}
+                                  className="p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-1 shadow-sm"
+                                  title="Resume Subscription"
+                                >
+                                  <FaPlay className="w-3 h-3" />
+                                  <span className="text-[10px] font-bold uppercase">Resume</span>
+                                </button>
                               ) : (
-                                <div className="flex items-center gap-1 text-gray-400 opacity-60">
-                                  <span className="text-[9px] font-medium italic">Basic Account</span>
-                                </div>
+                                <button
+                                  onClick={() => handlePauseSubscription(user)}
+                                  className="p-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg transition-all flex items-center gap-1 shadow-sm"
+                                  title="Pause Subscription"
+                                >
+                                  <FaPause className="w-3 h-3" />
+                                  <span className="text-[10px] font-bold uppercase">Pause</span>
+                                </button>
                               )}
+                              
+                              {/* Status Label */}
+                              <div className="flex items-center ml-1">
+                                {user.subscriptionStatus === "paused" ? (
+                                  <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
+                                     <FaExclamationTriangle className="w-2.5 h-2.5 animate-pulse" />
+                                     <span className="text-[9px] font-bold uppercase">Paused</span>
+                                  </div>
+                                ) : user.subscriptionStatus === "active" ? (
+                                  <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">
+                                     <FaCheckCircle className="w-2.5 h-2.5" />
+                                     <span className="text-[9px] font-bold uppercase">Active</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1 text-gray-400 opacity-60">
+                                    <span className="text-[9px] font-medium italic">Basic Account</span>
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex items-center gap-1 text-gray-400 opacity-60">
+                               <span className="text-[9px] font-medium italic">Basic Account</span>
                             </div>
-                          </>
-                        ) : (
-                          <div className="flex items-center gap-1 text-gray-400 opacity-60">
-                             <span className="text-[9px] font-medium italic">Basic Account</span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
+                          )}
+                        </div>
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {/* Logout */}
@@ -874,6 +917,118 @@ export default function UsersPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pause Subscription Modal */}
+      {showPauseModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
+            <div className="px-6 py-5 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                  <FaPause className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Pause Subscription</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">Temporarily restrict user access</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-600 mb-4">
+                Are you sure you want to <strong className="text-amber-600">PAUSE</strong> the subscription for <strong className="text-gray-900">{selectedUser.name}</strong>?
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5">
+                <p className="text-xs text-amber-800 font-medium flex items-start gap-2">
+                  <FaExclamationTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                  <span>This will block their uploads and downloads until the subscription is resumed.</span>
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowPauseModal(false)}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmPause}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
+                >
+                  Pause Subscription
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Resume Subscription Modal */}
+      {showResumeModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
+            <div className="px-6 py-5 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <FaPlay className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Resume Subscription</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">Restore user access</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-600 mb-4">
+                Are you sure you want to <strong className="text-green-600">RESUME</strong> the subscription for <strong className="text-gray-900">{selectedUser.name}</strong>?
+              </p>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-5">
+                <p className="text-xs text-green-800 font-medium flex items-start gap-2">
+                  <FaCheckCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                  <span>This will restore their ability to upload and download files.</span>
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowResumeModal(false)}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmResume}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Resume Subscription
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Toast */}
+      {showSuccessToast && (
+        <div className="fixed bottom-6 right-6 z-[100] animate-slideUp">
+          <div className="flex items-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl shadow-2xl border border-green-500">
+            <div className="w-6 h-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+              <FaCheckCircle className="w-4 h-4" />
+            </div>
+            <span className="font-semibold text-sm">{successMessage}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Error Toast */}
+      {showErrorToast && (
+        <div className="fixed bottom-6 right-6 z-[100] animate-slideUp">
+          <div className="flex items-center gap-3 px-6 py-4 bg-red-600 text-white rounded-xl shadow-2xl border border-red-500">
+            <div className="w-6 h-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+              <FaExclamationTriangle className="w-4 h-4" />
+            </div>
+            <span className="font-semibold text-sm">{errorMessage}</span>
           </div>
         </div>
       )}

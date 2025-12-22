@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DirectoryHeader from "./components/DirectoryHeader";
-import { FaArrowLeft, FaFileAlt, FaSearch, FaUserCircle, FaDownload, FaEye } from "react-icons/fa";
+import { FaArrowLeft, FaFileAlt, FaSearch, FaUserCircle, FaDownload, FaEye, FaExclamationTriangle, FaTimes, FaInfoCircle } from "react-icons/fa";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -17,6 +17,15 @@ function SharedWithMePage() {
   const [userEmail, setUserEmail] = useState("guest@example.com");
   const [userPicture, setUserPicture] = useState("");
   const [userRole, setUserRole] = useState("User");
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+
+  // Toast state
+  const [toast, setToast] = useState({ show: false, message: "", type: "info" });
+
+  const showToast = (message, type = "info") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "info" }), 3000);
+  };
 
   useEffect(() => {
     fetchUser();
@@ -34,6 +43,7 @@ function SharedWithMePage() {
         setUserEmail(data.email);
         setUserPicture(data.picture);
         setUserRole(data.role);
+        setSubscriptionStatus(data.subscriptionStatus || "active");
       }
     } catch (err) {
       console.error("Error fetching user info:", err);
@@ -216,16 +226,50 @@ function SharedWithMePage() {
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
                           <button 
-                            onClick={() => window.open(`${BASE_URL}/file/${file.fileId}`, '_blank')}
-                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                            title="View File"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              
+                              const statusStr = String(subscriptionStatus || "").toLowerCase().trim();
+                              const isPaused = statusStr === "paused";
+                              console.log("SharedWithMe View - statusStr:", statusStr, "isPaused:", isPaused);
+                              
+                              if (isPaused) {
+                                showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
+                                return false;
+                              }
+                              window.open(`${BASE_URL}/file/${file.fileId}`, '_blank');
+                            }}
+                            className={`p-2 rounded-full transition-colors ${
+                              subscriptionStatus?.toLowerCase() === "paused"
+                                ? "text-gray-400 cursor-not-allowed bg-gray-50"
+                                : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                            }`}
+                            title={subscriptionStatus?.toLowerCase() === "paused" ? "Paused" : "View File"}
                           >
                            <FaEye className="w-5 h-5" />
                           </button>
                           <button 
-                            onClick={() => window.location.href = `${BASE_URL}/file/${file.fileId}?action=download`}
-                            className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-full transition-colors"
-                            title="Download File"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              
+                              const statusStr = String(subscriptionStatus || "").toLowerCase().trim();
+                              const isPaused = statusStr === "paused";
+                              console.log("SharedWithMe Download - statusStr:", statusStr, "isPaused:", isPaused);
+                              
+                              if (isPaused) {
+                                showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
+                                return false;
+                              }
+                              window.location.href = `${BASE_URL}/file/${file.fileId}?action=download`;
+                            }}
+                            className={`p-2 rounded-full transition-colors ${
+                              subscriptionStatus?.toLowerCase() === "paused"
+                                ? "text-gray-400 cursor-not-allowed bg-gray-50"
+                                : "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            }`}
+                            title={subscriptionStatus?.toLowerCase() === "paused" ? "Paused" : "Download File"}
                           >
                             <FaDownload className="w-5 h-5" />
                           </button>
@@ -239,6 +283,21 @@ function SharedWithMePage() {
           )}
         </div>
       </div>
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed bottom-6 right-6 z-[100] animate-slideUp">
+          <div className={`flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl border ${
+            toast.type === "warning" ? "bg-amber-50 border-amber-200 text-amber-800" :
+            toast.type === "error" ? "bg-red-50 border-red-200 text-red-800" :
+            "bg-blue-50 border-blue-200 text-blue-800"
+          }`}>
+            {toast.type === "warning" && <FaExclamationTriangle className="w-5 h-5 text-amber-600" />}
+            {toast.type === "error" && <FaTimes className="w-5 h-5 text-red-600" />}
+            {toast.type === "info" && <FaInfoCircle className="w-5 h-5 text-blue-600" />}
+            <span className="font-semibold">{toast.message}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -36,6 +36,9 @@ function DirectoryItem({
 }) {
   const [isHovered, setIsHovered] = useState(false);
 
+  // Debug: Log subscription status
+  console.log("DirectoryItem rendered - subscriptionStatus:", subscriptionStatus, "type:", typeof subscriptionStatus);
+
   // Convert the file icon string to the actual Icon component
   function renderFileIcon(iconString) {
     switch (iconString) {
@@ -59,11 +62,24 @@ function DirectoryItem({
 
   const handleDownload = (e) => {
     e.stopPropagation();
+    e.preventDefault(); // Prevent default immediately
+    
     console.log("DirectoryItem handleDownload - status:", subscriptionStatus);
-    if (subscriptionStatus?.toLowerCase() === "paused") {
-      showToast("Your account is paused. Downloads are restricted.", "warning");
-      return;
+    console.log("DirectoryItem handleDownload - status type:", typeof subscriptionStatus);
+    
+    // Check if subscription is paused (case-insensitive, defensive)
+    const statusStr = String(subscriptionStatus || "").toLowerCase().trim();
+    const isPaused = statusStr === "paused";
+    
+    console.log("DirectoryItem handleDownload - statusStr:", statusStr);
+    console.log("DirectoryItem handleDownload - isPaused:", isPaused);
+    
+    if (isPaused) {
+      showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
+      return false; // Explicitly return false
     }
+    
+    // Only proceed with download if not paused
     window.location.href = `${BASE_URL}/file/${item.id}?action=download`;
   };
 

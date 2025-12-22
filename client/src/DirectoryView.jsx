@@ -391,7 +391,7 @@ function DirectoryView() {
    */
   function handleFileSelect(e) {
     if (subscriptionStatus?.toLowerCase() === "paused") {
-      showToast("Your account is paused. Uploads are restricted.", "warning");
+      showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
       e.target.value = "";
       return;
     }
@@ -604,7 +604,7 @@ function DirectoryView() {
   async function handleCreateDirectory(e) {
     e.preventDefault();
     if (subscriptionStatus?.toLowerCase() === "paused") {
-      showToast("Your account is paused. Folder creation is restricted.", "warning");
+      showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
       return;
     }
     setErrorMessage("");
@@ -789,7 +789,7 @@ function DirectoryView() {
               <button
                 onClick={() => {
                   if (subscriptionStatus?.toLowerCase() === "paused") {
-                    showToast("Your account is paused. Uploads are restricted.", "warning");
+                    showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
                     return;
                   }
                   fileInputRef.current.click();
@@ -817,7 +817,7 @@ function DirectoryView() {
               <button
                 onClick={() => {
                   if (subscriptionStatus?.toLowerCase() === "paused") {
-                    showToast("Your account is paused. Folder creation is restricted.", "warning");
+                    showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
                     return;
                   }
                   setShowCreateDirModal(true);
@@ -844,7 +844,7 @@ function DirectoryView() {
             <div className="relative group/btn cursor-not-allowed">
               <div onClick={() => {
                 if (subscriptionStatus === "paused") {
-                  showToast("Your account is paused. Imports are restricted.", "warning");
+                  showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
                 }
               }}>
                 <ImportFromDrive

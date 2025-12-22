@@ -23,6 +23,13 @@
       transform: translateY(0) scale(1);
     }
   }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  --animate-marquee: marquee 20s linear infinite;
 }
 
 body {
@@ -36,4 +43,8 @@ body {
 
 .animate-slideUp {
   animation: var(--animate-slideUp);
+}
+
+.animate-marquee {
+  animation: var(--animate-marquee);
 }
