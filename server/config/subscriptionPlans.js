@@ -49,4 +49,14 @@ export const SUBSCRIPTION_PLANS = {
     billingPeriod: "Yearly",
     price: 7999,
   },
+  // New ₹199 Plan (Assuming Standard limits for now)
+  plan_Pt60E0Yy95o09u: {
+    name: "Standard Plan",
+    tagline: "Special Offer",
+    storageQuotaInBytes: 100 * 1024 ** 3, // 100 GB
+    maxDevices: 2,
+    maxFileSize: 1 * 1024 ** 3, // 1 GB
+    billingPeriod: "Monthly",
+    price: 199,
+  },
 };

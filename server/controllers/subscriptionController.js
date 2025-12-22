@@ -1,6 +1,7 @@
 import Subscription from "../models/subscriptionModel.js";
 import { rzpInstance } from "../services/subscription/createSubscription.js";
 import {
+  cancelSubscriptionService,
   createSubscriptionService,
   getSubscriptionDetailsService,
 } from "../services/subscription/index.js";
@@ -59,6 +60,22 @@ export const getSubscriptionInvoice = async (req, res, next) => {
     return res.json({ invoiceUrl: lastInvoice.short_url });
   } catch (error) {
     console.error("Error fetching invoice:", error);
+    next(error);
+  }
+};
+
+export const cancelSubscription = async (req, res, next) => {
+  try {
+    const { planId } = req.body;
+    const result = await cancelSubscriptionService(req.user._id, planId);
+    
+    if (result && result.success === false) {
+      return res.status(400).json(result);
+    }
+    
+    return res.json(result);
+  } catch (error) {
+    console.error("Error while canceling subscription", error);
     next(error);
   }
 };

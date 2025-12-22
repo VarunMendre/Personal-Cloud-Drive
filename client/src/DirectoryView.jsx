@@ -20,6 +20,7 @@ function DirectoryView() {
   const [userEmail, setUserEmail] = useState("guest@example.com");
   const [userPicture, setUserPicture] = useState("");
   const [userRole, setUserRole] = useState("User");
+  const [subscriptionId, setSubscriptionId] = useState(null);
 
   // Displayed directory name
   const [directoryName, setDirectoryName] = useState("My Drive");
@@ -78,6 +79,7 @@ function DirectoryView() {
         setUserEmail(data.email);
         setUserPicture(data.picture);
         setUserRole(data.role);
+        setSubscriptionId(data.subscriptionId);
       } else if (response.status === 401) {
         setUserName("Guest User");
         setUserEmail("guest@example.com");
@@ -704,6 +706,7 @@ function DirectoryView() {
         userEmail={userEmail}
         userPicture={userPicture}
         userRole={userRole}
+        subscriptionId={subscriptionId}
       />
 
       {/* Hidden file input */}

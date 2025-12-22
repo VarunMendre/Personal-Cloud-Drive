@@ -4,7 +4,7 @@ import Directory from "../models/directoryModel.js";
 import { resolveFilePath } from "../utils/resolveFilePath.js";
 import { updateDirectorySize } from "../utils/updateDirectorySize.js";
 import { createCloudFrontSignedGetUrl } from "../services/cloudFront.js";
-import {deleteFileSchema, getFileSchema, renameFileSchema } from "../validators/fileSchema.js";
+import { deleteFileSchema, getFileSchema, renameFileSchema } from "../validators/fileSchema.js";
 import { completeUploadCheck, createUploadSignedUrl, deletes3File, getFileUrl, } from "../services/s3.js";
 
 
@@ -69,15 +69,15 @@ export const renameFile = async (req, res, next) => {
 
   // Check if this is a share link request (token in query or header)
   const shareToken = req.query.shareToken || req.headers['x-share-token'];
-  
+
   if (shareToken) {
     // Validate share link token and permissions
-    if (!file.shareLink || 
-        file.shareLink.token !== shareToken || 
-        !file.shareLink.enabled) {
+    if (!file.shareLink ||
+      file.shareLink.token !== shareToken ||
+      !file.shareLink.enabled) {
       return res.status(403).json({ error: "Invalid or disabled share link" });
     }
-    
+
     if (file.shareLink.role !== "editor") {
       return res.status(403).json({ error: "Share link does not have editor permissions" });
     }
@@ -181,11 +181,18 @@ export const uploadFileInitiate = async (req, res, next) => {
     });
   }
 
+  if (size > fullUser.maxFileSize) {
+    return res.status(413).json({
+      error: `File size exceeds the maximum limit of ${fullUser.maxFileSize / 1024 / 1024} MB for your current plan.`,
+    });
+  }
+
   const extension = name.includes(".")
     ? name.substring(name.lastIndexOf("."))
     : "";
 
-  const newFile = await File.insertOne({
+  const haveSubscription = fullUser.subscriptionId ? true : false;
+  const newFile = await File.create({
     name,
     size,
     contentType,
@@ -193,6 +200,7 @@ export const uploadFileInitiate = async (req, res, next) => {
     userId: fullUser._id,
     parentDirId: actualParentDirId,
     isUploading: true,
+    haveSubscription,
   });
 
   const s3Key = `${newFile._id}${extension}`;
@@ -289,11 +297,11 @@ export const cancelFileUpload = async (req, res, next) => {
     // So we ONLY update directory size if isUploading is FALSE (which shouldn't happen for a cancel, but good for safety).
     // Actually, if it's a cancel, we assume it's incomplete.
     // If isUploading is true, we just delete the file doc and S3 object.
-    
+
     if (!file.isUploading) {
-       // If for some reason we cancel a completed file (unlikely via this route, but possible),
-       // we should treat it like a delete.
-       await updateDirectorySize(file.parentDirId, -file.size);
+      // If for some reason we cancel a completed file (unlikely via this route, but possible),
+      // we should treat it like a delete.
+      await updateDirectorySize(file.parentDirId, -file.size);
     }
 
     await file.deleteOne();

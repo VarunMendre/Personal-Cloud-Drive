@@ -10,59 +10,62 @@ import {
   BsCreditCard,
   BsHddStack
 } from "react-icons/bs";
-import { getSubscriptionDetails, getInvoiceUrl } from "./apis/subscriptionApi";
+import { getSubscriptionDetails, getInvoiceUrl, cancelSubscription } from "./apis/subscriptionApi";
 
 const MOCK_DATA = {
-  activePlan: {
-    name: "Pro Plan",
-    tagline: "For Students & Freelancers",
-    nextBillingDate: "Dec 9, 2025",
-    daysLeft: 30,
-    billingAmount: 299,
-    billingPeriod: "Monthly",
-    status: "active"
-  },
-  storage: {
-    usedInBytes: 0,
-    totalInBytes: 214748364800, // 200 GB
-    percentageUsed: 0.0,
-    usedLabel: "0 Bytes",
-    totalLabel: "200 GB"
-  },
-  limits: {
-    maxFileSize: "2 GB",
-    prioritySpeed: "Active"
-  },
-  stats: {
-    totalFiles: 0,
-    sharedFiles: 0,
-    devicesConnected: 1,
-    maxDevices: 3,
-    uploadsDuringSubscription: 0
-  }
+// ... existing MOCK_DATA ...
 };
 
 export default function SubscriptionDetails() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const navigate = useNavigate();
 
   async function handleViewInvoice() {
     try {
       setLoadingInvoice(true);
-      const res = await getInvoiceUrl();
-      if (res.invoiceUrl) {
-        window.open(res.invoiceUrl, "_blank");
+      const url = await getInvoiceUrl();
+      if (url) {
+        window.open(url, "_blank");
       }
     } catch (err) {
       console.error("Failed to fetch invoice:", err);
-      setErrorMessage(err.response?.data?.message || "Unable to find the invoice. Please try again later.");
-      // Clear error after 5 seconds
+      setErrorMessage("Failed to load invoice. Please try again.");
       setTimeout(() => setErrorMessage(null), 5000);
     } finally {
       setLoadingInvoice(false);
+    }
+  }
+
+  async function handleCancelSubscription() {
+    const limit500MB = 524288000;
+    if (data.storage.usedInBytes > limit500MB) {
+      setErrorMessage("Your storage usage is above 500MB. Please delete some files before cancelling.");
+      setTimeout(() => setErrorMessage(null), 5000);
+      return;
+    }
+    setShowCancelConfirm(true);
+  }
+
+  async function confirmCancellation() {
+    try {
+      setCancelling(true);
+      const res = await cancelSubscription(data.activePlan.planId);
+      if (res.success) {
+        // Redirect or refresh
+        window.location.reload(); 
+      }
+    } catch (err) {
+      console.error("Failed to cancel subscription:", err);
+      setErrorMessage(err.response?.data?.message || "Failed to cancel subscription. Please try again.");
+      setTimeout(() => setErrorMessage(null), 5000);
+    } finally {
+      setCancelling(false);
+      setShowCancelConfirm(false);
     }
   }
 
@@ -74,15 +77,11 @@ export default function SubscriptionDetails() {
         if (res && res.activePlan) {
           setData(res);
         } else {
-          // If response is successful but empty/invalid plan
+          // If response is successful but empty/invalid plan, kick them out
           navigate("/plans");
         }
       } catch (err) {
-        console.error("DEBUG - Subscription Fetch Error:", {
-          message: err.message,
-          response: err.response?.data,
-          status: err.response?.status
-        });
+        // Expected 404 when no subscription exists
         navigate("/plans");
       } finally {
         setLoading(false);
@@ -91,16 +90,16 @@ export default function SubscriptionDetails() {
     fetchDetails();
   }, [navigate]);
 
-  if (loading || !data) {
+  if (loading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center bg-slate-50 min-h-screen">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent shadow-sm"></div>
-          <p className="text-slate-500 font-medium animate-pulse text-sm">Verifying subscription...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-600 font-medium">Loading subscription details...</p>
       </div>
     );
   }
+
+  if (!data) return null;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 bg-slate-50 min-h-screen relative">
@@ -122,14 +121,95 @@ export default function SubscriptionDetails() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 border border-slate-100 animate-in zoom-in-95 duration-300">
+            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mb-6">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">Cancel Subscription?</h3>
+            <p className="text-slate-500 text-sm mb-6">
+              Are you sure? This action is permanent and will trigger the following changes to your account:
+            </p>
+            
+            <div className="space-y-4 mb-8">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+                  <svg className="w-3 h-3 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" /></svg>
+                </div>
+                <p className="text-sm text-slate-600 leading-tight">
+                  <strong className="text-slate-900">Permanent Data Loss:</strong> All files uploaded during your subscription period will be <span className="text-red-600 font-bold uppercase text-[10px] tracking-wider">permanently deleted</span>.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center mt-0.5">
+                  <svg className="w-3 h-3 text-orange-600" fill="currentColor" viewBox="0 0 20 20"><path d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" /></svg>
+                </div>
+                <p className="text-sm text-slate-600 leading-tight">
+                  <strong className="text-slate-900">Storage Downgrade:</strong> Your storage limit will be reset to the free tier capacity of <strong className="text-slate-900">500MB</strong>.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
+                  <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM5.884 6.98a1 1 0 00-1.458-1.366l-.707.707a1 1 0 101.458 1.366l.707-.707zM14.282 5.614a1 1 0 00-1.414 0l-.707.707a1 1 0 101.414 1.414l.707-.707a1 1 0 000-1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zM6.98 14.116a1 1 0 00-1.366-1.458l-.707.707a1 1 0 101.366 1.458l.707-.707zM14.386 14.282a1 1 0 101.414-1.414l-.707-.707a1 1 0 10-1.414 1.414l.707.707zM11 16a1 1 0 10-2 0v1a1 1 0 102 0v-1z" /></svg>
+                </div>
+                <p className="text-sm text-slate-600 leading-tight">
+                  <strong className="text-slate-900">Upload Limits:</strong> Maximum file size per upload will be restricted to <strong className="text-slate-900">100MB</strong>.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center mt-0.5">
+                  <svg className="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>
+                </div>
+                <p className="text-sm text-slate-600 leading-tight">
+                  <strong className="text-slate-900">Device Restrictions:</strong> You will only be allowed <strong className="text-slate-900">1 active connection</strong> at a time.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={confirmCancellation}
+                disabled={cancelling}
+                className="w-full px-6 py-4 bg-red-600 text-white rounded-2xl font-bold text-sm hover:bg-red-700 transition-all shadow-lg shadow-red-200 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {cancelling ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Processing...
+                  </>
+                ) : (
+                  "Yes, Cancel My Subscription"
+                )}
+              </button>
+              <button 
+                onClick={() => setShowCancelConfirm(false)}
+                disabled={cancelling}
+                className="w-full px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all disabled:opacity-50"
+              >
+                Nevermind, keep my plan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="mb-10">
         <h1 className="text-3xl font-extrabold text-slate-900">Your Subscription</h1>
         <p className="text-slate-500 mt-1">Manage your plan and view usage details</p>
       </header>
-
+      
+      {/* ... existing card start ... */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Main Plan Card */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 relative overflow-hidden">
+          {/* ... existing header ... */}
           <div className="flex justify-between items-start mb-8">
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-2">
@@ -146,6 +226,7 @@ export default function SubscriptionDetails() {
             </div>
           </div>
 
+          {/* ... existing stats ... */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 transition hover:border-blue-100">
               <div className="flex items-center gap-2 text-slate-400 mb-2">
@@ -187,11 +268,15 @@ export default function SubscriptionDetails() {
                 "View invoice"
               )}
             </button>
-            <button className="px-5 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all">
+            <button 
+              onClick={handleCancelSubscription}
+              className="px-5 py-2.5 bg-white text-red-600 border border-red-100 rounded-lg text-sm font-bold hover:bg-red-50 transition-all"
+            >
               Cancel Subscription
             </button>
           </div>
         </div>
+
 
         {/* Storage Usage Card */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">

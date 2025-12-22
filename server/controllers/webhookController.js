@@ -2,6 +2,8 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import Subscription from "../models/subscriptionModel.js";
 import User from "../models/userModel.js";
+import { resetUserToDefault } from "../utils/resetUserLimits.js";
+
 // /**
 //  * Monthly
 //  * Yearly
@@ -13,32 +15,7 @@ import User from "../models/userModel.js";
 //  * Yearly
 //  *
 
-export const PLANS = {
-  // Standard Monthly - 100 GB
-  plan_RuC1EiZlwurf5N: {
-    storageQuotaInBytes: 100 * 1024 ** 3,
-    maxDevices: 2,
-    maxFileSize: 1 * 1024 ** 3, // 1 GB
-  },
-  // Premium Monthly - 200 GB
-  plan_RuC2evjqwSxHOH: {
-    storageQuotaInBytes: 200 * 1024 ** 3,
-    maxDevices: 3,
-    maxFileSize: 2 * 1024 ** 3, // 2 GB
-  },
-  // Standard Yearly - 200 GB
-  plan_RuC3yiXd7cecny: {
-    storageQuotaInBytes: 200 * 1024 ** 3,
-    maxDevices: 2,
-    maxFileSize: 1 * 1024 ** 3, // 1 GB
-  },
-  // Premium Yearly - 300 GB
-  plan_RuC5FeIwTTfUSh: {
-    storageQuotaInBytes: 300 * 1024 ** 3,
-    maxDevices: 3,
-    maxFileSize: 2 * 1024 ** 3, // 2 GB
-  },
-};
+import { SUBSCRIPTION_PLANS as PLANS } from "../config/subscriptionPlans.js";
 
 export const handleRazorpayWebhook = async (req, res) => {
   const razorpaySignature = req.headers["x-razorpay-signature"];
@@ -92,10 +69,27 @@ export const handleRazorpayWebhook = async (req, res) => {
           user.maxStorageLimit = planInfo.storageQuotaInBytes;
           user.maxDevices = planInfo.maxDevices;
           user.maxFileSize = planInfo.maxFileSize;
+          user.subscriptionId = rzpSubscription.id;
           await user.save();
           console.log(`Updated user ${user._id} limits: Storage=${planInfo.storageQuotaInBytes}, Devices=${planInfo.maxDevices}, FileSize=${planInfo.maxFileSize}`);
         }
       }
+    }
+  } else if (req.body.event === "subscription.cancelled") {
+    const rzpSubscription = req.body.payload.subscription.entity;
+
+    const subscription = await Subscription.findOne({
+      razorpaySubscriptionId: rzpSubscription.id,
+    });
+
+    if (subscription) {
+      subscription.status = "cancelled";
+      subscription.cancelledAt = new Date().toISOString();
+      await subscription.save();
+
+      // Reset user to default and delete subscription files
+      await resetUserToDefault(subscription.userId);
+      console.log(`Subscription cancelled for user ${subscription.userId} via webhook.`);
     }
   }
   res.end("OK");

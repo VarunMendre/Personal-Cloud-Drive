@@ -13,6 +13,7 @@ function DirectoryHeader({
   userEmail = "guest@example.com",
   userPicture = "",
   userRole = "User",
+  subscriptionId = null,
 }) {
   const navigate = useNavigate();
 
@@ -46,11 +47,13 @@ function DirectoryHeader({
             <div className="flex items-center gap-4">
               {/* Subscription Link */}
               <button
-                onClick={() => navigate("/plans")}
+                onClick={() => navigate(subscriptionId ? "/subscription" : "/plans")}
                 className="flex items-center gap-2 px-3 py-1.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <FaCrown className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm font-medium">Subscription</span>
+                <span className="text-sm font-medium">
+                  {subscriptionId ? "Subscription" : "Plans"}
+                </span>
               </button>
 
               {/* Share Link */}

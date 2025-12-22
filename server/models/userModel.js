@@ -54,6 +54,10 @@ const userSchema = new Schema(
     isDeleted: {
       type: Boolean,
       default: false,
+    },
+    subscriptionId: {
+      type: String,
+      default: null,
     }
   },
   {

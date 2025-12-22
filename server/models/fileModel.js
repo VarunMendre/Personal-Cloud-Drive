@@ -30,6 +30,11 @@ const fileSchema = new Schema(
       default: false,
       required: true,
     },
+    haveSubscription: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
     sharedWith: [{
       userId: {
         type: Schema.Types.ObjectId,

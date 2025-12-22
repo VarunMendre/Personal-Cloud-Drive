@@ -185,6 +185,7 @@ export const getCurrentUser = async (req, res) => {
     email: user.email,
     picture: user.picture,
     role: user.role,
+    subscriptionId: user.subscriptionId,
     maxStorageLimit: user.maxStorageLimit,
     usedStorageInBytes: userDir ? userDir.size : 0,
   });

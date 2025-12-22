@@ -92,6 +92,15 @@ router.post("/google-drive", async (req, res) => {
       extension = "." + extension;
     }
     
+    const user = await User.findById(userId);
+
+    if (fileSize > user.maxFileSize) {
+      return res.status(413).json({
+        error: `File size exceeds the maximum limit of ${user.maxFileSize / 1024 / 1024} MB for your current plan.`,
+      });
+    }
+
+    const haveSubscription = user.subscriptionId ? true : false; 
     const newFile = new File({
       name: finalFilename,
       size: fileSize || 0, 
@@ -99,6 +108,7 @@ router.post("/google-drive", async (req, res) => {
       userId: userId,
       parentDirId: parentDirId || req.user.rootDirId,
       isUploading: true, // Set true initially
+      haveSubscription,
     });
 
     // 4. Create S3 Key matching existing system pattern: fileId + extension
