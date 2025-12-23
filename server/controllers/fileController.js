@@ -141,10 +141,24 @@ export const deleteFile = async (req, res, next) => {
 };
 
 export const getFileDetails = async (req, res, next) => {
-  const result = await resolveFilePath(req.params.id);
-  console.log(result);
-  if (!result) {
+  const file = await File.findById(req.params.id);
+  if (!file) {
     return res.status(404).json({ message: "File not found" });
+  }
+
+  // Verify ownership or shared access
+  const isOwner = file.userId.toString() === req.user._id.toString();
+  const isShared = file.sharedWith.some(
+    (s) => s.userId.toString() === req.user._id.toString()
+  );
+
+  if (!isOwner && !isShared) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+
+  const result = await resolveFilePath(req.params.id);
+  if (!result) {
+    return res.status(404).json({ message: "Error resolving path" });
   }
   res.json(result);
 };

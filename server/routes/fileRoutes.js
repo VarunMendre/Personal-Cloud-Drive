@@ -19,7 +19,7 @@ router.param("parentDirId", validateIdMiddleware);
 router.param("id", validateIdMiddleware);
 
 router.get("/:id", checkAuth, checkDownloadAccess, rateLimiters.getFile, throttlers.getFile, getFile);
-router.get("/details/:id", getFileDetails);
+router.get("/details/:id", checkAuth, checkDownloadAccess, getFileDetails);
 
 router.patch(
   "/:id",

@@ -49,4 +49,7 @@ router.delete(
   checkUploadAccess,
   rateLimiters.deleteDirectory,
   throttlers.deleteDirectory,
-  delete
+  deleteDirectory
+);
+
+export default router;
