@@ -1,5 +1,5 @@
 import express from "express";
-import checkAuth from "../middlewares/authMiddleware.js";
+import checkAuth, { checkUploadAccess } from "../middlewares/authMiddleware.js";
 import {
     disableShareLink,
   generateShareLink,
@@ -32,15 +32,17 @@ router.get(
   checkAuth,
   getSharedUsers
 );
-router.post("/:resourceType/:resourceId/share", checkAuth, shareWithUser);
+router.post("/:resourceType/:resourceId/share", checkAuth, checkUploadAccess, shareWithUser);
 router.patch(
   "/:resourceType/:resourceId/share/:userId",
   checkAuth,
+  checkUploadAccess,
   updateUserAccess
 );
 router.delete(
   "/:resourceType/:resourceId/share/:userId",
   checkAuth,
+  checkUploadAccess,
   removeUserAccess
 );
 
@@ -48,16 +50,19 @@ router.delete(
 router.post(
   "/:resourceType/:resourceId/share-link",
   checkAuth,
+  checkUploadAccess,
   generateShareLink
 );
 router.patch(
   "/:resourceType/:resourceId/share-link",
   checkAuth,
+  checkUploadAccess,
   updateShareLink
 );
 router.delete(
     "/:resourceType/:resourceId/share-link",
     checkAuth,
+    checkUploadAccess,
     disableShareLink
 );
 

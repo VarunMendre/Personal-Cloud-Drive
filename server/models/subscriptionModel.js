@@ -26,9 +26,21 @@ const subscriptionSchema = new Schema(
         "paused",
         "completed",
         "pending",
-        "renewal_failed"
+        "renewal_failed",
+        "expired",
+        "halted"
       ],
       default: "created",
+    },
+    retryCount: {
+      type: Number,
+      default:0,
+    },
+    lastPaymentAttempt: {
+      type: Date,
+    },
+    gracePeriodEndsAt: {
+      type: Date,
     },
     currentPeriodStart: {
       type: Date,

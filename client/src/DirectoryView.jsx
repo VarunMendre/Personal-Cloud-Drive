@@ -204,8 +204,8 @@ function DirectoryView() {
     if (type === "directory") {
       navigate(`/directory/${id}`);
     } else {
-      if (subscriptionStatus?.toLowerCase() === "paused") {
-        showToast("Your account is paused. Downloads are restricted.", "warning");
+    if (["halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+        showToast("Your account is restricted. Downloads are disabled.", "warning");
         return;
       }
       window.location.href = `${BASE_URL}/file/${id}`;
@@ -390,8 +390,8 @@ function DirectoryView() {
    * Select multiple files
    */
   function handleFileSelect(e) {
-    if (subscriptionStatus?.toLowerCase() === "paused") {
-      showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
+    if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+      showToast("Restricted access: Cannot upload files.", "warning");
       e.target.value = "";
       return;
     }
@@ -603,8 +603,8 @@ function DirectoryView() {
    */
   async function handleCreateDirectory(e) {
     e.preventDefault();
-    if (subscriptionStatus?.toLowerCase() === "paused") {
-      showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
+    if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+      showToast("Restricted access: Cannot create directories.", "warning");
       return;
     }
     setErrorMessage("");
@@ -734,27 +734,65 @@ function DirectoryView() {
         subscriptionStatus={subscriptionStatus}
       />
 
-      {/* PAUSED ACCOUNT BANNER - PROMINENT DESIGN */}
+      {/* SUBSCRIPTION ALERTS */}
+      {/* 1. PAUSED */}
       {subscriptionStatus?.toLowerCase() === "paused" && (
         <div className="mx-6 mt-6 p-6 bg-amber-100 border-2 border-amber-400 rounded-xl shadow-md">
            <div className="flex flex-col sm:flex-row items-center gap-5 text-amber-900 text-center sm:text-left">
              <div className="p-4 bg-amber-200 rounded-2xl">
-               <FaExclamationTriangle className="w-10 h-10 text-amber-700 animate-bounce" />
+               <FaExclamationTriangle className="w-10 h-10 text-amber-700" />
              </div>
              <div>
-               <h2 className="text-2xl font-bold">Your Account is Currently Paused</h2>
-               <p className="text-sm text-amber-800 mt-2 max-w-2xl">
-                 An administrator has temporarily restricted your account. <strong>New uploads, directory creation, and file downloads are currently disabled.</strong> 
-                 Your existing files are safe and will be fully accessible once the account is resumed.
+               <h2 className="text-2xl font-bold">Account Paused</h2>
+               <p className="text-sm text-amber-800 mt-2">
+                 Administrator has paused your account. Access is restricted.
                </p>
-               <div className="mt-4 flex gap-4 justify-center sm:justify-start">
-                  <button 
-                    onClick={() => navigate("/subscription")}
-                    className="px-4 py-2 bg-amber-700 text-white rounded-lg font-bold text-sm hover:bg-amber-800 transition-colors"
-                  >
-                    View Status
-                  </button>
-               </div>
+             </div>
+           </div>
+        </div>
+      )}
+
+      {/* 2. PENDING (Grace Period) */}
+      {subscriptionStatus?.toLowerCase() === "pending" && (
+        <div className="mx-6 mt-6 p-6 bg-yellow-50 border-2 border-yellow-400 rounded-xl shadow-md">
+           <div className="flex flex-col sm:flex-row items-center gap-5 text-yellow-900 text-center sm:text-left">
+             <div className="p-4 bg-yellow-100 rounded-2xl">
+               <FaInfoCircle className="w-10 h-10 text-yellow-600 animate-pulse" />
+             </div>
+             <div className="flex-1">
+               <h2 className="text-2xl font-bold">Payment Failed</h2>
+               <p className="text-sm text-yellow-800 mt-2">
+                 We couldn't process your renewal. You are in a grace period, but please update your payment method to avoid suspension.
+               </p>
+               <button 
+                  onClick={() => navigate("/subscription")}
+                  className="mt-3 px-4 py-2 bg-yellow-600 text-white rounded-lg font-bold hover:bg-yellow-700"
+               >
+                 Retry Payment
+               </button>
+             </div>
+           </div>
+        </div>
+      )}
+
+      {/* 3. HALTED / EXPIRED (Hard Block) */}
+      {["halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && (
+        <div className="mx-6 mt-6 p-6 bg-red-50 border-2 border-red-400 rounded-xl shadow-md">
+           <div className="flex flex-col sm:flex-row items-center gap-5 text-red-900 text-center sm:text-left">
+             <div className="p-4 bg-red-100 rounded-2xl">
+               <FaTimes className="w-10 h-10 text-red-600" />
+             </div>
+             <div className="flex-1">
+               <h2 className="text-2xl font-bold">Access Halted</h2>
+               <p className="text-sm text-red-800 mt-2">
+                 Your subscription has expired or payment failed repeatedly. Downloads are blocked.
+               </p>
+               <button 
+                  onClick={() => navigate("/subscription")}
+                  className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700"
+               >
+                 Fix Subscription
+               </button>
              </div>
            </div>
         </div>
@@ -788,26 +826,26 @@ function DirectoryView() {
             <div className="relative group/btn cursor-not-allowed">
               <button
                 onClick={() => {
-                  if (subscriptionStatus?.toLowerCase() === "paused") {
-                    showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
+                  if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+                    showToast("Restricted: Uploads disabled.", "warning");
                     return;
                   }
                   fileInputRef.current.click();
                 }}
                 disabled={errorMessage === "Directory not found or you do not have access to it!"}
                 className={`flex items-center gap-2 px-5 py-2 text-white rounded-lg transition-all duration-200 font-medium text-sm shadow-md ${
-                  subscriptionStatus?.toLowerCase() === "paused" 
+                  ["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())
                     ? "bg-gray-400 cursor-not-allowed grayscale" 
                     : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg hover:scale-105"
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 <FaUpload className="w-4 h-4" />
-                Upload Files {subscriptionStatus?.toLowerCase() === "paused" && "⚠️"}
+                Upload Files {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && "⚠️"}
               </button>
-              {subscriptionStatus?.toLowerCase() === "paused" && (
+              {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && (
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none flex items-center gap-1 shadow-lg z-50">
                   <FaExclamationTriangle className="text-amber-400 w-3 h-3" />
-                  Paused: Uploads Disabled ⚠️
+                  Access Restricted ⚠️
                 </div>
               )}
             </div>
@@ -816,26 +854,26 @@ function DirectoryView() {
             <div className="relative group/btn cursor-not-allowed">
               <button
                 onClick={() => {
-                  if (subscriptionStatus?.toLowerCase() === "paused") {
-                    showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
+                  if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+                    showToast("Restricted: Directory creation disabled.", "warning");
                     return;
                   }
                   setShowCreateDirModal(true);
                 }}
                 disabled={errorMessage === "Directory not found or you do not have access to it!"}
                 className={`flex items-center gap-2 px-5 py-2 text-white rounded-lg transition-all duration-200 font-medium text-sm shadow-md ${
-                  subscriptionStatus?.toLowerCase() === "paused" 
+                  ["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())
                     ? "bg-gray-400 cursor-not-allowed grayscale" 
                     : "bg-green-600 hover:bg-green-700 hover:shadow-lg hover:scale-105"
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 <FaFolderPlus className="w-4 h-4" />
-                Create Directory {subscriptionStatus?.toLowerCase() === "paused" && "⚠️"}
+                Create Directory {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && "⚠️"}
               </button>
-              {subscriptionStatus?.toLowerCase() === "paused" && (
+              {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && (
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none flex items-center gap-1 shadow-lg z-50">
                   <FaExclamationTriangle className="text-amber-400 w-3 h-3" />
-                  Paused: Folders Disabled ⚠️
+                  Access Restricted ⚠️
                 </div>
               )}
             </div>
@@ -843,13 +881,13 @@ function DirectoryView() {
             {/* Import from Drive Button - NEW */}
             <div className="relative group/btn cursor-not-allowed">
               <div onClick={() => {
-                if (subscriptionStatus === "paused") {
-                  showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
+                if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+                  showToast("Restricted: Import disabled.", "warning");
                 }
               }}>
                 <ImportFromDrive
                   onFilesSelected={handleDriveFileImport}
-                  disabled={subscriptionStatus?.toLowerCase() === "paused"}
+                  disabled={["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())}
                   className={`flex items-center gap-2 px-5 py-2 text-gray-700 border border-gray-300 rounded-lg shadow-sm transition-all duration-200 font-medium text-sm ${
                     subscriptionStatus?.toLowerCase() === "paused"
                       ? "bg-gray-100 cursor-not-allowed opacity-50 grayscale pointer-events-none"

@@ -11,18 +11,19 @@ import {
 } from "../controllers/fileController.js";
 import { rateLimiters } from "../utils/rateLimiting.js";
 import { throttlers } from "../utils/throttler.js";
-import checkAuth from "../middlewares/authMiddleware.js";
+import checkAuth, { checkUploadAccess, checkDownloadAccess } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
 router.param("parentDirId", validateIdMiddleware);
 router.param("id", validateIdMiddleware);
 
-router.get("/:id", rateLimiters.getFile, throttlers.getFile, getFile);
+router.get("/:id", checkDownloadAccess, rateLimiters.getFile, throttlers.getFile, getFile);
 router.get("/details/:id", getFileDetails);
 
 router.patch(
   "/:id",
+  checkUploadAccess,
   rateLimiters.renameFile,
   throttlers.renameFile,
   renameFile
@@ -30,13 +31,29 @@ router.patch(
 
 router.delete(
   "/:id",
+  checkUploadAccess,
   rateLimiters.deleteFile,
   throttlers.deleteFile,
   deleteFile
 );
 
-router.post("/uploads/initiate", checkAuth, uploadFileInitiate);
-router.post("/uploads/complete", checkAuth, completeFileUpload);
-router.post("/uploads/cancel", checkAuth, cancelFileUpload);
+router.post(
+  "/uploads/initiate",
+  checkAuth,
+  checkUploadAccess,
+  uploadFileInitiate
+);
+router.post(
+  "/uploads/complete",
+  checkAuth,
+  checkUploadAccess,
+  completeFileUpload
+);
+router.post(
+  "/uploads/cancel",
+  checkAuth,
+  checkUploadAccess,
+  cancelFileUpload
+);
 
 export default router;

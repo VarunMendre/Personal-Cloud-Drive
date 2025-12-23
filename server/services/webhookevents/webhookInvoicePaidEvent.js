@@ -12,10 +12,14 @@ export const handleInvoicePaidEvent = async (webhookBody) => {
 
         // update subscription model
 
-        await Subscription.findOneAndUpdate({
-            razorpaySubscriptionId: subscriptionId
-        },
-            { invoiceId: invoiceId }
+        await Subscription.findOneAndUpdate(
+            { razorpaySubscriptionId: subscriptionId },
+            { 
+                invoiceId: invoiceId,
+                status: "active",
+                retryCount: 0,
+                gracePeriodEndsAt: null
+            }
         );
 
         

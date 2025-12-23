@@ -1,5 +1,6 @@
 import express from "express";
 import validateIdMiddleware from "../middlewares/validateIdMiddleware.js";
+import checkAuth, { checkUploadAccess } from "../middlewares/authMiddleware.js";
 
 import {
   createDirectory,
@@ -24,6 +25,7 @@ router.get(
 
 router.post(
   "/:parentDirId?",
+  checkUploadAccess,
   rateLimiters.createDirectory,
   throttlers.createDirectory,
   createDirectory
@@ -31,6 +33,7 @@ router.post(
 
 router.patch(
   "/:id",
+  checkUploadAccess,
   rateLimiters.renameDirectory,
   throttlers.renameDirectory,
   renameDirectory
@@ -38,6 +41,7 @@ router.patch(
 
 router.delete(
   "/:id",
+  checkUploadAccess,
   rateLimiters.deleteDirectory,
   throttlers.deleteDirectory,
   deleteDirectory
