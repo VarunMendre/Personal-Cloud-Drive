@@ -74,12 +74,14 @@ function DirectoryItem({
     console.log("DirectoryItem handleDownload - statusStr:", statusStr);
     console.log("DirectoryItem handleDownload - isPaused:", isPaused);
     
+    /* 
     if (isPaused) {
       showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
       return false; // Explicitly return false
     }
+    */
     
-    // Only proceed with download if not paused
+    // Only proceed with download 
     window.location.href = `${BASE_URL}/file/${item.id}?action=download`;
   };
 
@@ -170,21 +172,11 @@ function DirectoryItem({
                 <div className="relative group/tooltip">
                   <button
                     onClick={handleDownload}
-                    className={`flex items-center justify-center p-2 rounded-full transition-colors ${
-                      subscriptionStatus === "paused"
-                        ? "text-gray-400 cursor-not-allowed bg-gray-100"
-                        : "text-blue-600 hover:bg-blue-100"
-                    }`}
-                    title={subscriptionStatus === "paused" ? "" : "Download"}
+                    className="flex items-center justify-center p-2 rounded-full transition-colors text-blue-600 hover:bg-blue-100"
+                    title="Download"
                   >
                     <FaDownload className="text-sm" />
                   </button>
-                  {subscriptionStatus === "paused" && (
-                    <div className="absolute -top-8 right-0 bg-gray-900 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none flex items-center gap-1 shadow-lg z-50 border border-gray-700">
-                      <FaExclamationTriangle className="text-amber-500 w-2.5 h-2.5" />
-                      Paused ⚠️
-                    </div>
-                  )}
                 </div>
               )}
               

@@ -15,6 +15,7 @@ import {
   FaDatabase,
   FaClock,
   FaCalendarAlt,
+  FaDownload,
 } from "react-icons/fa";
 
 export const formatSize = (bytes) => {
@@ -28,7 +29,7 @@ export const formatSize = (bytes) => {
   return bytes + " B";
 };
 
-function DetailsPopup({ item, onClose, BASE_URL }) {
+function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }) {
   if (!item) return null;
 
   const [details, setDetails] = useState({
@@ -159,6 +160,15 @@ function DetailsPopup({ item, onClose, BASE_URL }) {
   const typeLabel = isDirectory
     ? "FOLDER"
     : getFileType(name).toUpperCase();
+    
+  const handleDownload = () => {
+    const statusStr = String(subscriptionStatus || "").toLowerCase().trim();
+    if (["halted", "expired"].includes(statusStr)) {
+      showToast("Your account is restricted. Downloads are disabled.", "warning");
+      return;
+    }
+    window.location.href = `${BASE_URL}/file/${item.id}?action=download`;
+  };
 
   return (
     <div
@@ -291,7 +301,16 @@ function DetailsPopup({ item, onClose, BASE_URL }) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end">
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+          {!isDirectory && (
+             <button
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+              onClick={handleDownload}
+            >
+              <FaDownload className="text-sm" />
+              Download
+            </button>
+          )}
           <button
             className="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
             onClick={onClose}

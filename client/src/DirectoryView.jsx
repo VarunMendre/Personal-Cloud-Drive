@@ -993,6 +993,7 @@ function DirectoryView() {
           handleShare={handleShare}
           openDetailsPopup={openDetailsPopup} 
           subscriptionStatus={subscriptionStatus}
+          showToast={showToast}
         />
       )}
 

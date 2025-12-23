@@ -18,11 +18,12 @@ const router = express.Router();
 router.param("parentDirId", validateIdMiddleware);
 router.param("id", validateIdMiddleware);
 
-router.get("/:id", checkDownloadAccess, rateLimiters.getFile, throttlers.getFile, getFile);
+router.get("/:id", checkAuth, checkDownloadAccess, rateLimiters.getFile, throttlers.getFile, getFile);
 router.get("/details/:id", getFileDetails);
 
 router.patch(
   "/:id",
+  checkAuth,
   checkUploadAccess,
   rateLimiters.renameFile,
   throttlers.renameFile,
@@ -31,6 +32,7 @@ router.patch(
 
 router.delete(
   "/:id",
+  checkAuth,
   checkUploadAccess,
   rateLimiters.deleteFile,
   throttlers.deleteFile,

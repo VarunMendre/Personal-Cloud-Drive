@@ -18,6 +18,8 @@ router.param("id", validateIdMiddleware);
 
 router.get(
   "/:id?",
+  checkAuth,
+  checkDownloadAccess,
   rateLimiters.getDirectory,
   throttlers.getDirectory,
   getDirectory
@@ -25,6 +27,7 @@ router.get(
 
 router.post(
   "/:parentDirId?",
+  checkAuth,
   checkUploadAccess,
   rateLimiters.createDirectory,
   throttlers.createDirectory,
@@ -33,6 +36,7 @@ router.post(
 
 router.patch(
   "/:id",
+  checkAuth,
   checkUploadAccess,
   rateLimiters.renameDirectory,
   throttlers.renameDirectory,
@@ -41,10 +45,8 @@ router.patch(
 
 router.delete(
   "/:id",
+  checkAuth,
   checkUploadAccess,
   rateLimiters.deleteDirectory,
   throttlers.deleteDirectory,
-  deleteDirectory
-);
-
-export default router;
+  delete

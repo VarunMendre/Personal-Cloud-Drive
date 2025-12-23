@@ -86,23 +86,23 @@ function ContextMenu({
             <span>Share</span>
           </div>
           <div
-            className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
+            className={itemClass}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               
               const statusStr = String(subscriptionStatus || "").toLowerCase().trim();
-              const isPaused = statusStr === "paused";
-              console.log("ContextMenu download - statusStr:", statusStr, "isPaused:", isPaused);
+              const isHalted = statusStr === "halted" || statusStr === "expired";
+              console.log("ContextMenu download - statusStr:", statusStr, "isHalted:", isHalted);
               
-              if (isPaused) {
-                showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
+              if (isHalted) {
+                showToast("Your subscription has been halted/expired. Downloads are disabled.", "warning");
                 return false;
               }
               window.location.href = `${BASE_URL}/file/${item.id}?action=download`;
             }}
           >
-            <FaDownload className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-gray-600"} />
+            <FaDownload className="text-gray-600" />
             <span>Download</span>
           </div>
           <div
