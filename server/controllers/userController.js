@@ -147,6 +147,7 @@ export const login = async (req, res, next) => {
     return res.status(404).json({ error: "Invalid Credentials" });
   }
 
+  const maxDevicesLimit = user.maxDevices;
   const allSessions = await redisClient.ft.search(
     "userIdInx",
     `@userId:{${user.id}}`,
@@ -155,7 +156,7 @@ export const login = async (req, res, next) => {
     }
   );
 
-  if (allSessions.total >= 2) {
+  if (allSessions.total >= maxDevicesLimit) {
     await redisClient.del(allSessions.documents[0].id);
   }
 
@@ -207,16 +208,45 @@ export const logout = async (req, res) => {
 };
 
 export const logoutAll = async (req, res) => {
-  const { sid } = req.signedCookies;
-  const session = await Session.findById(sid);
-  await Session.deleteMany({ userId: session.userId });
-  res.clearCookie("sid");
-  res.status(204).end();
+  const { _id: userId } = req.user;
+  try {
+    const allSessions = await redisClient.ft.search(
+      "userIdInx",
+      `@userId:{${userId}}`,
+      {
+        RETURN: [],
+      }
+    );
+
+    if (allSessions.total > 0) {
+      await Promise.all(
+        allSessions.documents.map((doc) => redisClient.del(doc.id))
+      );
+    }
+
+    res.clearCookie("sid");
+    res.status(204).end();
+  } catch (err) {
+    res.status(500).json({ error: "Logout failed" });
+  }
 };
 
 export const logOutById = async (req, res, next) => {
   try {
-    await Session.deleteMany({ userId: req.params.userId });
+    const { userId } = req.params;
+    const allSessions = await redisClient.ft.search(
+      "userIdInx",
+      `@userId:{${userId}}`,
+      {
+        RETURN: [],
+      }
+    );
+
+    if (allSessions.total > 0) {
+      await Promise.all(
+        allSessions.documents.map((doc) => redisClient.del(doc.id))
+      );
+    }
     res.status(204).end();
   } catch (err) {
     next(err);
@@ -390,7 +420,19 @@ export const softDeleteUser = async (req, res, next) => {
   try {
     client.startTransaction();
     await User.findByIdAndUpdate({ _id: userId }, { isDeleted: true });
-    await Session.deleteOne({ userId });
+
+    // Logout all sessions for this user
+    const allSessions = await redisClient.ft.search(
+      "userIdInx",
+      `@userId:{${userId}}`,
+      { RETURN: [] }
+    );
+    if (allSessions.total > 0) {
+      await Promise.all(
+        allSessions.documents.map((doc) => redisClient.del(doc.id))
+      );
+    }
+
     client.commitTransaction();
     res.status(204).end();
   } catch (err) {

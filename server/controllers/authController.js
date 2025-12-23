@@ -65,13 +65,14 @@ export const loginWithGoogle = async (req, res, next) => {
       });
     }
 
+    const maxDevicesLimit = user.maxDevices;
     const allSession = await redisClient.ft.search(
       "userIdInx",
       `@userId:{${user.id}}`,
       { RETURN: [] }
     );
 
-    if (allSession.total >= 2) {
+    if (allSession.total >= maxDevicesLimit) {
       await redisClient.del(allSession.documents[0].id);
     }
 
@@ -142,7 +143,9 @@ export const loginWithGoogle = async (req, res, next) => {
       { RETURN: [] }
     );
 
-    if (allSession.total >= 2) {
+    const maxDevicesLimit = newUser.maxDevices;
+
+    if (allSession.total >= maxDevicesLimit) {
       await redisClient.del(allSession.documents[0].id);
     }
 
@@ -234,8 +237,9 @@ export async function githubLogin(req, res, next) {
 
     // 4️ Check if user exists
     let user = await User.findOne({ email }).select("-__v");
-
     if (user) {
+
+      const maxDevicesLimit = user.maxDevices;
       // Manage sessions
       const allSession = await redisClient.ft.search(
         "userIdInx",
@@ -245,7 +249,7 @@ export async function githubLogin(req, res, next) {
         }
       );
 
-      if (allSession.total >= 2) {
+      if (allSession.total >= maxDevicesLimit) {
         await redisClient.del(allSession.documents[0].id);
       }
 
@@ -309,7 +313,8 @@ export async function githubLogin(req, res, next) {
         }
       );
 
-      if (allSession.total >= 2) {
+      const maxDevicesLimit = user.maxDevices;
+      if (allSession.total >= maxDevicesLimit) {
         await redisClient.del(allSession.documents[0].id);
       }
       const sessionId = crypto.randomUUID();
