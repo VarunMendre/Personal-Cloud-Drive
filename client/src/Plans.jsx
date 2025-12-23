@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { createSubscription } from "./apis/subscriptionApi";
+import { Link, useNavigate } from "react-router-dom";
+import { createSubscription, getSubscriptionDetails } from "./apis/subscriptionApi";
 
 const PLAN_CATALOG = {
   monthly: [
@@ -271,7 +271,23 @@ export default function Plans() {
   const [countdown, setCountdown] = useState(3);
   const [pendingPlan, setPendingPlan] = useState(null);
   const [createdSubscriptionId, setCreatedSubscriptionId] = useState(null);
+  const navigate = useNavigate();
   const plans = PLAN_CATALOG[mode];
+
+  useEffect(() => {
+    async function checkExistingSubscription() {
+      try {
+        const res = await getSubscriptionDetails();
+        if (res && res.activePlan) {
+          // User already has a plan, they should go to /change-plan instead
+          navigate("/change-plan", { replace: true });
+        }
+      } catch (err) {
+        // No subscription found (expected 404), stay on plans page
+      }
+    }
+    checkExistingSubscription();
+  }, [navigate]);
 
   useEffect(() => {
     const razorpayScript = document.querySelector("#razorpay-script");

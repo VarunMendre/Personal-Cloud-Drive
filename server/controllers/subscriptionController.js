@@ -4,6 +4,7 @@ import { rzpInstance } from "../services/subscription/createSubscription.js";
 import {
   cancelSubscriptionService,
   createSubscriptionService,
+  getEligiblePlanService,
   getSubscriptionDetailsService,
   pauseSubscriptionService,
   resumeSubscriptionService,
@@ -52,9 +53,9 @@ export const getSubscriptionInvoice = async (req, res, next) => {
       subscription_id: subscription.razorpaySubscriptionId,
     });
 
-    // find the most recent paid invoice 
+    // find the most recent paid invoice
 
-    const lastInvoice = invoice.items.find(inv => inv.status === "paid");
+    const lastInvoice = invoice.items.find((inv) => inv.status === "paid");
 
     if (!lastInvoice || !lastInvoice.short_url) {
       return res.status(404).json({ message: "No paid invoice found" });
@@ -128,4 +129,14 @@ export const checkSubscriptionStatus = async (req, res, next) => {
     console.error("Error checking subscription status:", error);
     next(error);
   }
-}
+};
+
+export const renewalSubscription = async (req, res, next) => {
+  try {
+    const result = await getEligiblePlanService(req.user._id);
+
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,7 +1,8 @@
 import express from "express";
-import { createSubscription, getSubscriptionDetails, getSubscriptionInvoice, cancelSubscription, pauseSubscription, resumeSubscription } from "../controllers/subscriptionController.js";
+import { createSubscription, getSubscriptionDetails, getSubscriptionInvoice, cancelSubscription, pauseSubscription, resumeSubscription, renewalSubscription } from "../controllers/subscriptionController.js";
 import checkAuth from "../middlewares/authMiddleware.js";
 import { checkSubscriptionStatus } from "../controllers/subscriptionController.js";
+
 const router = express.Router();
 
 router.post("/", createSubscription);
@@ -17,4 +18,7 @@ router.get("/invoice", checkAuth, getSubscriptionInvoice);
 // check subscription status
 router.get("/status/:id", checkAuth, checkSubscriptionStatus);
 
+// Change Plan
+
+router.get("/eligible-plans", checkAuth, renewalSubscription);
 export default router;

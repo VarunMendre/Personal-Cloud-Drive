@@ -4,7 +4,7 @@ import File from "../../models/fileModel.js";
 import { getRootDirectorySize } from "../../utils/rootDirectorySize.js";
 import redisClient from "../../config/redis.js";
 
-const PLAN_INFO = {
+export const PLAN_INFO = {
   plan_RuC1EiZlwurf5N: { name: "Standard Plan", tagline: "For Students & Freelancers", billingPeriod: "Monthly", price: 349, storage: "100 GB" },
   plan_RuC2evjqwSxHOH: { name: "Premium Plan", tagline: "For Professionals & Creators", billingPeriod: "Monthly", price: 999, storage: "200 GB" },
   plan_RuC3yiXd7cecny: { name: "Standard Plan", tagline: "For Students & Freelancers", billingPeriod: "Yearly", price: 3999, storage: "200 GB" },

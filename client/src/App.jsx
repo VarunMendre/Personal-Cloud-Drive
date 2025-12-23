@@ -16,6 +16,7 @@ import SharedLinkPage from "./SharedLinkPage";
 import ManagePermissionsPage from "./ManagePermissionsPage";
 import Plans from "./Plans";
 import SubscriptionDetails from "./SubscriptionDetails";
+import ChangePlan from "./ChangePlan";
 
 const router = createBrowserRouter([
   {
@@ -54,6 +55,10 @@ const router = createBrowserRouter([
   {
     path: "/subscription",
     element: <SubscriptionDetails />,
+  },
+  {
+    path: "/change-plan",
+    element: <ChangePlan />,
   },
   {
     path: "/shared-with-me",

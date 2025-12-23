@@ -26,3 +26,8 @@ export const checkSubscriptionStatus = async (subscriptionId) => {
   const { data } = await axiosWithCreds.get(`/subscriptions/status/${subscriptionId}`);
   return data;
 };
+
+export const getEligiblePlans = async () => {
+  const { data } = await axiosWithCreds.get("/subscriptions/eligible-plans");
+  return data;
+};
