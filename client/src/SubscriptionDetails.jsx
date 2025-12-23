@@ -74,10 +74,10 @@ export default function SubscriptionDetails() {
       try {
         setLoading(true);
         const res = await getSubscriptionDetails();
-        if (res && res.activePlan) {
+        if (res && res.activePlan && res.activePlan.status === "active") {
           setData(res);
         } else {
-          // If response is successful but empty/invalid plan, kick them out
+          // If response is successful but status is not 'active' (e.g. 'created'), kick them out
           navigate("/plans");
         }
       } catch (err) {

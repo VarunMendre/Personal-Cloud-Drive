@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createSubscription, getSubscriptionDetails } from "./apis/subscriptionApi";
+import SubscriptionAlert from "./components/SubscriptionAlert";
 
 const PLAN_CATALOG = {
   monthly: [
@@ -271,6 +272,7 @@ export default function Plans() {
   const [countdown, setCountdown] = useState(3);
   const [pendingPlan, setPendingPlan] = useState(null);
   const [createdSubscriptionId, setCreatedSubscriptionId] = useState(null);
+  const [errorAlert, setErrorAlert] = useState({ show: false, title: "", message: "", tip: null });
   const navigate = useNavigate();
   const plans = PLAN_CATALOG[mode];
 
@@ -278,7 +280,7 @@ export default function Plans() {
     async function checkExistingSubscription() {
       try {
         const res = await getSubscriptionDetails();
-        if (res && res.activePlan) {
+        if (res && res.activePlan && res.activePlan.status === "active") {
           // User already has a plan, they should go to /change-plan instead
           navigate("/change-plan", { replace: true });
         }
@@ -329,7 +331,11 @@ export default function Plans() {
       const res = await createSubscription(plan.id);
       
       if (res.message) {
-        alert(res.message);
+        setErrorAlert({
+           show: true,
+           title: "Subscription Required",
+           message: res.message
+        });
         setLoadingPlanId(null);
         return;
       }
@@ -346,7 +352,18 @@ export default function Plans() {
         },
         onFailure: (msg) => {
           setLoadingPlanId(null);
-          alert(msg);
+          
+          let tip = null;
+          if (msg.toLowerCase().includes("international cards are not supported")) {
+            tip = "Merchant Configuration Tip: Your Razorpay account is currently rejecting international cards. If you are using a real Indian card and seeing this, ensure 'International Payments' is enabled in your Razorpay Dashboard -> Settings -> Payment Methods. Also, verify you are not using a Test Card that Razorpay identifies as international.";
+          }
+
+          setErrorAlert({
+            show: true,
+            title: "Payment Processing Failed",
+            message: msg,
+            tip: tip
+          });
         },
         onClose: () => {
           setLoadingPlanId(null);
@@ -354,13 +371,25 @@ export default function Plans() {
       });
     } catch (error) {
       console.error("Failed to start subscription:", error);
-      alert("Something went wrong. Please try again.");
+      setErrorAlert({
+        show: true,
+        title: "Subscription error",
+        message: error.response?.data?.message || "Something went wrong while initiating your subscription. Please try again."
+      });
       setLoadingPlanId(null);
     }
   }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 relative">
+      {errorAlert.show && (
+        <SubscriptionAlert 
+          title={errorAlert.title}
+          message={errorAlert.message}
+          troubleshootingTip={errorAlert.tip}
+          onClose={() => setErrorAlert({ ...errorAlert, show: false })}
+        />
+      )}
       {showCountdownModal && (
         <CountdownModal countdown={countdown} onCancel={() => {
           setShowCountdownModal(false);

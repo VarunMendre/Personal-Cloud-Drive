@@ -17,7 +17,7 @@ export const createSubscription = async (req, res, next) => {
     return res.json(result);
   } catch (error) {
     console.log("Error creating subscription:", error);
-    next(error);
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 

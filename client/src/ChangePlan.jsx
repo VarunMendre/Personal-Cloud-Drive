@@ -10,6 +10,7 @@ import {
   BsStars
 } from "react-icons/bs";
 import { getSubscriptionDetails, getEligiblePlans, createSubscription } from "./apis/subscriptionApi";
+import SubscriptionAlert from "./components/SubscriptionAlert";
 
 export default function ChangePlan() {
   const [currentPlan, setCurrentPlan] = useState(null);
@@ -17,6 +18,7 @@ export default function ChangePlan() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [errorAlert, setErrorAlert] = useState({ show: false, title: "", message: "", tip: null });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,11 +30,11 @@ export default function ChangePlan() {
           getEligiblePlans()
         ]);
         
-        if (details && details.activePlan) {
+        if (details && details.activePlan && details.activePlan.status === "active") {
           setCurrentPlan(details);
           setEligiblePlans(eligible || []);
         } else {
-          // If no active plan, they shouldn't be here
+          // If no active plan (or just 'created'), they shouldn't be here
           navigate("/plans");
         }
       } catch (err) {
@@ -62,14 +64,28 @@ export default function ChangePlan() {
              navigate("/subscription");
           },
           onFailure: (msg) => {
-            setErrorMessage(msg);
+            let tip = null;
+            if (msg.toLowerCase().includes("international cards are not supported")) {
+              tip = "Merchant Configuration Tip: Ensure 'International Payments' is enabled in your Razorpay Dashboard -> Settings -> Payment Methods. If you are using an Indian card in Test Mode, Razorpay might incorrectly flag it if the merchant settings are restricted.";
+            }
+
+            setErrorAlert({
+              show: true,
+              title: "Upgrade Failed",
+              message: msg,
+              tip: tip
+            });
             setProcessingId(null);
           },
           onClose: () => setProcessingId(null)
         });
       }
     } catch (err) {
-      setErrorMessage(err.response?.data?.message || "Failed to initiate upgrade.");
+      setErrorAlert({
+        show: true,
+        title: "Change Plan Error",
+        message: err.response?.data?.message || "Failed to initiate plan change. Please try again later."
+      });
       setProcessingId(null);
     }
   }
@@ -88,6 +104,14 @@ export default function ChangePlan() {
   return (
     <div className="min-h-screen bg-slate-50/50 py-16 px-4">
       <div className="max-w-5xl mx-auto">
+        {errorAlert.show && (
+          <SubscriptionAlert 
+            title={errorAlert.title}
+            message={errorAlert.message}
+            troubleshootingTip={errorAlert.tip}
+            onClose={() => setErrorAlert({ ...errorAlert, show: false })}
+          />
+        )}
         
         {/* Header */}
         <div className="mb-12">

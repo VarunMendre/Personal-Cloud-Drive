@@ -14,7 +14,9 @@ export const createSubscriptionService = async (userId, planId) => {
     });
 
     if (activeSubscription) {
-        return { message: "You already have an active subscription" };
+        const error = new Error("You already have an active subscription");
+        error.status = 400;
+        throw error;
     }
 
     // Check if user has a pending subscription for the SAME plan
