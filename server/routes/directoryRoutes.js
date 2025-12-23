@@ -1,6 +1,6 @@
 import express from "express";
 import validateIdMiddleware from "../middlewares/validateIdMiddleware.js";
-import checkAuth, { checkUploadAccess } from "../middlewares/authMiddleware.js";
+import checkAuth, { checkDownloadAccess, checkUploadAccess } from "../middlewares/authMiddleware.js";
 
 import {
   createDirectory,
