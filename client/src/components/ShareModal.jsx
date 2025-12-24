@@ -584,7 +584,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                 {isSharing
                   ? "Sending..."
                   : selectedUsers.length > 0
-                  ? `Select users to send invites`
+                  ? "Send Invites"
                   : "Select users to send invites"}
               </button>
             </div>

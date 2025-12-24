@@ -4,12 +4,15 @@ import { PLAN_INFO } from "./getSubscriptionDetails.js";
 import { handleRazorpayError } from "../../utils/razorpayErrorHandler.js";
 
 export const changePlanService = async (userId, planId) => {
+  const session = await Subscription.startSession();
+  session.startTransaction();
+
   try {
     // 1. Find the current subscription exits and is active
     const currSubscription = await Subscription.findOne({
       userId,
       status: "active",
-    });
+    }).session(session);
 
     if (!currSubscription) {
       const error = new Error("No active subscription found to upgrade from");
@@ -60,6 +63,8 @@ export const changePlanService = async (userId, planId) => {
     );
 
     // 5. Create New Subscription
+    // Note: Razorpay creation is external and cannot be 'rolled back' by abortTransaction.
+    // Use try/catch specifically for the DB part to trigger manual cancellation if needed.
 
     const newSubscription = await rzpInstance.subscriptions.create({
       plan_id: planId,
@@ -72,22 +77,40 @@ export const changePlanService = async (userId, planId) => {
       },
     });
 
-    // 6. save Subscription with bonus days
-    const subscription = new Subscription({
-      razorpaySubscriptionId: newSubscription.id,
-      planId,
-      userId,
-      status: "created",
-      bonusDays: bonusDays,
-    });
-    await subscription.save();
+    try {
+      // 6. save Subscription with bonus days
+      const [subscription] = await Subscription.create([{
+        razorpaySubscriptionId: newSubscription.id,
+        planId,
+        userId,
+        status: "created",
+        bonusDays: bonusDays,
+      }], { session });
 
-    console.log(
-      `Upgrade initiated: User ${userId} → Plan ${planId}, Bonus: ${bonusDays} days`
-    );
+      await session.commitTransaction();
+      session.endSession();
+      
+      console.log(
+        `Upgrade initiated: User ${userId} → Plan ${planId}, Bonus: ${bonusDays} days`
+      );
 
-    return { subscriptionId: newSubscription.id };
+      return { subscriptionId: newSubscription.id };
+
+    } catch (dbError) {
+      // If DB save failed, we must cancel the created Razorpay subscription to avoid charging user
+      // without a record.
+      console.error("DB Save failed during upgrade, cancelling Razorpay subscription:", newSubscription.id);
+      await rzpInstance.subscriptions.cancel(newSubscription.id).catch(err => 
+        console.error("CRITICAL: Failed to cancel orphaned subscription:", newSubscription.id, err)
+      );
+      throw dbError; // Re-throw to main catch
+    }
+
   } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    session.endSession();
     console.error("Error in changePlanService:", error);
     throw handleRazorpayError(error, "Failed to upgrade subscription");
   }

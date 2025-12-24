@@ -15,6 +15,7 @@ function ContextMenu({
   handleDeleteFile,
   handleDeleteDirectory,
   openRenameModal,
+  handleShare,
   openDetailsPopup,
   BASE_URL,
   subscriptionStatus,
@@ -24,12 +25,22 @@ function ContextMenu({
   const itemClass = "flex items-center gap-3 px-5 py-2 cursor-pointer whitespace-nowrap text-[#333] hover:bg-[#eee] transition-colors duration-200 text-sm";
   const disabledClass = "flex items-center gap-3 px-5 py-2 cursor-not-allowed whitespace-nowrap text-gray-400 bg-gray-50 opacity-60 text-sm";
 
+  // Determine position style
+  const MENU_HEIGHT_ESTIMATE = 250; 
+  const isNearBottom = typeof window !== 'undefined' && (contextMenuPos.y + MENU_HEIGHT_ESTIMATE > window.innerHeight);
+
+  const menuStyle = {
+    left: contextMenuPos.x,
+    top: isNearBottom ? "auto" : contextMenuPos.y,
+    bottom: isNearBottom ? (window.innerHeight - contextMenuPos.y) : "auto",
+  };
+
   // Directory context menu
   if (item.isDirectory) {
     return (
       <div
         className="fixed bg-white shadow-[0_2px_6px_rgba(0,0,0,0.2)] rounded-[4px] z-[999] py-[5px] min-w-[160px]"
-        style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
+        style={menuStyle}
       >
 
         <div
@@ -59,7 +70,7 @@ function ContextMenu({
       return (
         <div
           className="fixed bg-white shadow-[0_2px_6px_rgba(0,0,0,0.2)] rounded-[4px] z-[999] py-[5px] min-w-[160px]"
-          style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
+          style={menuStyle}
         >
           <div
             className={itemClass}
@@ -75,7 +86,7 @@ function ContextMenu({
       return (
         <div
           className="fixed bg-white shadow-[0_2px_6px_rgba(0,0,0,0.2)] rounded-[4px] z-[999] py-[5px] min-w-[160px]"
-          style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
+          style={menuStyle}
         >
           {/* Share option */}
           <div

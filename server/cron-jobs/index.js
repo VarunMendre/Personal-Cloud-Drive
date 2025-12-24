@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { processSubscriptionStates } from "./processSubscriptionStates.js";
 import { processAuthenticatedTrials } from "./authenticatedTrialProcessor.js";
+import { cleanupOrphanedUploads } from "./cleanupUploads.js";
 
 export const startCronJobs = () => {
   console.log(`
@@ -25,4 +26,6 @@ export const startCronJobs = () => {
     console.log("Running authenticated trial processor...");
     await processAuthenticatedTrials();
   });
+
+  cleanupOrphanedUploads();
 };

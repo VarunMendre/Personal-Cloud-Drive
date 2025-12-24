@@ -39,7 +39,8 @@ function DirectoryList({
             handleDeleteFile={handleDeleteFile}
             handleDeleteDirectory={handleDeleteDirectory}
             openRenameModal={openRenameModal}
-            openDetailsPopup={openDetailsPopup} 
+            openDetailsPopup={openDetailsPopup}
+            handleShare={handleShare} 
             BASE_URL={BASE_URL}
             subscriptionStatus={subscriptionStatus}
             showToast={showToast}

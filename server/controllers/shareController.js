@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import User from "../models/userModel.js";
 import File from "../models/fileModel.js";
 import Directory from "../models/directoryModel.js";
@@ -41,7 +42,7 @@ export const getSharedUsers = async (req, res) => {
     }
 
     console.log("DEBUG: getSharedUsers returning shareLink:", resource.shareLink ? "FOUND" : "NULL", resource.shareLink);
-    
+
     res.json({
       owner: resource.userId,
       sharedWith: resource.sharedWith.map((s) => ({
@@ -61,23 +62,32 @@ export const getSharedUsers = async (req, res) => {
 };
 
 export const shareWithUser = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { resourceType, resourceId } = req.params;
     const { email, role } = req.body;
     const currentUserId = req.user._id;
 
     if (!email || !role) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ error: "Email & role are required" });
     }
 
     // Finding the user to share with
 
-    const userTOShare = await User.findOne({ email });
+    const userTOShare = await User.findOne({ email }).session(session);
     if (!userTOShare) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ error: "User not found with this email" });
     }
 
     if (userTOShare._id.toString() === currentUserId.toString()) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ error: "You cannot share yourself" });
     }
 
@@ -88,13 +98,19 @@ export const shareWithUser = async (req, res) => {
     if (resourceType === "file") {
       Model = File;
     } else if (resourceType === "folder") {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ error: "Folder sharing is disabled" });
     } else {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ error: "Invalid Resource Type" });
     }
 
-    const resource = await Model.findById(resourceId);
+    const resource = await Model.findById(resourceId).session(session);
     if (!resource) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ error: "Resource Not found" });
     }
 
@@ -102,6 +118,8 @@ export const shareWithUser = async (req, res) => {
 
     // Check if current user is Owner
     if (resource.userId.toString() !== currentUserId.toString()) {
+      await session.abortTransaction();
+      session.endSession();
       return res
         .status(403)
         .json({ error: "Only the owner can share this resource" });
@@ -123,7 +141,11 @@ export const shareWithUser = async (req, res) => {
       });
     }
 
-    const savedResource = await resource.save();
+    const savedResource = await resource.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
     console.log(
       "Resource saved. SharedWith length:",
       savedResource.sharedWith.length
@@ -135,25 +157,36 @@ export const shareWithUser = async (req, res) => {
 
     return res.status(200).json({ message: "Shared successfully" });
   } catch (err) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    session.endSession();
     console.error("Share error:", err);
     res.status(500).json({ error: "Failed to share resource" });
   }
 };
 
 export const updateUserAccess = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { resourceType, resourceId, userId } = req.params;
     const { role } = req.body;
     const currentUserId = req.user._id;
 
     let Model = resourceType === "file" ? File : Directory;
-    const resource = await Model.findById(resourceId);
+    const resource = await Model.findById(resourceId).session(session);
 
     if (!resource) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ error: "Resource not found" });
     }
 
     if (resource.userId.toString() !== currentUserId.toString()) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(403).json({ error: "Unauthorized" });
     }
 
@@ -163,28 +196,42 @@ export const updateUserAccess = async (req, res) => {
 
     if (share) {
       share.role = role;
-      await resource.save();
+      await resource.save({ session });
     }
+
+    await session.commitTransaction();
+    session.endSession();
 
     res.json({ message: "Access updated" });
   } catch (err) {
+    if (session.inTransaction()) {
+        await session.abortTransaction();
+    }
+    session.endSession();
     res.status(500).json({ error: "Failed to update access" });
   }
 };
 
 export const removeUserAccess = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { resourceType, resourceId, userId } = req.params;
     const currentUserId = req.user._id;
 
     let Model = resourceType === "file" ? File : Directory;
-    const resource = await Model.findById(resourceId);
+    const resource = await Model.findById(resourceId).session(session);
 
     if (!resource) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ error: "Resource not found" });
     }
 
     if (resource.userId.toString() !== currentUserId.toString()) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(403).json({ error: "Unauthorized" });
     }
 
@@ -192,9 +239,17 @@ export const removeUserAccess = async (req, res) => {
       (s) => s.userId.toString() !== userId.toString()
     );
 
-    await resource.save();
+    await resource.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
     res.json({ message: "Access removed" });
   } catch (err) {
+    if (session.inTransaction()) {
+        await session.abortTransaction();
+    }
+    session.endSession();
     res.status(500).json({ error: "Failed to remove access" });
   }
 };
@@ -231,7 +286,7 @@ export const generateShareLink = async (req, res) => {
     // Use origin or fallback to env/localhost
     const origin = req.get("origin") || process.env.CLIENT_URL || "http://localhost:5173";
     const linkUrl = `${origin}/shared/link/${token}`;
-    
+
     console.log("DEBUG: Generating Link for:", resourceId);
     console.log("DEBUG: Link URL:", linkUrl);
 
@@ -242,11 +297,11 @@ export const generateShareLink = async (req, res) => {
       enabled: true,
       createdAt: new Date(),
     };
-    
+
     console.log("DEBUG: Saving resource with shareLink:", JSON.stringify(resource.shareLink));
 
     await resource.save();
-    
+
     console.log("DEBUG: Save successful. Token:", resource.shareLink.token);
 
     res.json({ shareLink: resource.shareLink });

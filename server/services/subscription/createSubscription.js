@@ -27,6 +27,9 @@ export const createSubscriptionService = async (userId, planId) => {
 
     const isYearly = ["plan_RuC3yiXd7cecny", "plan_RuC5FeIwTTfUSh"].includes(planId);
 
+    const session = await Subscription.startSession();
+    session.startTransaction();
+
     try {
         const newSubscription = await rzpInstance.subscriptions.create({
             plan_id: planId,
@@ -36,16 +39,32 @@ export const createSubscriptionService = async (userId, planId) => {
             },
         });
 
-        const subscription = new Subscription({
-            razorpaySubscriptionId: newSubscription.id,
-            planId,
-            userId,
-        });
+        try {
+            const [subscription] = await Subscription.create([{
+                razorpaySubscriptionId: newSubscription.id,
+                planId,
+                userId,
+            }], { session });
 
-        await subscription.save();
+            await session.commitTransaction();
+            session.endSession();
 
-        return { subscriptionId: newSubscription.id };
+            return { subscriptionId: newSubscription.id };
+
+        } catch (dbError) {
+             // If DB write fails, cancel the external subscription to prevent billing ghost accounts
+            console.error("DB Save failed, cancelling Razorpay subscription:", newSubscription.id);
+            await rzpInstance.subscriptions.cancel(newSubscription.id).catch(err => 
+                console.error("CRITICAL: Failed to cancel orphaned subscription:", newSubscription.id, err)
+            );
+            throw dbError;
+        }
+
     } catch (error) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        session.endSession();
         console.error("Error in createSubscriptionService:", error);
         throw handleRazorpayError(error, "Failed to create subscription");
     }

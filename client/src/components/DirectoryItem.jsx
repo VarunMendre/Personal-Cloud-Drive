@@ -36,8 +36,7 @@ function DirectoryItem({
 }) {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Debug: Log subscription status
-  console.log("DirectoryItem rendered - subscriptionStatus:", subscriptionStatus, "type:", typeof subscriptionStatus);
+
 
   // Convert the file icon string to the actual Icon component
   function renderFileIcon(iconString) {

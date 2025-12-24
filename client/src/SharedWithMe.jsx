@@ -116,9 +116,9 @@ function SharedWithMe() {
         userEmail={userEmail}
         userPicture={userPicture}
       />
-      <div className="shared-with-me-container">
-        <div className="shared-header">
-          <button className="back-btn" onClick={() => navigate("/")}>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="mb-8">
+          <button className="flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-4 transition-colors font-medium" onClick={() => navigate("/")}>
             <FaArrowLeft /> Back to My Drive
           </button>
         <h1 className="text-[32px] m-0 mb-2 text-[#333] max-[768px]:text-2xl max-[480px]:text-xl">Shared with Me</h1>

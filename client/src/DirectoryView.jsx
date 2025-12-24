@@ -564,37 +564,63 @@ function DirectoryView() {
   /**
    * Delete a file/directory
    */
+  /**
+   * Delete a file/directory
+   */
   async function handleDeleteFile(id) {
+    if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+        showToast("Restricted access: Cannot delete files.", "warning");
+        return;
+    }
+
+    setToast({ show: true, message: "Deleting file...", type: "loading" });
     setErrorMessage("");
+
     try {
       const response = await fetch(`${BASE_URL}/file/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
       await handleFetchErrors(response);
-      getDirectoryItems();
+      
+      // Update UI immediately (optimistic update could be done here, but we re-fetch)
+      await getDirectoryItems();
+      
       if (refreshStorageRef.current) {
         refreshStorageRef.current();
       }
+      showToast("File deleted successfully", "success");
     } catch (error) {
       setErrorMessage(error.message);
+      showToast(`Failed to delete file: ${error.message}`, "error");
     }
   }
 
   async function handleDeleteDirectory(id) {
+    if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+        showToast("Restricted access: Cannot delete folders.", "warning");
+        return;
+    }
+
+    setToast({ show: true, message: "Deleting folder...", type: "loading" });
     setErrorMessage("");
+
     try {
       const response = await fetch(`${BASE_URL}/directory/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
       await handleFetchErrors(response);
-      getDirectoryItems();
+      
+      await getDirectoryItems();
+      
       if (refreshStorageRef.current) {
         refreshStorageRef.current();
       }
+      showToast("Folder deleted successfully", "success");
     } catch (error) {
       setErrorMessage(error.message);
+      showToast(`Failed to delete folder: ${error.message}`, "error");
     }
   }
 
@@ -1038,11 +1064,24 @@ function DirectoryView() {
           <div className={`flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl border ${
             toast.type === "warning" ? "bg-amber-50 border-amber-200 text-amber-800" :
             toast.type === "error" ? "bg-red-50 border-red-200 text-red-800" :
+            toast.type === "success" ? "bg-green-50 border-green-200 text-green-800" :
+            toast.type === "loading" ? "bg-blue-50 border-blue-200 text-blue-800" :
             "bg-blue-50 border-blue-200 text-blue-800"
           }`}>
             {toast.type === "warning" && <FaExclamationTriangle className="w-5 h-5 text-amber-600" />}
             {toast.type === "error" && <FaTimes className="w-5 h-5 text-red-600" />}
-            {toast.type === "info" && <FaInfoCircle className="w-5 h-5 text-blue-600" />}
+            {toast.type === "success" && (
+                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
+                    <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+            )}
+            {toast.type === "loading" && (
+                <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            )}
+            {(toast.type === "info" || !["warning", "error", "success", "loading"].includes(toast.type)) && <FaInfoCircle className="w-5 h-5 text-blue-600" />}
+            
             <span className="font-semibold">{toast.message}</span>
           </div>
         </div>

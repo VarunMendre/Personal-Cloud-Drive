@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import File from "../models/fileModel.js";
 import User from "../models/userModel.js";
 import Directory from "../models/directoryModel.js";
@@ -172,66 +173,93 @@ export const uploadFileInitiate = async (req, res, next) => {
       .json({ error: "to upload file req body need specified info" });
   }
 
-  const actualParentDirId = parentDirId || req.user.rootDirId;
-  const parentDir = await Directory.findById(actualParentDirId);
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  if (!parentDir) {
-    return res.status(400).json({ error: "Parent directory not found" });
-  }
+  try {
+    const actualParentDirId = parentDirId || req.user.rootDirId;
+    const parentDir = await Directory.findById(actualParentDirId).session(session);
 
-  // parent directory belongs to user
-  if (parentDir.userId.toString() !== req.user._id.toString()) {
-    return res
-      .status(403)
-      .json({ error: "You don't have access to this directory" });
-  }
+    if (!parentDir) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: "Parent directory not found" });
+    }
 
-  const rootDir = await Directory.findById(req.user.rootDirId);
+    // parent directory belongs to user
+    if (parentDir.userId.toString() !== req.user._id.toString()) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(403)
+        .json({ error: "You don't have access to this directory" });
+    }
 
-  const fullUser = await User.findById(req.user._id);
+    const rootDir = await Directory.findById(req.user.rootDirId).session(session);
 
-  // CHECK: Middleware (checkUploadAccess) now handles state-based blocking.
-  // This manual check is redundant and can be removed.
+    // We fetch the user AGAIN with the session to ensure we are seeing the latest committed state
+    // if we were updating a specific field on user. However, files are separate docs.
+    // Ideally updateDirectorySize on CompleteUpload is what updates 'size', but here we check 'maxStorageLimit'.
+    // The race condition comes if we create many files before any complete.
+    // To strictly fix this, we would need to count "isUploading: true" files towards quota here too,
+    // OR we just ensure atomic creation.
+    // For this fix, we will just ensure this block is atomic and checks the current state.
 
-  const availableSpace = fullUser.maxStorageLimit - rootDir.size;
+    const fullUser = await User.findById(req.user._id).session(session);
 
-  if (size > availableSpace) {
-    return res.status(413).json({
-      error:
-        "Storage quota exceeded. Please delete some files or upgrade your plan.",
+    const availableSpace = fullUser.maxStorageLimit - rootDir.size;
+
+    if (size > availableSpace) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(413).json({
+        error:
+          "Storage quota exceeded. Please delete some files or upgrade your plan.",
+      });
+    }
+
+    if (size > fullUser.maxFileSize) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(413).json({
+        error: `File size exceeds the maximum limit of ${fullUser.maxFileSize / 1024 / 1024} MB for your current plan.`,
+      });
+    }
+
+    const extension = name.includes(".")
+      ? name.substring(name.lastIndexOf("."))
+      : "";
+
+    const haveSubscription = fullUser.subscriptionId ? true : false;
+    
+    // Create file with session
+    const [newFile] = await File.create([{
+      name,
+      size,
+      contentType,
+      extension,
+      userId: fullUser._id,
+      parentDirId: actualParentDirId,
+      isUploading: true,
+      haveSubscription,
+    }], { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    const s3Key = `${newFile._id}${extension}`;
+
+    const signedUrl = await createUploadSignedUrl({
+      key: s3Key,
+      contentType: contentType,
     });
+
+    return res.status(200).json({ fileId: newFile._id, uploadUrl: signedUrl });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
-
-  if (size > fullUser.maxFileSize) {
-    return res.status(413).json({
-      error: `File size exceeds the maximum limit of ${fullUser.maxFileSize / 1024 / 1024} MB for your current plan.`,
-    });
-  }
-
-  const extension = name.includes(".")
-    ? name.substring(name.lastIndexOf("."))
-    : "";
-
-  const haveSubscription = fullUser.subscriptionId ? true : false;
-  const newFile = await File.create({
-    name,
-    size,
-    contentType,
-    extension,
-    userId: fullUser._id,
-    parentDirId: actualParentDirId,
-    isUploading: true,
-    haveSubscription,
-  });
-
-  const s3Key = `${newFile._id}${extension}`;
-
-  const signedUrl = await createUploadSignedUrl({
-    key: s3Key,
-    contentType: contentType,
-  });
-
-  return res.status(200).json({ fileId: newFile._id, uploadUrl: signedUrl });
 };
 
 export const completeFileUpload = async (req, res, next) => {
@@ -243,7 +271,7 @@ export const completeFileUpload = async (req, res, next) => {
     return res.status(404).json({ error: "File not found" });
   }
 
-  // ADD THIS: Verify ownership
+  // Verify ownership
   if (file.userId.toString() !== req.user._id.toString()) {
     return res
       .status(403)
@@ -311,13 +339,13 @@ export const cancelFileUpload = async (req, res, next) => {
     const s3Key = `${file._id}${file.extension}`;
     await deletes3File(s3Key);
 
-    // If the file was NOT in uploading state, it means it was already counted in storage
-    // So we would need to decrease storage.
-    // BUT, this endpoint is specifically for cancelling an *ongoing* upload.
-    // If isUploading is true, it hasn't been added to directory size yet (see completeFileUpload).
-    // So we ONLY update directory size if isUploading is FALSE (which shouldn't happen for a cancel, but good for safety).
-    // Actually, if it's a cancel, we assume it's incomplete.
-    // If isUploading is true, we just delete the file doc and S3 object.
+    // if the file was NOT in uploading state, it means it was already counted in storage
+    // so we would need to decrease storage.
+    // but, this endpoint is specifically for cancelling an *ongoing* upload.
+    // if isUploading is true, it hasn't been added to directory size yet (see completeFileUpload).
+    // so we ONLY update directory size if isUploading is FALSE (which shouldn't happen for a cancel, but good for safety).
+    // actually, if it's a cancel, we assume it's incomplete.
+    // if isUploading is true, we just delete the file doc and S3 object.
 
     if (!file.isUploading) {
       // If for some reason we cancel a completed file (unlikely via this route, but possible),
