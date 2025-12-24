@@ -3,6 +3,7 @@ import User from "../../models/userModel.js";
 import File from "../../models/fileModel.js";
 import Directory from "../../models/directoryModel.js";
 import { rzpInstance } from "./createSubscription.js";
+import { handleRazorpayError } from "../../utils/razorpayErrorHandler.js";
 import { resetUserToDefault } from "../../utils/resetUserLimits.js";
 
 export const cancelSubscriptionService = async (userId, planId) => {
@@ -51,8 +52,10 @@ export const cancelSubscriptionService = async (userId, planId) => {
 
     return { success: true, message: "Subscription cancelled successfully", subscription };
   } catch (error) {
-
     console.error("Error in cancelSubscriptionService:", error);
-    throw error;
+
+    // Convert to CustomError but return object as controller expects {success: false}
+    const customError = handleRazorpayError(error, "Cancellation failed");
+    return { success: false, message: customError.message };
   }
 };

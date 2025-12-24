@@ -1,5 +1,6 @@
 import Subscription from "../../models/subscriptionModel.js";
 import { rzpInstance } from "./createSubscription.js";
+import { handleRazorpayError } from "../../utils/razorpayErrorHandler.js";
 
 export const resumeSubscriptionService = async (subscriptionId) => {
   try {
@@ -23,6 +24,6 @@ export const resumeSubscriptionService = async (subscriptionId) => {
     return { success: true, message: "Subscription resumed successfully", rzpResponse };
   } catch (error) {
     console.error("Error in resumeSubscriptionService:", error);
-    throw error;
+    throw handleRazorpayError(error, "Failed to resume subscription");
   }
 };

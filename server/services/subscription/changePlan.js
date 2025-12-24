@@ -1,6 +1,7 @@
 import Subscription from "../../models/subscriptionModel.js";
 import { rzpInstance } from "./createSubscription.js";
 import { PLAN_INFO } from "./getSubscriptionDetails.js";
+import { handleRazorpayError } from "../../utils/razorpayErrorHandler.js";
 
 export const changePlanService = async (userId, planId) => {
   try {
@@ -88,6 +89,6 @@ export const changePlanService = async (userId, planId) => {
     return { subscriptionId: newSubscription.id };
   } catch (error) {
     console.error("Error in changePlanService:", error);
-    throw error;
+    throw handleRazorpayError(error, "Failed to upgrade subscription");
   }
 };

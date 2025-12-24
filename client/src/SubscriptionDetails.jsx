@@ -35,7 +35,7 @@ export default function SubscriptionDetails() {
       }
     } catch (err) {
       console.error("Failed to fetch invoice:", err);
-      setErrorMessage("Failed to load invoice. Please try again.");
+      setErrorMessage(err.response?.data?.message || "Failed to load invoice. Please try again.");
       setTimeout(() => setErrorMessage(null), 5000);
     } finally {
       setLoadingInvoice(false);

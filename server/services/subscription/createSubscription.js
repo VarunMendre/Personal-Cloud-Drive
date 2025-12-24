@@ -1,5 +1,6 @@
 import Razorpay from "razorpay";
 import Subscription from "../../models/subscriptionModel.js";
+import { handleRazorpayError } from "../../utils/razorpayErrorHandler.js";
 
 export const rzpInstance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -45,7 +46,7 @@ export const createSubscriptionService = async (userId, planId) => {
 
         return { subscriptionId: newSubscription.id };
     } catch (error) {
-        console.log("Error in createSubscriptionService:", error);
-        throw error;
+        console.error("Error in createSubscriptionService:", error);
+        throw handleRazorpayError(error, "Failed to create subscription");
     }
 };
