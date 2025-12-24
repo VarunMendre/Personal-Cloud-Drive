@@ -31,3 +31,8 @@ export const getEligiblePlans = async () => {
   const { data } = await axiosWithCreds.get("/subscriptions/eligible-plans");
   return data;
 };
+
+export const upgradeSubscription = async (planId) => {
+  const { data } = await axiosWithCreds.post("/subscriptions/change-plan", { planId });
+  return data;
+};

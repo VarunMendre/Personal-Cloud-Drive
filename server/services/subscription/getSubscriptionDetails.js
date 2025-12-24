@@ -20,14 +20,17 @@ const formatBytes = (bytes) => {
 };
 
 export const getSubscriptionDetailsService = async (userId) => {
-  const subscription = await Subscription.findOne({
+  const subscriptions = await Subscription.find({
     userId,
     status: { $in: ["active", "created", "pending", "past_due"] },
   }).sort({ createdAt: -1 });
 
-  if (!subscription) {
+  if (subscriptions.length === 0) {
     return null;
   }
+
+  // Prioritize active plan for details view (e.g. during migration)
+  const subscription = subscriptions.find(s => s.status === "active") || subscriptions[0];
 
   const user = await User.findById(userId);
   if (!user) {
@@ -103,5 +106,12 @@ export const getSubscriptionDetailsService = async (userId) => {
       maxDevices: user.maxDevices,
       uploadsDuringSubscription: totalFiles,
     },
+    bonusDays: subscription.bonusDays || 0,
+    isInTrial: subscription.status === "authenticated",
+    trialEndsAt: subscription.authenticatedPeriodEnd ? subscription.authenticatedPeriodEnd.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    }) : null
   };
 };

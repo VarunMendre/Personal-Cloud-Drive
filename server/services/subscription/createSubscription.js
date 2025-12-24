@@ -7,27 +7,21 @@ export const rzpInstance = new Razorpay({
 });
 
 export const createSubscriptionService = async (userId, planId) => {
-    // Check if user already has an active subscription
-    const activeSubscription = await Subscription.findOne({
+    // Check for any subscription that isn't halted/cancelled
+    const existingSubscription = await Subscription.findOne({
         userId,
-        status: "active",
+        status: { $in: ["active", "created", "pending", "past_due"] },
     });
 
-    if (activeSubscription) {
-        const error = new Error("You already have an active subscription");
-        error.status = 400;
-        throw error;
-    }
-
-    // Check if user has a pending subscription for the SAME plan
-    const pendingSubscription = await Subscription.findOne({
-        userId,
-        planId,
-        status: "created",
-    });
-
-    if (pendingSubscription) {
-        return { subscriptionId: pendingSubscription.razorpaySubscriptionId };
+    if (existingSubscription) {
+        // If it's already active, show the specific error
+        if (existingSubscription.status === "active") {
+            const error = new Error("You already have an active subscription");
+            error.status = 400;
+            throw error;
+        }
+        // If it's just 'created', return that ID so they can finish payment
+        return { subscriptionId: existingSubscription.razorpaySubscriptionId };
     }
 
     const isYearly = ["plan_RuC3yiXd7cecny", "plan_RuC5FeIwTTfUSh"].includes(planId);

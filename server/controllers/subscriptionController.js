@@ -3,6 +3,7 @@ import Subscription from "../models/subscriptionModel.js";
 import { rzpInstance } from "../services/subscription/createSubscription.js";
 import {
   cancelSubscriptionService,
+  changePlanService,
   createSubscriptionService,
   getEligiblePlanService,
   getSubscriptionDetailsService,
@@ -140,3 +141,14 @@ export const renewalSubscription = async (req, res, next) => {
     next(error);
   }
 };
+
+export const changePlan = async (req, res, next) => {
+    try {
+        const { planId } = req.body;
+        const result = await changePlanService(req.user._id, planId);
+        return res.json(result);
+    } catch (error) {
+        console.error("Error changing plan:", error);
+        next(error);
+    }
+}

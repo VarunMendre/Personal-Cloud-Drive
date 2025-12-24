@@ -1,5 +1,6 @@
 import { rateLimit } from "express-rate-limit";
 
+const _1Hour = 60 * 60 * 1000;
 const _15Minute = 15 * 60 * 1000;
 const _10Minute = 10 * 60 * 1000;
 const _5Minute = 5 * 60 * 1000;
@@ -242,6 +243,24 @@ const limiterConfig = {
     56,
     false,
     "Too many file deletion requests. Please slow down",
+  ],
+
+  // Subscription - TESTING MODE (100 req/min)
+
+  createSubscription: [
+    _1Minute,
+    100,
+    56,
+    false,
+    "Too many subscription creation attempts. Please try again later.",
+  ],
+
+  upgradeLimiter: [
+    _1Minute,
+    100,
+    56,
+    true,
+    "Too many upgrade attempts. Please try again later.",
   ],
 };
 

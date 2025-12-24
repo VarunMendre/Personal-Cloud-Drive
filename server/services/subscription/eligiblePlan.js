@@ -1,3 +1,4 @@
+import { features } from "node:process";
 import Subscription from "../../models/subscriptionModel.js";
 import { PLAN_INFO } from "./getSubscriptionDetails.js";
 
@@ -10,24 +11,68 @@ export const getEligiblePlanService = async (userId) => {
   const currentPlanId = activeSub?.planId;
   const currentPrice = PLAN_INFO[currentPlanId]?.price || 0;
 
-  // 3. Filter plan_info with higher prices
+  // 3. decide days left in current plan
 
-  const eligiblePlans = Object.keys(PLAN_INFO)
+  const daysRemaining = Math.max(
+    0,
+    Math.ceil(
+      (new Date(activeSub.currentPeriodEnd) - new Date()) /
+        (1000 * 60 * 60 * 24)
+    )
+  );
+  const credit = Math.floor((currentPrice / 30) * daysRemaining);
+
+  const allPlans = Object.keys(PLAN_INFO)
     .filter((planId) => {
-      // condition 1: must be different plan
-      // condition 2: must be expensive then current one
-
+      // Exclude current plan AND only show plans with higher price
       return planId !== currentPlanId && PLAN_INFO[planId].price > currentPrice;
     })
     .map((planId) => {
+      const targetPrice = PLAN_INFO[planId].price;
+      const bonusDays = Math.floor((credit / targetPrice) * 30);
+      const cappedBonusDays = Math.min(bonusDays, 15);
+
       return {
         id: planId,
         ...PLAN_INFO[planId],
         features: getPlanFeatures(planId),
+        creditAmount: credit,
+        bonusDays: bonusDays,
+        cappedBonusDays: cappedBonusDays,
       };
     });
 
-  return eligiblePlans;
+  // Filter out plans with < 1 bonus day
+  const eligiblePlans = allPlans.filter(plan => plan.cappedBonusDays >= 1);
+
+  // Check if user is on highest plan (₹7999)
+  if (currentPrice >= 7999) {
+    return {
+      eligiblePlans: [],
+      daysRemaining,
+      message: "You're using the highest tier plan. To downgrade, please wait until your current plan expires."
+    };
+  }
+
+  // If no eligible plans due to insufficient bonus days
+  if (eligiblePlans.length === 0 && allPlans.length > 0) {
+    return {
+      eligiblePlans: [],
+      daysRemaining,
+      message: "Please wait 1 day before upgrading to accumulate minimum bonus days"
+    };
+  }
+
+  // If no plans available at all (shouldn't happen unless on highest plan)
+  if (eligiblePlans.length === 0) {
+    return {
+      eligiblePlans: [],
+      daysRemaining,
+      message: "No upgrade options available at this time"
+    };
+  }
+
+  return { eligiblePlans, daysRemaining };
 };
 
 // Simple helper to match FE features

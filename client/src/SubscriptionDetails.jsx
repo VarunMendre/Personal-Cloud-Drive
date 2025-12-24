@@ -8,7 +8,8 @@ import {
   BsCloudUploadFill,
   BsCalendar3,
   BsCreditCard,
-  BsHddStack
+  BsHddStack,
+  BsStars
 } from "react-icons/bs";
 import { getSubscriptionDetails, getInvoiceUrl, cancelSubscription } from "./apis/subscriptionApi";
 
@@ -74,10 +75,10 @@ export default function SubscriptionDetails() {
       try {
         setLoading(true);
         const res = await getSubscriptionDetails();
-        if (res && res.activePlan && res.activePlan.status === "active") {
+        if (res && res.activePlan && ["active", "created", "past_due"].includes(res.activePlan.status)) {
           setData(res);
         } else {
-          // If response is successful but status is not 'active' (e.g. 'created'), kick them out
+          // If response is successful but status is not valid (e.g. 'halted'), kick them out
           navigate("/plans");
         }
       } catch (err) {
@@ -205,6 +206,30 @@ export default function SubscriptionDetails() {
         <h1 className="text-3xl font-extrabold text-slate-900">Your Subscription</h1>
         <p className="text-slate-500 mt-1">Manage your plan and view usage details</p>
       </header>
+      
+      {/* Bonus Trial Banner */}
+      {data.activePlan.isInTrial && (
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-6 mb-8 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-md">
+              <BsStars className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-blue-900">Bonus Trial Active!</h3>
+              <p className="text-sm text-blue-700">
+                You have <strong>{data.activePlan.bonusDays} bonus days</strong> of free access
+              </p>
+            </div>
+          </div>
+          <div className="bg-white/60 rounded-lg p-3 border border-blue-100">
+            <p className="text-xs text-blue-800">
+              <strong>Trial ends:</strong> {data.activePlan.trialEndsAt}
+              <br />
+              <strong>Next billing:</strong> After trial expires
+            </p>
+          </div>
+        </div>
+      )}
       
       {/* ... existing card start ... */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

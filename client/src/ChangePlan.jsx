@@ -9,15 +9,22 @@ import {
   BsGem,
   BsStars
 } from "react-icons/bs";
-import { getSubscriptionDetails, getEligiblePlans, createSubscription } from "./apis/subscriptionApi";
+import { getSubscriptionDetails, getEligiblePlans, upgradeSubscription, checkSubscriptionStatus } from "./apis/subscriptionApi";
 import SubscriptionAlert from "./components/SubscriptionAlert";
 
 export default function ChangePlan() {
   const [currentPlan, setCurrentPlan] = useState(null);
   const [eligiblePlans, setEligiblePlans] = useState([]);
+  const [emptyMessage, setEmptyMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null);
+  
+  // Modals & Animation State
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showCountdownModal, setShowCountdownModal] = useState(false);
+  const [countdown, setCountdown] = useState(3);
+  const [pendingPlan, setPendingPlan] = useState(null);
+  const [createdSubscriptionId, setCreatedSubscriptionId] = useState(null);
   const [errorAlert, setErrorAlert] = useState({ show: false, title: "", message: "", tip: null });
   const navigate = useNavigate();
 
@@ -30,11 +37,12 @@ export default function ChangePlan() {
           getEligiblePlans()
         ]);
         
-        if (details && details.activePlan && details.activePlan.status === "active") {
+        if (details && details.activePlan && ["active", "created"].includes(details.activePlan.status)) {
           setCurrentPlan(details);
-          setEligiblePlans(eligible || []);
+          setEligiblePlans(eligible?.eligiblePlans || []);
+          setEmptyMessage(eligible?.message || "");
         } else {
-          // If no active plan (or just 'created'), they shouldn't be here
+          // If no active plan, they shouldn't be here
           navigate("/plans");
         }
       } catch (err) {
@@ -48,25 +56,61 @@ export default function ChangePlan() {
     fetchData();
   }, [navigate]);
 
+  // Load Razorpay Script
+  useEffect(() => {
+    const razorpayScript = document.querySelector("#razorpay-script");
+    if (razorpayScript) return;
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.id = "razorpay-script";
+    document.body.appendChild(script);
+  }, []);
+
   async function handleUpgrade(planId) {
+    if (showCountdownModal) return;
+
+    const plan = eligiblePlans.find(p => p.id === planId);
+    console.log(`Initiating upgrade for user to ${plan.name}. Bonus days: ${plan.cappedBonusDays}`);
+    setPendingPlan(plan);
+    setProcessingId(planId);
+    setShowCountdownModal(true);
+    setCountdown(3);
+
+    let count = 3;
+    const countdownInterval = setInterval(() => {
+      count -= 1;
+      setCountdown(count);
+      
+      if (count === 0) {
+        clearInterval(countdownInterval);
+        setShowCountdownModal(false);
+        startUpgrade(plan);
+      }
+    }, 1000);
+  }
+
+  async function startUpgrade(plan) {
     try {
-      setProcessingId(planId);
-      // In a real flow, this would call createSubscription which initiates Razorpay
-      // But since user is handling BE, I'll keep it standard
-      const res = await createSubscription(planId);
+      console.log("Attempting upgrade for plan:", plan.id);
+      const res = await upgradeSubscription(plan.id);
       
       if (res.subscriptionId) {
-        // Trigger Razorpay (reusing logic from Plans.jsx)
+        setCreatedSubscriptionId(res.subscriptionId);
         openRazorPayPopup({
           subscriptionId: res.subscriptionId,
-          planName: "Upgrade",
+          planName: plan.name,
+          planDescription: `${plan.storage} Storage - ${plan.tagline}`,
           onSuccess: () => {
-             navigate("/subscription");
+            setProcessingId(null);
+            setShowSuccessModal(true);
           },
           onFailure: (msg) => {
+            setProcessingId(null);
+            
             let tip = null;
             if (msg.toLowerCase().includes("international cards are not supported")) {
-              tip = "Merchant Configuration Tip: Ensure 'International Payments' is enabled in your Razorpay Dashboard -> Settings -> Payment Methods. If you are using an Indian card in Test Mode, Razorpay might incorrectly flag it if the merchant settings are restricted.";
+               tip = "Merchant Configuration Tip: Your Razorpay account is currently rejecting international cards. Ensure 'International Payments' is enabled in your Dashboard.";
             }
 
             setErrorAlert({
@@ -75,16 +119,37 @@ export default function ChangePlan() {
               message: msg,
               tip: tip
             });
-            setProcessingId(null);
           },
-          onClose: () => setProcessingId(null)
+          onClose: () => {
+            setProcessingId(null);
+          }
         });
       }
     } catch (err) {
+      console.error("Detailed Upgrade Error Context:", {
+          message: err.message,
+          response: err.response?.data,
+          stack: err.stack
+      });
+      const msg = err.response?.data?.message || "Failed to initiate plan change. Please try again later.";
+      
+      let tip = null;
+      const lowerMsg = msg.toLowerCase();
+      
+      // Check for "wait 1 day" error
+      if (lowerMsg.includes("wait") && lowerMsg.includes("day") && lowerMsg.includes("bonus")) {
+        tip = "Your current plan credit is too low to upgrade today. Please wait until tomorrow when you'll have accumulated enough credit for at least 1 bonus day.";
+      }
+      // Check for UPI/Card mandate errors
+      else if (lowerMsg.includes("upi subscriptions cannot be updated") || lowerMsg.includes("card mandate is applicable")) {
+        tip = "Why this happened: Banking regulations (RBI) in India fix the terms of your auto-pay mandate at creation. Many UPI and Card mandates cannot be modified mid-cycle. To change plans, please cancel your current subscription and purchase the new one manually.";
+      }
+
       setErrorAlert({
         show: true,
-        title: "Change Plan Error",
-        message: err.response?.data?.message || "Failed to initiate plan change. Please try again later."
+        title: "Upgrade Restricted",
+        message: msg,
+        tip: tip
       });
       setProcessingId(null);
     }
@@ -120,7 +185,7 @@ export default function ChangePlan() {
                 <span>Subscription Management</span>
             </div>
           <h1 className="text-4xl font-black text-slate-900 mb-2">Change Your Plan</h1>
-          <p className="text-slate-500 text-lg">Upgrade or adjust your plan anytime. We don't offer prorated charges for plan changes.</p>
+          <p className="text-slate-500 text-lg">Upgrade or adjust your plan anytime. We'll automatically apply a discount based on your remaining days.</p>
         </div>
 
         {/* Current Plan Card - Reusing the style from provided mockup */}
@@ -170,10 +235,11 @@ export default function ChangePlan() {
         </div>
 
         {/* Global Notice */}
-        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex items-start gap-4 mb-16 shadow-sm">
-            <BsInfoCircleFill className="w-6 h-6 text-blue-500 flex-shrink-0 mt-0.5" />
-            <p className="text-blue-700 text-sm font-medium leading-relaxed">
-                Your new plan starts today! You'll be billed the full amount immediately. We don't offer prorated charges for plan changes.
+        <div className="bg-green-50 border border-green-100 rounded-2xl p-5 flex items-start gap-4 mb-16 shadow-sm">
+            <BsInfoCircleFill className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" />
+            <p className="text-green-700 text-sm font-medium leading-relaxed">
+                <strong className="block text-green-800 mb-1">Prorated Upgrade Credit Active!</strong>
+                Switching plans? We'll automatically calculate the value of your remaining days on your current plan and apply it as a discount to your new subscription!
             </p>
         </div>
 
@@ -203,23 +269,49 @@ export default function ChangePlan() {
                     <div className="w-20 h-20 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-6">
                         <BsGem className="w-10 h-10" />
                     </div>
-                    <h4 className="text-xl font-black text-slate-900 mb-2">You're on our highest plan!</h4>
-                    <p className="text-slate-500 max-w-sm mx-auto font-medium">Once your current subscription ends, you will revert to a standard user and can choose any available plan again.</p>
+                    <h4 className="text-xl font-black text-slate-900 mb-2">
+                        {emptyMessage && emptyMessage.includes("highest") ? "You're on our highest plan!" : "No Upgrades Available"}
+                    </h4>
+                    <p className="text-slate-500 max-w-sm mx-auto font-medium">
+                        {emptyMessage || "Once your current subscription ends, you will revert to a standard user and can choose any available plan again."}
+                    </p>
                 </div>
             )}
         </div>
       </div>
 
-      {/* Error Toast */}
-      {errorMessage && (
-        <div className="fixed bottom-10 right-10 bg-red-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
-            <BsInfoCircleFill className="w-5 h-5 flex-shrink-0" />
-            <span className="font-bold text-sm tracking-wide">{errorMessage}</span>
-            <button onClick={() => setErrorMessage(null)} className="ml-4 opacity-70 hover:opacity-100 uppercase text-[10px] font-black border border-white/30 px-2 py-1 rounded-md">Dismiss</button>
-        </div>
-      )}
+        {/* Modals */}
+        {showCountdownModal && (
+          <CountdownModal 
+            countdown={countdown} 
+            onCancel={() => {
+              setShowCountdownModal(false);
+              setProcessingId(null);
+              setPendingPlan(null);
+            }} 
+          />
+        )}
+        
+        {showSuccessModal && (
+          <SuccessModal 
+            subscriptionId={createdSubscriptionId} 
+            onClose={() => navigate("/subscription")} 
+          />
+        )}
+
     </div>
   );
+}
+
+// Helper function to calculate next billing date
+function calculateNextBillingDate(days) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toLocaleDateString("en-US", { 
+    month: "short", 
+    day: "numeric", 
+    year: "numeric" 
+  });
 }
 
 function FeatureItem({ label }) {
@@ -233,74 +325,276 @@ function FeatureItem({ label }) {
     );
 }
 
+function Price({ value }) {
+  return (
+    <div className="flex items-baseline gap-1">
+      {value === 0 ? (
+        <span className="text-4xl font-bold tracking-tight text-slate-900">
+          Free
+        </span>
+      ) : (
+        <>
+          <span className="text-lg font-semibold text-slate-700">₹</span>
+          <span className="text-4xl font-bold tracking-tight text-slate-900">
+            {value}
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
 function UpgradePlanCard({ plan, onUpgrade, isProcessing, disabled }) {
     const isPremium = plan.name.toLowerCase().includes('premium');
+    const billingPeriod = plan.billingPeriod === 'Yearly' ? '/year' : '/month';
     
     return (
-        <div className={`relative flex flex-col bg-white rounded-3xl border-2 transition-all p-8 md:p-10 ${isPremium ? 'border-green-500 shadow-xl shadow-green-100' : 'border-blue-500 shadow-xl shadow-blue-100'}`}>
-            <div className="mb-8">
-                <div className="flex justify-between items-start mb-6">
-                    <div className={`p-3 rounded-2xl ${isPremium ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
-                        {isPremium ? <BsGem className="w-6 h-6" /> : <BsStars className="w-6 h-6" />}
-                    </div>
-                </div>
-                <h4 className="text-2xl font-black text-slate-900 mb-1">{plan.name}</h4>
-                <p className="text-blue-600 text-xs font-bold uppercase tracking-wider mb-8">{plan.tagline}</p>
-                
-                <div className="flex items-baseline gap-1 py-1">
-                    <span className="text-4xl font-black text-slate-900">₹{plan.price}</span>
-                    <span className="text-slate-400 font-bold">/{plan.billingPeriod === 'Yearly' ? 'Year' : 'Month'}</span>
-                </div>
+        <div
+          className={classNames(
+            "relative flex flex-col rounded-2xl border bg-white p-5 shadow-sm transition",
+            "hover:shadow-md",
+            isPremium
+              ? "border-blue-500/60 ring-1 ring-blue-500/20"
+              : "border-slate-200"
+          )}
+        >
+          {isPremium && (
+            <div className="absolute -top-2 right-4 select-none rounded-full bg-blue-600 px-2 py-0.5 text-xs font-medium text-white shadow">
+              RECOMMENDED
             </div>
-
-            <div className="h-px bg-slate-100 mb-10" />
-
-            <button 
-                onClick={() => onUpgrade(plan.id)}
-                disabled={disabled}
-                className={`w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 ${isPremium ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-200' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200'}`}
-            >
-                {isProcessing ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                    <>
-                        {plan.name.includes('Premium') ? 'Upgrade Plan' : 'Change Plan'}
-                        <BsArrowRightShort className="w-6 h-6" />
-                    </>
-                )}
-            </button>
-
-            <div className="mt-10 mb-4">
-                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Includes:</div>
-                <ul className="space-y-4">
-                    {plan.features.slice(0, 4).map((f, i) => (
-                        <li key={i} className="flex items-start gap-3 group">
-                            <BsCheckCircleFill className="w-3.5 h-3.5 text-green-500 mt-1 flex-shrink-0" />
-                            <span className="text-[13px] font-bold text-slate-600 group-hover:text-slate-900 transition leading-snug">{f}</span>
-                        </li>
-                    ))}
-                    {plan.features.length > 4 && (
-                        <li className="text-[11px] font-black text-blue-600 uppercase tracking-wider ml-6 mt-2">
-                            +{plan.features.length - 4} more features
-                        </li>
+          )}
+    
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                 <div className={classNames(
+                   "p-1.5 rounded-lg",
+                   isPremium ? "bg-blue-50 text-blue-600" : "bg-slate-50 text-slate-600"
+                 )}>
+                    {isPremium ? (
+                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
+                    ) : (
+                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>
                     )}
-                </ul>
+                 </div>
+                 <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
+              </div>
+              <p className="text-xs font-semibold text-blue-600">{plan.tagline}</p>
             </div>
+          </div>
+    
+          <div className="mb-6 mt-2 flex flex-col gap-0.5">
+            <div className="flex items-end gap-1">
+              <Price value={plan.billingPeriod === "Yearly" ? Math.floor(plan.price / 12) : plan.price} />
+              <span className="mb-[6px] text-sm text-slate-500">/month</span>
+            </div>
+            
+            {plan.cappedBonusDays > 0 && (
+                <div className="flex flex-col mt-1">
+                    <span className="text-[11px] text-green-600 font-bold flex items-center gap-1">
+                        <BsCheckCircleFill className="w-2.5 h-2.5" />
+                        {plan.cappedBonusDays} Days Free Trial
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                        Next billing on {calculateNextBillingDate(30)}
+                    </span>
+                </div>
+            )}
+          </div>
+    
+          <div className="h-px bg-slate-100 mb-6" />
+    
+          <button
+            onClick={() => onUpgrade(plan.id)}
+            disabled={disabled}
+            className={classNames(
+              "mb-6 cursor-pointer inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-bold transition focus:outline-none",
+              isPremium
+                ? "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed"
+                : "bg-slate-900 text-white hover:bg-slate-800 disabled:bg-slate-700 disabled:cursor-not-allowed"
+            )}
+          >
+            {isProcessing ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              </span>
+            ) : (
+                <span className="flex items-center gap-2">
+                    {isPremium ? 'Upgrade Now' : 'Switch Plan'}
+                    <BsArrowRightShort className="w-5 h-5" />
+                </span>
+            )}
+          </button>
+    
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">What's Included</div>
+          <ul className="space-y-3 text-[13px] text-slate-600">
+            {plan.features.map((f, i) => (
+              <li key={i} className="flex items-start gap-2.5">
+                <svg
+                  className="mt-0.5 h-3.5 w-3.5 flex-none text-green-500"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  strokeWidth="3.5"
+                  stroke="currentColor"
+                >
+                  <path
+                    d="M5 13l4 4L19 7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
         </div>
     );
 }
 
+function classNames(...cls) {
+    return cls.filter(Boolean).join(" ");
+}
+
+// Reuse the exact same modal components from Plans.jsx for consistency
+function SuccessModal({ subscriptionId, onClose }) {
+  const [activating, setActivating] = useState(true);
+
+  useEffect(() => {
+    if (!subscriptionId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const status = await checkSubscriptionStatus(subscriptionId);
+        if (status && (status.active || status.status === 'active')) {
+          clearInterval(interval);
+          setActivating(false);
+          setTimeout(() => {
+             onClose();
+          }, 1500);
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [subscriptionId, onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"></div>
+      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 text-center animate-in zoom-in-95 fade-in duration-300 border border-slate-100">
+        <div className={`mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full transition-colors duration-500 ${activating ? 'bg-blue-50' : 'bg-green-50'}`}>
+          <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-colors duration-500 ${activating ? 'bg-blue-600' : 'bg-green-600'}`}>
+            {activating ? (
+               <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+               </svg>
+            ) : (
+              <svg className="w-6 h-6 animate-in zoom-in duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            )}
+          </div>
+        </div>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">
+          {activating ? "Confirming Upgrade..." : "Upgrade Successful!"}
+        </h2>
+        <p className="text-sm text-slate-500 mb-8 max-w-xs mx-auto">
+          {activating 
+            ? "Please wait while we confirm your payment and update your account features." 
+            : "Your new plan is now active. Redirecting to your dashboard..."}
+        </p>
+        {activating && (
+           <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-2">
+             <div className="h-full bg-blue-600 animate-progress-indeterminate"></div>
+           </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CountdownModal({ countdown, onCancel }) {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    const timer = setTimeout(() => { setProgress(100); }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+  
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"></div>
+      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300 border border-slate-100">
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-slate-100">
+          <div 
+            className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all ease-linear"
+            style={{ width: `${progress}%`, transitionDuration: '3000ms' }}
+          ></div>
+        </div>
+        <div className="p-8 text-center">
+          <button onClick={onCancel} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17L17 7M17 7H7M17 7v10" /></svg>
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Preparing your Upgrade</h2>
+          <p className="text-sm text-slate-500 mb-8">You are being redirected to a secure payment gateway</p>
+          <div className="mb-8">
+            <div className="text-6xl font-bold text-slate-900 mb-2 animate-pulse">{countdown}</div>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-xs text-slate-500 mb-6 font-bold">
+            <BsShieldCheck className="w-4 h-4 text-blue-600" /> Secure connection
+          </div>
+          <button onClick={onCancel} className="text-sm text-slate-500 hover:text-slate-700 transition font-bold uppercase tracking-wider">Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Helper for Razorpay (copied from Plans.jsx)
-function openRazorPayPopup({ subscriptionId, planName, onClose, onSuccess, onFailure }) {
+function openRazorPayPopup({
+  subscriptionId,
+  planName,
+  planDescription,
+  onClose,
+  onSuccess,
+  onFailure,
+}) {
+  console.log("Opening Razorpay for upgrade:", subscriptionId);
   const rzp = new window.Razorpay({
     key: "rzp_test_RnAnjbXG3sqHWQ",
     name: "Storage App",
-    description: "Upgrade to " + planName,
+    description: planName + " - " + planDescription,
     subscription_id: subscriptionId,
-    theme: { color: "#2563eb" },
-    handler: function (response) { onSuccess?.(); },
-    modal: { ondismiss: function() { onClose?.(); } }
+    theme: {
+      color: "#2563eb",
+    },
+    handler: function (response) {
+      console.log("Upgrade payment successful!", response);
+      onSuccess?.();
+    },
+    modal: {
+      ondismiss: function() {
+        console.log("Upgrade checkout modal closed");
+        onClose?.();
+      }
+    }
   });
-  rzp.on("payment.failed", function (response) { onFailure?.("Payment failed: " + response.error.description); });
+
+  rzp.on("payment.failed", function (response) {
+    console.error("Upgrade payment failed:", response.error);
+    onFailure?.("Payment failed: " + response.error.description);
+  });
+
   rzp.open();
 }

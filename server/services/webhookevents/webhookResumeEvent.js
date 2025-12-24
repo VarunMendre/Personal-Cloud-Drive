@@ -1,4 +1,6 @@
 import Subscription from "../../models/subscriptionModel.js";
+import User from "../../models/userModel.js";
+import { SUBSCRIPTION_PLANS as PLANS } from "../../config/subscriptionPlans.js";
 
 export const handleResumeEvent = async (webhookBody) => {
   const rzpSubscription = webhookBody.payload.subscription.entity;
@@ -10,6 +12,19 @@ export const handleResumeEvent = async (webhookBody) => {
   if (subscription) {
     subscription.status = "active";
     await subscription.save();
-    console.log(`Subscription ${subscription.razorpaySubscriptionId} resumed via webhook.`);
+
+    // Restore pro features
+    const planInfo = PLANS[subscription.planId];
+    if (planInfo) {
+      const user = await User.findById(subscription.userId);
+      if (user) {
+        user.maxStorageLimit = planInfo.storageQuotaInBytes;
+        user.maxDevices = planInfo.maxDevices;
+        user.maxFileSize = planInfo.maxFileSize;
+        user.subscriptionId = rzpSubscription.id;
+        await user.save();
+        console.log(`Subscription ${subscription.razorpaySubscriptionId} resumed and limits restored.`);
+      }
+    }
   }
 };

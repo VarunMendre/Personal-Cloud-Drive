@@ -1,4 +1,5 @@
 import { model, Schema } from "mongoose";
+import { type } from "node:os";
 
 const subscriptionSchema = new Schema(
   {
@@ -28,13 +29,14 @@ const subscriptionSchema = new Schema(
         "pending",
         "renewal_failed",
         "expired",
-        "halted"
+        "halted",
+        "authenticated"
       ],
       default: "created",
     },
     retryCount: {
       type: Number,
-      default:0,
+      default: 0,
     },
     lastPaymentAttempt: {
       type: Date,
@@ -47,12 +49,12 @@ const subscriptionSchema = new Schema(
       default: null,
     },
     currentPeriodEnd: {
-      type: Date, 
+      type: Date,
       default: null,
     },
     startDate: {
       type: Date,
-      default:null
+      default: null,
     },
     endDate: {
       type: Date,
@@ -64,8 +66,22 @@ const subscriptionSchema = new Schema(
     },
     cancelledAt: {
       type: Date,
-      default: null
-    }
+      default: null,
+    },
+    bonusDays: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 15,
+    },
+    authenticatedPeriodStart: {
+      type: Date,
+      default: null,
+    },
+    authenticatedPeriodEnd: {
+      type: Date,
+      default: null,
+    },
   },
   {
     strict: "throw",

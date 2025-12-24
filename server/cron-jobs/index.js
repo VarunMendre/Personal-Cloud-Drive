@@ -1,4 +1,6 @@
+import cron from "node-cron";
 import { processSubscriptionStates } from "./processSubscriptionStates.js";
+import { processAuthenticatedTrials } from "./authenticatedTrialProcessor.js";
 
 export const startCronJobs = () => {
   console.log(`
@@ -18,4 +20,9 @@ export const startCronJobs = () => {
 ⏱️ Schedulers are active and waiting
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `);
+
+  cron.schedule("0 * * * *", async () => {
+    console.log("Running authenticated trial processor...");
+    await processAuthenticatedTrials();
+  });
 };
