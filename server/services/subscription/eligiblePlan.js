@@ -5,7 +5,7 @@ import { PLAN_INFO } from "./getSubscriptionDetails.js";
 export const getEligiblePlanService = async (userId) => {
   // 1. find the user's active subscription
 
-  const activeSub = await Subscription.findOne({ userId, status: "active" });
+  const activeSub = await Subscription.findOne({ userId, status: "active" }).sort({ createdAt: -1 });
 
   // 2. current plan price
   const currentPlanId = activeSub?.planId;

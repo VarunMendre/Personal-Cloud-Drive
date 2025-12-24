@@ -197,7 +197,7 @@ export default function ChangePlan() {
                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
                            Current Plan
                         </span>
-                        <h2 className="text-3xl font-black text-slate-900 mb-1">{currentPlan.activePlan.name} Plan</h2>
+                        <h2 className="text-3xl font-black text-slate-900 mb-1">{currentPlan.activePlan.name}</h2>
                         <p className="text-slate-400 font-medium">{currentPlan.activePlan.tagline}</p>
                     </div>
                     <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shadow-inner">

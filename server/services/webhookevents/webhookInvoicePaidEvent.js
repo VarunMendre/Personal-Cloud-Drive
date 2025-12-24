@@ -58,6 +58,7 @@ export const handleInvoicePaidEvent = async (webhookBody) => {
           currentPeriodEnd: new Date(rzpSub.current_end * 1000),
           bonusDays: bonusDays,
           startDate: new Date(rzpSub.start_at * 1000),
+          invoiceId: invoice.id,
         },
         { upsert: true }
       );

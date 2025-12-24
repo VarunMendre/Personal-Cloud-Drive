@@ -248,19 +248,19 @@ const limiterConfig = {
   // Subscription - TESTING MODE (100 req/min)
 
   createSubscription: [
-    _1Minute,
-    100,
+    _15Minute,
+    5,
     56,
     false,
     "Too many subscription creation attempts. Please try again later.",
   ],
 
   upgradeLimiter: [
-    _1Minute,
-    100,
+    _1Hour,
+    1,
     56,
     true,
-    "Too many upgrade attempts. Please try again later.",
+    "You can only upgrade once per hour. Please try again later.",
   ],
 };
 
