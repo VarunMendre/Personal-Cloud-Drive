@@ -9,6 +9,7 @@ export const renameFileSchema = z.object({
   fileId: objectIdSchema,
   newFilename: filenameSchema,
   userId: objectIdSchema,
+  version: z.number().optional(),
 });
 
 

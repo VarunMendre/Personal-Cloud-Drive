@@ -42,6 +42,7 @@ function DirectoryView() {
   const [renameType, setRenameType] = useState(null);
   const [renameId, setRenameId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
+  const [renameVersion, setRenameVersion] = useState(undefined);
 
   // Share modal state
   const [showShareModal, setShowShareModal] = useState(false);
@@ -654,10 +655,11 @@ function DirectoryView() {
   /**
    * Rename
    */
-  function openRenameModal(type, id, currentName) {
+  function openRenameModal(type, id, currentName, version) {
     setRenameType(type);
     setRenameId(id);
     setRenameValue(currentName);
+    setRenameVersion(version);
     setShowRenameModal(true);
   }
 
@@ -676,17 +678,26 @@ function DirectoryView() {
         },
         body: JSON.stringify(
           renameType === "file"
-            ? { newFilename: renameValue }
+            ? { newFilename: renameValue, version: renameVersion }
             : { newDirName: renameValue }
         ),
         credentials: "include",
       });
+
+      if (response.status === 409) {
+          showToast("Conflict: File modified by someone else. Refreshing...", "error");
+          await getDirectoryItems();
+          setShowRenameModal(false);
+          return;
+      }
+
       await handleFetchErrors(response);
 
       setShowRenameModal(false);
       setRenameValue("");
       setRenameType(null);
       setRenameId(null);
+      setRenameVersion(undefined);
       getDirectoryItems();
     } catch (error) {
       setErrorMessage(error.message);

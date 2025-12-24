@@ -58,11 +58,12 @@ export const renameFile = async (req, res, next) => {
     fileId: req.params.id,
     newFilename: req.body.newFilename,
     userId: req.user._id.toString(),
+    version: req.body.version, // FIXED: req.body instead of req.user
   });
   if (!validateData.success) {
     return res.status(400).json({ error: "Invalid Id's" });
   }
-  const { fileId, newFilename, userId } = validateData.data;
+  const { fileId, newFilename, userId, version } = validateData.data;
 
   // Find the file 
   const file = await File.findById(fileId);
@@ -71,12 +72,17 @@ export const renameFile = async (req, res, next) => {
   if (!file) {
     return res.status(404).json({ error: "File not found!" });
   }
+  // Optimistic locking check
+  if (version !== undefined && file.__v !== version) {
+    return res.status(409).json({ error: "File has been modified by another user. Please refresh." }); // 409 Conflict
+  }
 
+  file.__v = (file.__v || 0) + 1;
   // Check if this is a share link request (token in query or header)
   const shareToken = req.query.shareToken || req.headers['x-share-token'];
 
   if (shareToken) {
-    // Validate share link token and permissions
+    // Validate share link token and permissionsgit 
     if (!file.shareLink ||
       file.shareLink.token !== shareToken ||
       !file.shareLink.enabled) {
@@ -231,7 +237,7 @@ export const uploadFileInitiate = async (req, res, next) => {
       : "";
 
     const haveSubscription = fullUser.subscriptionId ? true : false;
-    
+
     // Create file with session
     const [newFile] = await File.create([{
       name,

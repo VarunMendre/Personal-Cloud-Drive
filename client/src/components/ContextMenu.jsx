@@ -45,7 +45,7 @@ function ContextMenu({
 
         <div
           className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
-          onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && openRenameModal("directory", item.id, item.name)}
+          onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && openRenameModal("directory", item.id, item.name, item.__v)}
         >
           <FaPencilAlt className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-gray-600"} />
           <span>Rename</span>
@@ -118,7 +118,7 @@ function ContextMenu({
           </div>
           <div
             className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
-            onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && openRenameModal("file", item.id, item.name)}
+            onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && openRenameModal("file", item.id, item.name, item.__v)}
           >
             <FaPencilAlt className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-gray-600"} />
             <span>Rename</span>
