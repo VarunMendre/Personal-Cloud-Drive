@@ -82,7 +82,7 @@ export const renameFile = async (req, res, next) => {
   const shareToken = req.query.shareToken || req.headers['x-share-token'];
 
   if (shareToken) {
-    // Validate share link token and permissionsgit 
+    // Validate share link token and permissions
     if (!file.shareLink ||
       file.shareLink.token !== shareToken ||
       !file.shareLink.enabled) {
