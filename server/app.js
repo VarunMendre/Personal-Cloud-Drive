@@ -24,11 +24,13 @@ const PORT = process.env.PORT || 4000;
 
 app.use(cookieParser(process.env.MY_SECRET_KEY));
 app.use(express.json());
+const clientOrigin = process.env.CLIENT_ORIGIN?.replace(/\/$/, "");
+
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
-        "frame-ancestors": ["'self'", process.env.CLIENT_ORIGIN],
+        "frame-ancestors": ["'self'", clientOrigin],
       },
     },
   })
@@ -36,7 +38,7 @@ app.use(
 
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN,
+    origin: clientOrigin,
     credentials: true,
   })
 );
