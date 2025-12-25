@@ -1,7 +1,6 @@
 import Subscription from "../../models/subscriptionModel.js";
 import User from "../../models/userModel.js";
 import { resetUserToDefault } from "../../utils/resetUserLimits.js";
-import { errorResponse } from "../../utils/response.js";
 import { sendSubscriptionCancelledEmail } from "../emailService/subscriptionCancelled.js";
 
 export const handleCancelledEvent = async (webhookBody) => {
@@ -26,7 +25,7 @@ export const handleCancelledEvent = async (webhookBody) => {
         await sendSubscriptionCancelledEmail(user.email, user.name);
       }
     } catch (emailErr) {
-      errorResponse(emailErr);
+      console.error("[Cancellation] Failed to send email:", emailErr.message);
     }
 
     console.log(
