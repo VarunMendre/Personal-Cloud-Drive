@@ -7,248 +7,167 @@ A professional, secure, and full‑featured **personal cloud storage system** bu
 ## 🚀 Key Features
 
 ### 🔐 **Authentication & Security**
+- **Multiple Login Methods:** Email/Password (OTP Verified), Google OAuth, and GitHub OAuth.
+- **Secure Session Handling:** Redis-powered session store with signed cookies and **multi-device session limiting**.
+- **Role-Based Access Control (RBAC):** Granular permissions with `Owner`, `Admin`, `Manager`, and `User` roles.
+- **Advanced Sanitization:** Automated input sanitization using **DOMPurify** to eliminate XSS risks.
+- **Reliable Validation:** Comprehensive schema validation using **Zod**.
+- **Transaction Integrity:** Mongoose Transactions for atomic operations (e.g., user creation with root directory).
 
-- **Multiple Login Methods:** Email/Password, Google OAuth, GitHub OAuth.
-- **Secure Session Handling:** Redis-powered session store with signed cookies.
-- **Role-Based Access Control (RBAC):** Includes `Owner`, `Admin`, `Manager`, and `User` roles.
-- **Advanced Security Headers:** Implemented via Helmet with custom CSP for iframe safety.
-- **Input Validation & Sanitization:** Using **Zod** and **DOMPurify** to eliminate XSS and injection risks.
-- **Rate Limiting:** Prevents brute-force and abusive requests.
+### 📂 **Cloud File Management**
+- **AWS S3 Integration:** High-performance file storage with multipart upload support.
+- **CloudFront Content Delivery:** Secure file access via **CloudFront Signed URLs** for low-latency streaming and downloads.
+- **Intelligent Navigation:** Folder-based structure with breadcrumbs and nested directory support.
+- **Optimistic Locking:** Prevent data corruption during simultaneous file renames.
+- **Advanced Previews:** Seamless previewing for Images, PDFs, Videos, Audio, and Text files.
 
----
+### 🤝 **Collaborative Sharing**
+- **Role-Based Sharing:** Share files/folders with specific users as `Viewer` or `Editor`.
+- **Public/Protected Share Links:** Generate temporary or permanent share links with configurable access levels.
+- **Direct Access Management:** Real-time permission updates and access revocation for shared resources.
 
-### 📂 **File & Directory Management**
-
-- **Clean & Intuitive UI:** Folder navigation, breadcrumbs, and smooth transitions.
-- **File Operations:** Upload, rename, delete, and preview (Images, PDFs, Videos, Audio, Text).
-- **Directory Management:** Create, rename, and navigate nested folder structures.
-- **Context Menu Support:** Right-click for quick file/folder actions.
-- **Storage Usage Indicator:** Real-time progress bar showing used vs. allocated space.
-
----
-
-### 🤝 **Sharing & Collaboration**
-
-- **Direct Sharing:** Share files/folders with any registered user via email.
-- **Public Links:** Generate shareable links with `Viewer` or `Editor` permissions.
-- **Permission Control:** Update, revoke, or modify roles for shared users.
-- **Shared With Me:** Dedicated section for files and folders shared by others.
-
----
-
-### 🛠️ **Admin Dashboard**
-
-- **User Management:** View all users, update roles, soft delete, or restore accounts.
-- **System File Overview:** Owners can view and manage all stored files.
-- **Deletion Controls:** Soft and hard delete workflows for safer user handling.
+### 💳 **Storage & Subscriptions**
+- **Flexible Plans:** Subscription-based storage tiers integrated with **Razorpay**.
+- **Storage Quotas:** Real-time tracking of used space vs. plan limits.
+- **Seamless Upgrades:** Direct integration for plan transitions and storage expansion.
 
 ---
 
 ## 🏗️ Tech Stack Overview
 
 ### 🎨 **Frontend (Client)**
-
 - **Framework:** React (Vite)
-- **Styling:** Tailwind CSS v4
+- **Styling:** Vanilla CSS (Custom premium design system) / Tailwind CSS v4 support.
 - **Routing:** React Router DOM
-- **State Management:** React Hooks
+- **State Management:** Context API + Custom Hooks
 - **Icons:** React Icons
 
 ### ⚡ **Backend (Server)**
-
 - **Runtime:** Node.js
 - **Framework:** Express.js
-- **Database:** MongoDB with Mongoose
-- **Caching/Sessions:** Redis
-- **Validation:** Zod + DOMPurify
-- **Security:** Helmet, CORS, BCrypt, Cookie-Parser
+- **Database:** MongoDB (Mongoose ODM)
+- **Caching/Sessions:** Redis (Redis Cloud integration)
+- **Cloud Services:** AWS S3 (Storage), AWS CloudFront (CDN)
+- **Payments:** Razorpay
 
 ---
 
 ## ⚙️ Installation & Setup Guide
 
 ### 📌 Prerequisites
-
 - Node.js v18+
-- MongoDB (Local or Atlas)
-- Redis Server
+- MongoDB (Atlas recommended)
+- Redis Server (Redis Cloud recommended)
+- AWS Account (S3 Bucket & CloudFront Distribution)
+- Razorpay Account (for subscriptions)
 
 ---
 
 ### **1. Clone the Repository**
-
 ```bash
 git clone <repository-url>
 cd Storage-Drive
 ```
 
----
-
 ### **2. Setup Backend**
-
 ```bash
 cd server
 npm install
 ```
 
 Create a `.env` file inside `server`:
-
 ```env
 PORT=4000
-MONGO_URI=mongodb://localhost:27017/storage-drive
-REDIS_URL=redis://localhost:6379
-MY_SECRET_KEY=your_super_secret_key
+MONGO_URI=your_mongodb_uri
+REDIS_HOST=your_redis_host
+REDIS_PORT=your_redis_port
+REDIS_PASSWORD=your_redis_password
+MY_SECRET_KEY=your_session_secret
 CLIENT_ORIGIN=http://localhost:5173
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
+
+# AWS
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_REGION=...
+S3_BUCKET_NAME=...
+CLOUDFRONT_DOMAIN=...
+CLOUDFRONT_PRIVATE_KEY=...
+CLOUDFRONT_KEY_PAIR_ID=...
+
+# OAuth
+GOOGLE_OAUTH_CLIENT_ID=...
 GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
-RESEND_API_KEY=...
+
+# Payments
+RAZORPAY_KEY_ID=...
+RAZORPAY_KEY_SECRET=...
 ```
-
-Run database initialization:
-
-```bash
-npm run setup
-```
-
-Start the backend:
-
-```bash
-npm run dev
-```
-
----
 
 ### **3. Setup Frontend**
-
 ```bash
 cd client
 npm install
 ```
-
-Create a `.env` file inside `client`:
-
-```env
-VITE_BASE_URL=http://localhost:4000
-```
-
-Start the React app:
-
+Start the application:
 ```bash
 npm run dev
 ```
 
 ---
 
-## 🛡️ Security Highlights
-
-- **Strict MongoDB Schema Validation:** Ensures all stored data matches the expected structure.
-- **Custom CSP Policies:** Secure iframe embedding and restricted resource loading.
-- **Secure Cookies:** HttpOnly, Signed, SameSite cookies safeguard against CSRF and XSS.
-
----
-
-## 📝 License
-
-Licensed under the **ISC License**.
-
----
-
-## 📁 Folder Structure
-
+##  Folder Structure
 ```
 Storage-Drive/
 ├── client/                # React Frontend
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── hooks/
-│   │   ├── context/
-│   │   └── utils/
 ├── server/                # Node.js Backend
-│   ├── controllers/
-│   ├── middleware/
-│   ├── routes/
-│   ├── models/
-│   ├── utils/
-│   └── config/
-├── scripts/               # Setup scripts
+│   ├── config/            # Database & Cloud service configs
+│   ├── controllers/       # Business logic (Refactored/Standardized)
+│   ├── models/            # Mongoose Schemas
+│   ├── routes/            # API Endpoints
+│   ├── services/          # External API integrations (AWS, OAuth, Razorpay)
+│   ├── utils/             # Reusable Helpers (Response, Validation, Transactions)
+│   └── validators/        # Zod Validation Schemas
 └── README.md
 ```
 
 ---
 
-## 📘 API Documentation
+## 📘 API Documentation Highlights
 
-### **Auth Routes**
+### **Authentication**
+- `POST /auth/register` – OTP-based registration
+- `POST /auth/login` – Traditional login
+- `POST /auth/google-login` – Google OAuth sync
+- `POST /auth/github-login` – GitHub OAuth sync
+- `GET /auth/logout` – Session termination
 
-- `POST /auth/register` – Create user account
-- `POST /auth/login` – Login with email/password
-- `GET /auth/google` – Google OAuth
-- `GET /auth/github` – GitHub OAuth
+### **File Operations**
+- `POST /files/initiate-upload` – Prepare S3 multipart upload
+- `POST /files/complete-upload` – Finalize file storage and metadata
+- `PATCH /files/rename/:fileId` – Secure file renaming
+- `DELETE /files/delete/:fileId` – File removal (S3 + DB)
 
-### **File Routes**
-
-- `POST /files/upload` – Upload file
-- `GET /files/:id` – Fetch file metadata
-- `DELETE /files/:id` – Delete file
-- `PATCH /files/:id` – Rename file
-
-### **Directory Routes**
-
-- `POST /folders/create` – Create folder
-- `GET /folders/:id` – Fetch folder contents
-
-### **Sharing Routes**
-
-- `POST /share` – Share file/folder
-- `PATCH /share/permissions` – Modify permissions
-
-> Full API documentation will be added soon.
+### **Directory Management**
+- `POST /directories/create` – Create new directory
+- `GET /directories/get/:dirId` – List directory contents
+- `DELETE /directories/delete/:dirId` – Recursive directory deletion
 
 ---
 
-## 🤝 Contribution Guidelines
-
-We welcome contributions! Follow these steps:
-
-1. **Fork** the repository
-2. Create a new branch:
-   ```bash
-   git checkout -b feature-name
-   ```
-3. Commit your changes:
-   ```bash
-   git commit -m "Added new feature"
-   ```
-4. Push and create a **Pull Request**
-
-### Code Style
-
-- Use meaningful commit messages
-- Follow existing linting & formatting rules
-- Keep components small and reusable
-
-### Reporting Issues
-
-Feel free to open an issue for:
-
-- Bugs
-- Feature requests
-- Security concerns
+## 🛡️ Security & Reliability
+- **Optimistic Locking:** Ensures data consistency during concurrent updates.
+- **Signed CloudFront URLs:** Direct, secure file streaming without exposing S3 buckets.
+- **Standardized Responses:** Unified `successResponse` and `errorResponse` helpers for predictable API behavior.
+- **Redis Resilience:** Robust reconnection strategy and keep-alive heartbeats for cloud stability.
 
 ---
 
-## 🛠️ Roadmap (Upcoming Enhancements)
-
-- **AWS S3 Bucket Integration** – Move file storage to scalable cloud storage.
-- **Payment Integration** – Add subscription plans using Razorpay / Stripe.
-- **Deployments** – Production deployment guides for Render, Vercel, AWS EC2.
+## 📝 License
+Licensed under the **ISC License**.
 
 ---
 
 ## 📞 Contact
-
-For any support or collaboration opportunities: **Varun Mendre** – Developer & Maintainer For any support or collaboration opportunities: **Varun Mendre** – Developer & Maintainer
-
+**Varun Mendre** – Developer & Maintainer
+Project Link: [https://github.com/VarunMendre/Personal-Cloud-Drive](https://github.com/VarunMendre/Personal-Cloud-Drive)
