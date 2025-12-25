@@ -14,7 +14,7 @@ import { successResponse, errorResponse } from "../utils/response.js";
 import { sanitize } from "../utils/sanitizer.js";
 import { validateWithSchema } from "../utils/validationWrapper.js";
 import { runInTransaction } from "../utils/transactionHelper.js";
-import { deleteUserSessions } from "../utils/authUtils.js";
+import { deleteUserSessions, createSession } from "../utils/authUtils.js";
 
 export const register = async (req, res, next) => {
   const sanitizedBody = sanitize(req.body);
@@ -111,38 +111,7 @@ export const login = async (req, res, next) => {
     return errorResponse(res, "Invalid Credentials", 404);
   }
 
-  const maxDevicesLimit = user.maxDevices;
-  const userIdStr = user._id.toString();
-  
-  const allSessions = await redisClient.ft.search(
-    "userIdInx",
-    `@userId:{${userIdStr}}`,
-    {
-      RETURN: [],
-    }
-  );
-
-  if (allSessions.total >= maxDevicesLimit) {
-    await redisClient.del(allSessions.documents[0].id);
-  }
-
-  const sessionId = crypto.randomUUID();
-  const redisKey = `session:${sessionId}`;
-
-  await redisClient.json.set(redisKey, "$", {
-    userId: user._id,
-    rootDirId: user.rootDirId,
-    role: user.role,
-  });
-
-  await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
-
-  res.cookie("sid", sessionId, {
-    httpOnly: true,
-    sameSite: "lax",
-    signed: true,
-    maxAge: 60 * 1000 * 60 * 24 * 7,
-  });
+  await createSession(res, user);
   return successResponse(res, null, "logged in");
 };
 
@@ -343,7 +312,7 @@ export const softDeleteUser = async (req, res, next) => {
   if (req.user._id.toString() === userId) {
     return errorResponse(res, "You cannot delete your self", 403);
   }
-  
+
   try {
     await runInTransaction(async (session) => {
       await User.findByIdAndUpdate({ _id: userId }, { isDeleted: true }, { session });
@@ -395,7 +364,7 @@ export const recoverUser = async (req, res, next) => {
   if (req.user._id.toString() === userId) {
     return errorResponse(res, "You cannot delete your self", 403);
   }
-  
+
   try {
     await runInTransaction(async (session) => {
       await User.findByIdAndUpdate(
