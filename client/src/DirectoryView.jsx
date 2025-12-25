@@ -205,11 +205,26 @@ function DirectoryView() {
     if (type === "directory") {
       navigate(`/directory/${id}`);
     } else {
-    if (["halted", "expired", "paused"].includes(subscriptionStatus?.toLowerCase())) {
+      if (["halted", "expired", "paused"].includes(subscriptionStatus?.toLowerCase())) {
         showToast("Your account is restricted. Downloads are disabled.", "warning");
         return;
       }
-      window.location.href = `${BASE_URL}/file/${id}`;
+      
+      // Fixed: Fetch the URL via JSON first to ensure auth cookies are sent cross-origin
+      fetch(`${BASE_URL}/file/${id}?json=true`, { credentials: "include" })
+        .then(res => res.json())
+        .then(data => {
+          if (data.url) {
+            window.open(data.url, "_blank");
+          } else if (data.error) {
+            showToast(data.error, "error");
+            if (data.status === 401) navigate("/login");
+          }
+        })
+        .catch(err => {
+          console.error("Error opening file:", err);
+          showToast("Failed to open file", "error");
+        });
     }
   }
 

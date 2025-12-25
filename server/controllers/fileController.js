@@ -32,19 +32,25 @@ export const getFile = async (req, res) => {
 
   const s3Key = `${fileId}${fileData.extension}`;
 
-  if (req.query.action === "download") {
-    const getUrl = await getFileUrl({
+  const isDownload = req.query.action === "download";
+  let getUrl;
+
+  if (isDownload) {
+    getUrl = await getFileUrl({
       Key: s3Key,
       download: true,
       filename: fileData.name,
     });
-    return res.redirect(getUrl);
+  } else {
+    getUrl = createCloudFrontSignedGetUrl({
+      key: s3Key,
+      filename: fileData.name,
+    });
   }
 
-  const getUrl = createCloudFrontSignedGetUrl({
-    key: s3Key,
-    filename: fileData.name,
-  });
+  if (req.query.json === "true") {
+    return successResponse(res, { url: getUrl });
+  }
 
   return res.redirect(getUrl);
 };
