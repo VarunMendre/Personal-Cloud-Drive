@@ -24,7 +24,11 @@ const PORT = process.env.PORT || 4000;
 
 app.set("trust proxy", 1);
 
-app.use(cookieParser(process.env.MY_SECRET_KEY));
+if (!process.env.MY_SECRET_KEY) {
+  console.error("CRITICAL: MY_SECRET_KEY is not defined in environment variables!");
+}
+
+app.use(cookieParser(process.env.MY_SECRET_KEY || "fallback_secret_for_local_only"));
 app.use(express.json());
 const clientOrigin = process.env.CLIENT_ORIGIN?.replace(/\/$/, "");
 
