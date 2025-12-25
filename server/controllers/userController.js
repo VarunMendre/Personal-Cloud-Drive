@@ -81,38 +81,46 @@ export const register = async (req, res, next) => {
 };
 
 export const login = async (req, res, next) => {
-  const sanitizedBody = sanitize(req.body);
+  try {
+    const sanitizedBody = sanitize(req.body);
 
-  const { success, data } = validateWithSchema(loginSchema, sanitizedBody);
+    const { success, data } = validateWithSchema(loginSchema, sanitizedBody);
 
-  if (!success) {
-    return errorResponse(res, "Invalid Credentials", 404);
+    if (!success) {
+      return errorResponse(res, "Invalid Credentials", 404);
+    }
+
+    const { email, password } = data;
+
+    if (!email || !password) {
+      return errorResponse(res, "Email and password are required", 400);
+    }
+    const user = await User.findOne({ email, isDeleted: false });
+
+    if (!user) {
+      return errorResponse(res, "Invalid Credentials", 404);
+    }
+
+    // CHECK: If user doesn't have a password (OAuth user who hasn't set password)
+    if (!user.password || user.password.length === 0) {
+      return errorResponse(
+        res,
+        "No password set. Please login with Google/GitHub or set a password in settings.",
+        401
+      );
+    }
+
+    const isPasswordValid = await user.comparePassword(password);
+
+    if (!isPasswordValid) {
+      return errorResponse(res, "Invalid Credentials", 404);
+    }
+
+    await createSession(res, user);
+    return successResponse(res, null, "logged in");
+  } catch (err) {
+    next(err);
   }
-
-  const { email, password } = data;
-
-  if (!email || !password) {
-    return errorResponse(res, "Email and password are required", 400);
-  }
-  const user = await User.findOne({ email, isDeleted: false });
-
-  if (!user) {
-    return errorResponse(res, "Invalid Credentials", 404);
-  }
-
-  // CHECK: If user doesn't have a password (OAuth user who hasn't set password)
-  if (!user.password || user.password.length === 0) {
-    return errorResponse(res, "No password set. Please login with Google/GitHub or set a password in settings.", 401);
-  }
-
-  const isPasswordValid = await user.comparePassword(password);
-
-  if (!isPasswordValid) {
-    return errorResponse(res, "Invalid Credentials", 404);
-  }
-
-  await createSession(res, user);
-  return successResponse(res, null, "logged in");
 };
 
 export const getCurrentUser = async (req, res) => {

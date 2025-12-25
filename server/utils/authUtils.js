@@ -39,15 +39,20 @@ export const createSession = async (res, user) => {
   const maxDevicesLimit = user.maxDevices || 1;
 
   // 1. Manage device limits
-  const allSessions = await redisClient.ft.search(
-    "userIdInx",
-    `@userId:{${userId}}`,
-    { RETURN: [] }
-  );
+  try {
+    const allSessions = await redisClient.ft.search(
+      "userIdInx",
+      `@userId:{${userId}}`,
+      { RETURN: [] }
+    );
 
-  if (allSessions.total >= maxDevicesLimit) {
-    // Delete the oldest session
-    await redisClient.del(allSessions.documents[0].id);
+    if (allSessions.total >= maxDevicesLimit) {
+      // Delete the oldest session
+      await redisClient.del(allSessions.documents[0].id);
+    }
+  } catch (err) {
+    console.error("Redis search for device limits failed. Skipping limit enforcement:", err.message);
+    // Continue session creation even if search fails (e.g. index missing)
   }
 
   // 2. Create session in Redis
