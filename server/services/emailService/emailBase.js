@@ -48,7 +48,7 @@ export const wrapEmailTemplate = (title, contentHtml, themeColor = "#2563EB") =>
           </div>
           <div class="footer">
             <p>&copy; ${new Date().getFullYear()} Storage Drive. All rights reserved.</p>
-            <p>Managed your account at <a href="${process.env.CLIENT_URL || "http://localhost:5173"}/subscription">Storage Drive</a></p>
+            <p>Managed your account at <a href="${process.env.CLIENT_URL || "#"}">Storage Drive</a></p>
           </div>
         </div>
       </div>

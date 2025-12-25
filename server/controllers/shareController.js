@@ -224,7 +224,7 @@ export const generateShareLink = async (req, res) => {
       Math.random().toString(36).substring(2, 15);
 
     // Use origin or fallback to env/localhost
-    const origin = req.get("origin") || process.env.CLIENT_URL || "http://localhost:5173";
+    const origin = req.get("origin") || process.env.CLIENT_URL;
     const linkUrl = `${origin}/shared/link/${token}`;
 
     resource.shareLink = {

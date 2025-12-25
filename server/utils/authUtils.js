@@ -16,12 +16,12 @@ export const deleteUserSessions = async (userId) => {
       }
     );
 
-    if (allSessions.total > 0) {
+    if (allSessions?.total > 0) {
       await Promise.all(
         allSessions.documents.map((doc) => redisClient.del(doc.id))
       );
     }
-    
+
     return allSessions.total;
   } catch (err) {
     console.error(`Error deleting sessions for user ${userId}:`, err);
@@ -55,15 +55,15 @@ export const createSession = async (res, user) => {
     // Continue session creation even if search fails (e.g. index missing)
   }
 
-  // 2. Create session in Redis
+  // 2. Create session in Redis (Standard String for compatibility)
   const sessionId = crypto.randomUUID();
   const redisKey = `session:${sessionId}`;
 
-  await redisClient.json.set(redisKey, "$", {
+  await redisClient.set(redisKey, JSON.stringify({
     userId: user._id,
     rootDirId: user.rootDirId,
     role: user.role,
-  });
+  }));
 
   // Set 7-day expiration
   await redisClient.expire(redisKey, 60 * 60 * 24 * 7);

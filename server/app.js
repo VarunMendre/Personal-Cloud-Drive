@@ -22,6 +22,8 @@ connectDB();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+app.set("trust proxy", 1);
+
 app.use(cookieParser(process.env.MY_SECRET_KEY));
 app.use(express.json());
 const clientOrigin = process.env.CLIENT_ORIGIN?.replace(/\/$/, "");
