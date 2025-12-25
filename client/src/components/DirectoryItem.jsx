@@ -61,26 +61,14 @@ function DirectoryItem({
 
   const handleDownload = (e) => {
     e.stopPropagation();
-    e.preventDefault(); // Prevent default immediately
+    e.preventDefault(); 
     
-    console.log("DirectoryItem handleDownload - status:", subscriptionStatus);
-    console.log("DirectoryItem handleDownload - status type:", typeof subscriptionStatus);
-    
-    // Check if subscription is paused (case-insensitive, defensive)
     const statusStr = String(subscriptionStatus || "").toLowerCase().trim();
-    const isPaused = statusStr === "paused";
-    
-    console.log("DirectoryItem handleDownload - statusStr:", statusStr);
-    console.log("DirectoryItem handleDownload - isPaused:", isPaused);
-    
-    /* 
-    if (isPaused) {
-      showToast("Your subscription has been paused so you can't download or upload a file.", "warning");
-      return false; // Explicitly return false
+    if (["halted", "expired", "paused"].includes(statusStr)) {
+      showToast("Access Restricted: Your subscription is currently paused.", "warning");
+      return;
     }
-    */
     
-    // Only proceed with download 
     window.location.href = `${BASE_URL}/file/${item.id}?action=download`;
   };
 

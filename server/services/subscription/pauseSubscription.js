@@ -9,7 +9,7 @@ export const pauseSubscriptionService = async (subscriptionId) => {
         });
 
         if (!subscription) {
-            throw new Error("Subscription not found");
+            throw new Error("Subscription not found in our records. Please ensure it's synced.");
         }
 
         // Call Razorpay to pause

@@ -1,10 +1,11 @@
 import { handleActivationEvent } from "./webhookActivationEvent.js";
-import { handleCancelledEvent } from "./webhookCancelledEvent.js";
+import { handleInvoicePaidEvent } from "./webhookInvoicePaidEvent.js";
 import { handlePauseEvent } from "./webhookPauseEvent.js";
 import { handleResumeEvent } from "./webhookResumeEvent.js";
-import { handleInvoicePaidEvent } from "./webhookInvoicePaidEvent.js";
+import { handleCancelledEvent } from "./webhookCancelledEvent.js";
 import { webhookPaymentFailedEvent } from "./webhookPaymentFailedEvent.js";
 import { webhookHaltedEvent } from "./webhookHaltedEvent.js";
+import { sendSubscriptionActiveEmail } from "../emailService/subscriptionActive.js";
 
 export async function WebhookEventHandler(event, webhookBody) {
   switch (event) {
@@ -25,7 +26,12 @@ export async function WebhookEventHandler(event, webhookBody) {
       break;
 
     case "invoice.paid":
+    case "subscription.charged":
       await handleInvoicePaidEvent(webhookBody);
+      break;
+
+    case "subscription.authenticated":
+      console.log(`[Webhook] Subscription authenticated: ${webhookBody.payload.subscription.entity.id}`);
       break;
 
     case "invoice.payment_failed":

@@ -205,7 +205,7 @@ function DirectoryView() {
     if (type === "directory") {
       navigate(`/directory/${id}`);
     } else {
-    if (["halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+    if (["halted", "expired", "paused"].includes(subscriptionStatus?.toLowerCase())) {
         showToast("Your account is restricted. Downloads are disabled.", "warning");
         return;
       }

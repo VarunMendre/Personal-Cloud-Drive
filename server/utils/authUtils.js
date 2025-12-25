@@ -66,7 +66,8 @@ export const createSession = async (res, user) => {
   // 3. Set cookie
   res.cookie("sid", sessionId, {
     httpOnly: true,
-    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production", // Must be true for SameSite: None
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     signed: true,
     maxAge: 1000 * 60 * 60 * 24 * 7,
   });

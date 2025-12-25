@@ -2,11 +2,26 @@ import Subscription from "../../models/subscriptionModel.js";
 import User from "../../models/userModel.js";
 import { SUBSCRIPTION_PLANS } from "../../config/subscriptionPlans.js";
 import { rzpInstance } from "../subscription/createSubscription.js";
+import { sendSubscriptionActiveEmail } from "../emailService/subscriptionActive.js";
 
 export const handleInvoicePaidEvent = async (webhookBody) => {
   try {
-    const invoice = webhookBody.payload.invoice.entity;
-    const newSubId = invoice.subscription_id;
+    const event = webhookBody.event;
+    let newSubId;
+    let invoiceData = null;
+
+    if (event === "invoice.paid") {
+      invoiceData = webhookBody.payload.invoice.entity;
+      newSubId = invoiceData.subscription_id;
+    } else if (event === "subscription.charged") {
+      newSubId = webhookBody.payload.subscription.entity.id;
+      // For subscription.charged, we might not have a hosted_url immediately
+    }
+
+    if (!newSubId) {
+      console.error(`Could not extract subscription ID from event: ${event}`);
+      return { success: false };
+    }
 
     // 1. Fetch subscription details from Razorpay
     const rzpSub = await rzpInstance.subscriptions.fetch(newSubId);
@@ -25,7 +40,9 @@ export const handleInvoicePaidEvent = async (webhookBody) => {
       razorpaySubscriptionId: newSubId,
     });
 
-    const isFirstPayment = !existingSub || existingSub.status === "created";
+    const isFirstPayment = !existingSub || existingSub.status === "created" || !existingSub.invoiceId;
+
+    console.log(`[InvoicePaid] Sub: ${newSubId}, isFirstPayment: ${isFirstPayment}, Has Migration: ${!!oldSubId}`);
 
     // 3. Handle first payment (upgrade payment)
     if (isFirstPayment) {
@@ -58,10 +75,25 @@ export const handleInvoicePaidEvent = async (webhookBody) => {
           currentPeriodEnd: new Date(rzpSub.current_end * 1000),
           bonusDays: bonusDays,
           startDate: new Date(rzpSub.start_at * 1000),
-          invoiceId: invoice.id,
+          invoiceId: invoiceData?.id || null,
         },
         { upsert: true }
       );
+
+      // Send Activation Email (Double check if we should skip or send again with better URL)
+      try {
+        const storageLimitGb = Math.round(planInfo.storageQuotaInBytes / (1024 * 1024 * 1024));
+        await sendSubscriptionActiveEmail(
+          user.email,
+          user.name,
+          planInfo.name,
+          storageLimitGb,
+          invoiceData?.hosted_url || invoiceData?.short_url || `${process.env.CLIENT_URL}/subscription`,
+          "View My Invoice"
+        );
+      } catch (emailErr) {
+        console.error("Failed to send activation email:", emailErr.message);
+      }
 
       // Cancel old Subscription
 
@@ -71,14 +103,12 @@ export const handleInvoicePaidEvent = async (webhookBody) => {
             cancel_at_cycle_end: 0,
           });
 
-          await Subscription.findOneAndUpdate(
-            { razorpaySubscriptionId: oldSubId },
-            { status: "cancelled", cancelledAt: new Date() }
-          );
+          // Delete the old subscription record to keep DB clean as per user request
+          await Subscription.deleteOne({ razorpaySubscriptionId: oldSubId });
 
-          console.log(`Cancelled old subscription: ${oldSubId}`);
+          console.log(`Deleted old subscription record: ${oldSubId}`);
         } catch (error) {
-          console.error(`Failed to cancel old sub: ${error.message}`);
+          console.error(`Failed to cleanup old sub: ${error.message}`);
         }
       }
 

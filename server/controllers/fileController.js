@@ -10,6 +10,7 @@ import { deleteFileSchema, getFileSchema, renameFileSchema } from "../validators
 import { completeUploadCheck, createUploadSignedUrl, deletes3File, getFileUrl, } from "../services/s3.js";
 import { successResponse, errorResponse } from "../utils/response.js";
 import { validateWithSchema } from "../utils/validationWrapper.js";
+import { runInTransaction } from "../utils/transactionHelper.js";
 
 export const getFile = async (req, res) => {
   const { success, data } = validateWithSchema(getFileSchema, { fileId: req.params.id });

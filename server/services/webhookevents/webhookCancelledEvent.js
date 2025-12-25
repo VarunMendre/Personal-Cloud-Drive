@@ -1,5 +1,8 @@
 import Subscription from "../../models/subscriptionModel.js";
+import User from "../../models/userModel.js";
 import { resetUserToDefault } from "../../utils/resetUserLimits.js";
+import { errorResponse } from "../../utils/response.js";
+import { sendSubscriptionCancelledEmail } from "../emailService/subscriptionCancelled.js";
 
 export const handleCancelledEvent = async (webhookBody) => {
   const rzpSubscription = webhookBody.payload.subscription.entity;
@@ -13,10 +16,23 @@ export const handleCancelledEvent = async (webhookBody) => {
     subscription.cancelledAt = new Date().toISOString();
     await subscription.save();
 
-    // Reset user to default and delete subscription files
+    // reset user to default and delete subscription files
     await resetUserToDefault(subscription.userId);
+
+    // send Cancellation Email
+    try {
+      const user = await User.findById(subscription.userId);
+      if (user) {
+        await sendSubscriptionCancelledEmail(user.email, user.name);
+      }
+    } catch (emailErr) {
+      errorResponse(emailErr);
+    }
+
     console.log(
       `Subscription cancelled for user ${subscription.userId} via webhook.`
     );
+  } else {
+    console.warn(`[Webhook] Subscription ${rzpSubscription.id} not found in database. Skipping cancellation email.`);
   }
 };

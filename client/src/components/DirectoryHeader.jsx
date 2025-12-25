@@ -79,7 +79,7 @@ function DirectoryHeader({
             </div>
 
             {/* PAUSED NAVBAR INDICATOR */}
-            {subscriptionStatus === "paused" && (
+            {subscriptionStatus?.toLowerCase() === "paused" && (
               <div className="flex items-center gap-2 px-3 py-1 bg-amber-500 text-white rounded-full animate-pulse shadow-sm border border-amber-600">
                 <FaExclamationTriangle className="w-3 h-3" />
                 <span className="text-[10px] font-bold tracking-tight uppercase">Account Paused</span>

@@ -138,7 +138,12 @@ export const getCurrentUser = async (req, res) => {
 export const logout = async (req, res) => {
   const { sid } = req.signedCookies;
   await redisClient.del(`session:${sid}`);
-  res.clearCookie("sid");
+  res.clearCookie("sid", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    signed: true,
+  });
   res.status(204).end();
 };
 

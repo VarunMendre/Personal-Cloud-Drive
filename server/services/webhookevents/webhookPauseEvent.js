@@ -1,5 +1,7 @@
+import User from "../../models/userModel.js";
 import Subscription from "../../models/subscriptionModel.js";
 import { resetUserToDefault } from "../../utils/resetUserLimits.js";
+import { sendSubscriptionPausedEmail } from "../emailService/subscriptionPaused.js";
 
 export const handlePauseEvent = async (webhookBody) => {
   const rzpSubscription = webhookBody.payload.subscription.entity;
@@ -12,8 +14,15 @@ export const handlePauseEvent = async (webhookBody) => {
     subscription.status = "paused";
     await subscription.save();
 
-    // Revoke pro features during pause
-    await resetUserToDefault(subscription.userId);
+    // Send Pause Email
+    try {
+      const user = await User.findById(subscription.userId);
+      if (user) {
+        await sendSubscriptionPausedEmail(user.email, user.name);
+      }
+    } catch (emailErr) {
+      console.error("Failed to send pause email:", emailErr.message);
+    }
 
     console.log(`Subscription ${subscription.razorpaySubscriptionId} paused and limits reset via webhook.`);
   }

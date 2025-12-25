@@ -163,8 +163,8 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
     
   const handleDownload = () => {
     const statusStr = String(subscriptionStatus || "").toLowerCase().trim();
-    if (["halted", "expired"].includes(statusStr)) {
-      showToast("Your account is restricted. Downloads are disabled.", "warning");
+    if (["halted", "expired", "paused"].includes(statusStr)) {
+      showToast("Access Restricted: Your subscription is currently paused.", "warning");
       return;
     }
     window.location.href = `${BASE_URL}/file/${item.id}?action=download`;

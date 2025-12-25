@@ -1,7 +1,9 @@
+import User from "../../models/userModel.js";
 import Subscription from "../../models/subscriptionModel.js";
+import { sendSubscriptionGracePeriodEmail } from "../emailService/subscriptionGracePeriod.js";
 
-export const webhookPaymentFailedEvent = async (payload) => {
-  const { id: razorpaySubscriptionId } = payload.subscription.entity;
+export const webhookPaymentFailedEvent = async (webhookBody) => {
+  const { id: razorpaySubscriptionId } = webhookBody.payload.subscription.entity;
 
   // Calculate 3 day grace period
   const gracePeriod = new Date();
@@ -17,8 +19,21 @@ export const webhookPaymentFailedEvent = async (payload) => {
         $inc: { retryCount: 1 },
       }
     );
+
+    // Send Grace Period Email
+    try {
+      const subscription = await Subscription.findOne({ razorpaySubscriptionId });
+      if (subscription) {
+        const user = await User.findById(subscription.userId);
+        if (user) {
+          await sendSubscriptionGracePeriodEmail(user.email, user.name, 3);
+        }
+      }
+    } catch (emailErr) {
+      console.error("Failed to send grace period email:", emailErr.message);
+    }
   } catch (error) {
-    console.error("Error while putting into grace Period",error);
+    console.error("Error while putting into grace Period", error);
   }
 
   console.log(
