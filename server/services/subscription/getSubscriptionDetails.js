@@ -56,12 +56,14 @@ export const getSubscriptionDetailsService = async (userId) => {
   try {
     const keys = await redisClient.keys("session:*");
     if (keys.length > 0) {
-      const sessions = await Promise.all(
-        keys.map((key) => redisClient.json.get(key))
+      const rawSessions = await Promise.all(
+        keys.map((key) => redisClient.get(key))
       );
-      devicesConnected = sessions.filter(
-        (s) => s && s.userId && s.userId.toString() === userId.toString()
-      ).length;
+      devicesConnected = rawSessions
+        .map(raw => raw ? JSON.parse(raw) : null)
+        .filter(
+          (s) => s && s.userId && s.userId.toString() === userId.toString()
+        ).length;
     }
   } catch (err) {
     console.error("Error counting sessions for subscription stats:", err);
