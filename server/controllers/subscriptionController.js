@@ -10,15 +10,16 @@ import {
   pauseSubscriptionService,
   resumeSubscriptionService,
 } from "../services/subscription/index.js";
+import { successResponse, errorResponse } from "../utils/response.js";
 
 export const createSubscription = async (req, res, next) => {
   try {
     const { planId } = req.body;
     const result = await createSubscriptionService(req.user._id, planId);
-    return res.json(result);
+    return successResponse(res, result);
   } catch (error) {
     console.log("Error creating subscription:", error);
-    res.status(error.status || 500).json({ message: error.message });
+    return errorResponse(res, error.message, error.status || 500);
   }
 };
 
@@ -27,10 +28,10 @@ export const getSubscriptionDetails = async (req, res, next) => {
     const details = await getSubscriptionDetailsService(req.user._id);
 
     if (!details) {
-      return res.status(404).json({ message: "No active subscription found" });
+      return errorResponse(res, "No active subscription found", 404);
     }
 
-    return res.json(details);
+    return successResponse(res, details);
   } catch (error) {
     console.log("Error getting subscription details:", error);
     next(error);
@@ -47,7 +48,7 @@ export const getSubscriptionInvoice = async (req, res, next) => {
     }).sort({ createdAt: -1 });
 
     if (!subscription) {
-      return res.status(404).json({ message: "No active subscription found" });
+      return errorResponse(res, "No active subscription found", 404);
     }
 
     // fetch invoices from razorpay for this subscription
@@ -61,10 +62,10 @@ export const getSubscriptionInvoice = async (req, res, next) => {
     const lastInvoice = invoice.items.find((inv) => inv.status === "paid");
 
     if (!lastInvoice || !lastInvoice.short_url) {
-      return res.status(404).json({ message: "No paid invoice found" });
+      return errorResponse(res, "No paid invoice found", 404);
     }
 
-    return res.json({ invoiceUrl: lastInvoice.short_url });
+    return successResponse(res, { invoiceUrl: lastInvoice.short_url });
   } catch (error) {
     console.error("Error fetching invoice:", error);
     next(error);
@@ -77,10 +78,10 @@ export const cancelSubscription = async (req, res, next) => {
     const result = await cancelSubscriptionService(req.user._id, planId);
 
     if (result && result.success === false) {
-      return res.status(400).json(result);
+      return errorResponse(res, result.message || "Failed to cancel subscription", 400);
     }
 
-    return res.json(result);
+    return successResponse(res, result);
   } catch (error) {
     console.error("Error while canceling subscription", error);
     next(error);
@@ -91,7 +92,7 @@ export const pauseSubscription = async (req, res, next) => {
   try {
     const { id } = req.params; // razorpaySubscriptionId
     const result = await pauseSubscriptionService(id);
-    return res.json(result);
+    return successResponse(res, result);
   } catch (error) {
     console.error("Error pausing subscription:", error);
     next(error);
@@ -102,7 +103,7 @@ export const resumeSubscription = async (req, res, next) => {
   try {
     const { id } = req.params; // razorpaySubscriptionId
     const result = await resumeSubscriptionService(id);
-    return res.json(result);
+    return successResponse(res, result);
   } catch (error) {
     console.error("Error resuming subscription:", error);
     next(error);
@@ -122,12 +123,12 @@ export const checkSubscriptionStatus = async (req, res, next) => {
     });
 
     if (activationevent) {
-      return res.json({
+      return successResponse(res, {
         status: "active",
       });
     }
 
-    return res.json({ active: false });
+    return successResponse(res, { active: false });
   } catch (error) {
     console.error("Error checking subscription status:", error);
     next(error);
@@ -137,20 +138,19 @@ export const checkSubscriptionStatus = async (req, res, next) => {
 export const renewalSubscription = async (req, res, next) => {
   try {
     const result = await getEligiblePlanService(req.user._id);
-
-    res.json(result);
+    return successResponse(res, result);
   } catch (error) {
     next(error);
   }
 };
 
 export const changePlan = async (req, res, next) => {
-    try {
-        const { planId } = req.body;
-        const result = await changePlanService(req.user._id, planId);
-        return res.json(result);
-    } catch (error) {
-        console.error("Error changing plan:", error);
-        next(error);
-    }
+  try {
+    const { planId } = req.body;
+    const result = await changePlanService(req.user._id, planId);
+    return successResponse(res, result);
+  } catch (error) {
+    console.error("Error changing plan:", error);
+    next(error);
+  }
 }

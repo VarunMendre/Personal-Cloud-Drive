@@ -4,6 +4,8 @@ import File from "../models/fileModel.js";
 import Directory from "../models/directoryModel.js";
 import { createCloudFrontSignedGetUrl } from "../services/cloudFront.js";
 import { getFileUrl } from "../services/s3.js";
+import { successResponse, errorResponse } from "../utils/response.js";
+import { runInTransaction } from "../utils/transactionHelper.js";
 
 export const getSharedUsers = async (req, res) => {
   try {
@@ -14,9 +16,9 @@ export const getSharedUsers = async (req, res) => {
     if (resourceType === "file") {
       Model = File;
     } else if (resourceType === "folder") {
-      return res.status(400).json({ error: "Folder sharing is disabled" });
+      return errorResponse(res, "Folder sharing is disabled", 400);
     } else {
-      return res.status(400).json({ error: "Invalid Resource Type" });
+      return errorResponse(res, "Invalid Resource Type", 400);
     }
 
     const resource = await Model.findById(resourceId)
@@ -24,13 +26,8 @@ export const getSharedUsers = async (req, res) => {
       .populate("sharedWith.userId", "name email picture");
 
     if (!resource) {
-      return res.status(404).json({ error: "Resource not found" });
+      return errorResponse(res, "Resource not found", 404);
     }
-
-    // Allow owner OR anyone who has access to view the shared list?
-    // Usually only owner or editors should see this. For now, strict check for owner.
-    // However, if I am a shared user opening this, I might need to see it too?
-    // Let's stick to Owner + Shared users can see who else is on it.
 
     const isOwner = resource.userId._id.toString() === currentUserId.toString();
     const isShared = resource.sharedWith.some(
@@ -38,12 +35,12 @@ export const getSharedUsers = async (req, res) => {
     );
 
     if (!isOwner && !isShared) {
-      return res.status(403).json({ error: "Unauthorized" });
+      return errorResponse(res, "Unauthorized", 403);
     }
 
     console.log("DEBUG: getSharedUsers returning shareLink:", resource.shareLink ? "FOUND" : "NULL", resource.shareLink);
 
-    res.json({
+    return successResponse(res, {
       owner: resource.userId,
       sharedWith: resource.sharedWith.map((s) => ({
         userId: s.userId._id,
@@ -57,225 +54,168 @@ export const getSharedUsers = async (req, res) => {
     });
   } catch (err) {
     console.error("Get Shared Users Error:", err);
-    res.status(500).json({ error: "Failed to fetch shared users" });
+    return errorResponse(res, "Failed to fetch shared users", 500);
   }
 };
 
 export const shareWithUser = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     const { resourceType, resourceId } = req.params;
     const { email, role } = req.body;
     const currentUserId = req.user._id;
 
     if (!email || !role) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: "Email & role are required" });
+      return errorResponse(res, "Email & role are required", 400);
     }
 
-    // Finding the user to share with
+    await runInTransaction(async (session) => {
+      // Finding the user to share with
+      const userTOShare = await User.findOne({ email }).session(session);
+      if (!userTOShare) {
+        throw { statusCode: 404, message: "User not found with this email" };
+      }
 
-    const userTOShare = await User.findOne({ email }).session(session);
-    if (!userTOShare) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ error: "User not found with this email" });
-    }
+      if (userTOShare._id.toString() === currentUserId.toString()) {
+        throw { statusCode: 400, message: "You cannot share yourself" };
+      }
 
-    if (userTOShare._id.toString() === currentUserId.toString()) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: "You cannot share yourself" });
-    }
+      // Find the Resource;
+      let Model;
+      if (resourceType === "file") {
+        Model = File;
+      } else if (resourceType === "folder") {
+        throw { statusCode: 400, message: "Folder sharing is disabled" };
+      } else {
+        throw { statusCode: 400, message: "Invalid Resource Type" };
+      }
 
-    // Find the Resource;
+      const resource = await Model.findById(resourceId).session(session);
+      if (!resource) {
+        throw { statusCode: 404, message: "Resource Not found" };
+      }
 
-    let Model;
+      // Check if current user is Owner
+      if (resource.userId.toString() !== currentUserId.toString()) {
+        throw { statusCode: 403, message: "Only the owner can share this resource" };
+      }
 
-    if (resourceType === "file") {
-      Model = File;
-    } else if (resourceType === "folder") {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: "Folder sharing is disabled" });
-    } else {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: "Invalid Resource Type" });
-    }
+      const existingShare = resource.sharedWith.find(
+        (share) => share.userId.toString() === userTOShare._id.toString()
+      );
 
-    const resource = await Model.findById(resourceId).session(session);
-    if (!resource) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ error: "Resource Not found" });
-    }
+      if (existingShare) {
+        console.log(`Updating existing share for user ${userTOShare._id}`);
+        existingShare.role = role;
+      } else {
+        console.log(`Adding new share for user ${userTOShare._id}`);
+        resource.sharedWith.push({
+          userId: userTOShare._id,
+          role: role,
+          sharedAt: new Date(),
+        });
+      }
 
-    // Check if current user is Owner
+      await resource.save({ session });
+    });
 
-    // Check if current user is Owner
-    if (resource.userId.toString() !== currentUserId.toString()) {
-      await session.abortTransaction();
-      session.endSession();
-      return res
-        .status(403)
-        .json({ error: "Only the owner can share this resource" });
-    }
-
-    const existingShare = resource.sharedWith.find(
-      (share) => share.userId.toString() === userTOShare._id.toString()
-    );
-
-    if (existingShare) {
-      console.log(`Updating existing share for user ${userTOShare._id}`);
-      existingShare.role = role;
-    } else {
-      console.log(`Adding new share for user ${userTOShare._id}`);
-      resource.sharedWith.push({
-        userId: userTOShare._id,
-        role: role,
-        sharedAt: new Date(),
-      });
-    }
-
-    const savedResource = await resource.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
-
-    console.log(
-      "Resource saved. SharedWith length:",
-      savedResource.sharedWith.length
-    );
-    console.log(
-      "Saved sharedWith array:",
-      JSON.stringify(savedResource.sharedWith)
-    );
-
-    return res.status(200).json({ message: "Shared successfully" });
+    return successResponse(res, null, "Shared successfully");
   } catch (err) {
-    if (session.inTransaction()) {
-      await session.abortTransaction();
-    }
-    session.endSession();
     console.error("Share error:", err);
-    res.status(500).json({ error: "Failed to share resource" });
+    if (err.statusCode) {
+        return errorResponse(res, err.message, err.statusCode);
+    }
+    return errorResponse(res, "Failed to share resource", 500);
   }
 };
 
 export const updateUserAccess = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     const { resourceType, resourceId, userId } = req.params;
     const { role } = req.body;
     const currentUserId = req.user._id;
 
-    let Model = resourceType === "file" ? File : Directory;
-    const resource = await Model.findById(resourceId).session(session);
+    await runInTransaction(async (session) => {
+      let Model = resourceType === "file" ? File : Directory;
+      const resource = await Model.findById(resourceId).session(session);
 
-    if (!resource) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ error: "Resource not found" });
-    }
+      if (!resource) {
+        throw { statusCode: 404, message: "Resource not found" };
+      }
 
-    if (resource.userId.toString() !== currentUserId.toString()) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(403).json({ error: "Unauthorized" });
-    }
+      if (resource.userId.toString() !== currentUserId.toString()) {
+        throw { statusCode: 403, message: "Unauthorized" };
+      }
 
-    const share = resource.sharedWith.find(
-      (s) => s.userId.toString() === userId.toString()
-    );
+      const share = resource.sharedWith.find(
+        (s) => s.userId.toString() === userId.toString()
+      );
 
-    if (share) {
-      share.role = role;
-      await resource.save({ session });
-    }
+      if (share) {
+        share.role = role;
+        await resource.save({ session });
+      }
+    });
 
-    await session.commitTransaction();
-    session.endSession();
-
-    res.json({ message: "Access updated" });
+    return successResponse(res, null, "Access updated");
   } catch (err) {
-    if (session.inTransaction()) {
-        await session.abortTransaction();
+    if (err.statusCode) {
+        return errorResponse(res, err.message, err.statusCode);
     }
-    session.endSession();
-    res.status(500).json({ error: "Failed to update access" });
+    return errorResponse(res, "Failed to update access", 500);
   }
 };
 
 export const removeUserAccess = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     const { resourceType, resourceId, userId } = req.params;
     const currentUserId = req.user._id;
 
-    let Model = resourceType === "file" ? File : Directory;
-    const resource = await Model.findById(resourceId).session(session);
+    await runInTransaction(async (session) => {
+      let Model = resourceType === "file" ? File : Directory;
+      const resource = await Model.findById(resourceId).session(session);
 
-    if (!resource) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ error: "Resource not found" });
-    }
+      if (!resource) {
+        throw { statusCode: 404, message: "Resource not found" };
+      }
 
-    if (resource.userId.toString() !== currentUserId.toString()) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(403).json({ error: "Unauthorized" });
-    }
+      if (resource.userId.toString() !== currentUserId.toString()) {
+        throw { statusCode: 403, message: "Unauthorized" };
+      }
 
-    resource.sharedWith = resource.sharedWith.filter(
-      (s) => s.userId.toString() !== userId.toString()
-    );
+      resource.sharedWith = resource.sharedWith.filter(
+        (s) => s.userId.toString() !== userId.toString()
+      );
 
-    await resource.save({ session });
+      await resource.save({ session });
+    });
 
-    await session.commitTransaction();
-    session.endSession();
-
-    res.json({ message: "Access removed" });
+    return successResponse(res, null, "Access removed");
   } catch (err) {
-    if (session.inTransaction()) {
-        await session.abortTransaction();
+    if (err.statusCode) {
+        return errorResponse(res, err.message, err.statusCode);
     }
-    session.endSession();
-    res.status(500).json({ error: "Failed to remove access" });
+    return errorResponse(res, "Failed to remove access", 500);
   }
 };
 
 export const generateShareLink = async (req, res) => {
   try {
-    console.log("DEBUG: generateShareLink HIT");
-    console.log("DEBUG: Params:", req.params);
-    console.log("DEBUG: Body:", req.body);
-
     const { resourceType, resourceId } = req.params;
     const { role } = req.body;
     const currentUserId = req.user._id;
 
     if (resourceType !== "file") {
-      return res.status(400).json({ error: "Only files can be shared" });
+      return errorResponse(res, "Only files can be shared", 400);
     }
     let Model = File;
     const resource = await Model.findById(resourceId);
 
     if (!resource) {
-      return res.status(404).json({ error: "Resource not found" });
+      return errorResponse(res, "Resource not found", 404);
     }
 
     if (resource.userId.toString() !== currentUserId.toString()) {
-      return res.status(403).json({ error: "Unauthorized" });
+      return errorResponse(res, "Unauthorized", 403);
     }
 
     // Generate random token
@@ -287,9 +227,6 @@ export const generateShareLink = async (req, res) => {
     const origin = req.get("origin") || process.env.CLIENT_URL || "http://localhost:5173";
     const linkUrl = `${origin}/shared/link/${token}`;
 
-    console.log("DEBUG: Generating Link for:", resourceId);
-    console.log("DEBUG: Link URL:", linkUrl);
-
     resource.shareLink = {
       token,
       url: linkUrl,
@@ -298,16 +235,12 @@ export const generateShareLink = async (req, res) => {
       createdAt: new Date(),
     };
 
-    console.log("DEBUG: Saving resource with shareLink:", JSON.stringify(resource.shareLink));
-
     await resource.save();
 
-    console.log("DEBUG: Save successful. Token:", resource.shareLink.token);
-
-    res.json({ shareLink: resource.shareLink });
+    return successResponse(res, { shareLink: resource.shareLink });
   } catch (err) {
     console.error("Link Gen Error", err);
-    res.status(500).json({ error: "Failed to generate link" });
+    return errorResponse(res, "Failed to generate link", 500);
   }
 };
 
@@ -321,7 +254,7 @@ export const updateShareLink = async (req, res) => {
     const resource = await Model.findById(resourceId);
 
     if (!resource || resource.userId.toString() !== currentUserId.toString()) {
-      return res.status(403).json({ error: "Unauthorized or not found" });
+      return errorResponse(res, "Unauthorized or not found", 403);
     }
 
     if (resource.shareLink) {
@@ -329,9 +262,9 @@ export const updateShareLink = async (req, res) => {
       await resource.save();
     }
 
-    res.json({ message: "Link updated" });
+    return successResponse(res, null, "Link updated");
   } catch (err) {
-    res.status(500).json({ error: "Failed to update link" });
+    return errorResponse(res, "Failed to update link", 500);
   }
 };
 
@@ -344,15 +277,15 @@ export const disableShareLink = async (req, res) => {
     const resource = await Model.findById(resourceId);
 
     if (!resource || resource.userId.toString() !== currentUserId.toString()) {
-      return res.status(403).json({ error: "Unauthorized or not found" });
+      return errorResponse(res, "Unauthorized or not found", 403);
     }
 
     resource.shareLink = undefined;
     await resource.save();
 
-    res.json({ message: "Link disabled" });
+    return successResponse(res, null, "Link disabled");
   } catch (err) {
-    res.status(500).json({ error: "Failed to disable link" });
+    return errorResponse(res, "Failed to disable link", 500);
   }
 };
 

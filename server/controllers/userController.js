@@ -8,98 +8,70 @@ import Subscription from "../models/subscriptionModel.js";
 import { getEditableRoles } from "../utils/permissions.js";
 import redisClient from "../config/redis.js";
 import { loginSchema, registerSchema } from "../validators/authSchema.js";
-import z from "zod";
-import { JSDOM } from "jsdom";
-import createDOMPurify from "dompurify";
 import { getFileUrl } from "../services/s3.js";
 import { createCloudFrontSignedGetUrl } from "../services/cloudFront.js";
-
-let DOMPurify;
-
-const getDOMPurify = () => {
-  if (!DOMPurify) {
-    const window = new JSDOM("").window;
-    DOMPurify = createDOMPurify(window);
-  }
-  return DOMPurify;
-};
+import { successResponse, errorResponse } from "../utils/response.js";
+import { sanitize } from "../utils/sanitizer.js";
+import { validateWithSchema } from "../utils/validationWrapper.js";
+import { runInTransaction } from "../utils/transactionHelper.js";
+import { deleteUserSessions } from "../utils/authUtils.js";
 
 export const register = async (req, res, next) => {
-  const sanitizedBody = {
-    name: getDOMPurify().sanitize(req.body.name),
-    email: getDOMPurify().sanitize(req.body.email),
-    password: getDOMPurify().sanitize(req.body.password),
-    otp: getDOMPurify().sanitize(req.body.otp),
-  };
+  const sanitizedBody = sanitize(req.body);
 
-  const {
-    success,
-    data = content,
-    error,
-  } = registerSchema.safeParse(sanitizedBody);
+  const { success, data, fieldErrors } = validateWithSchema(registerSchema, sanitizedBody);
 
   if (!success) {
-    return res.status(400).json({ error: z.flattenError(error).fieldErrors });
+    return errorResponse(res, "Validation failed", 400, { fieldErrors });
   }
 
   const { name, email, password, otp } = data;
   const optRecord = await OTP.findOne({ email, otp });
   if (!optRecord) {
-    return res.status(400).json({ error: "Invalid or Expired OTP" });
+    return errorResponse(res, "Invalid or Expired OTP", 400);
   }
   await optRecord.deleteOne();
 
-  const session = await mongoose.startSession();
-
   try {
-    const rootDirId = new Types.ObjectId();
-    const userId = new Types.ObjectId();
+    await runInTransaction(async (session) => {
+      const rootDirId = new Types.ObjectId();
+      const userId = new Types.ObjectId();
 
-    session.startTransaction();
+      await Directory.create(
+        [
+          {
+            _id: rootDirId,
+            name: `root-${email}`,
+            parentDirId: null,
+            userId,
+          },
+        ],
+        { session }
+      );
 
-    await Directory.create(
-      [
-        {
-          _id: rootDirId,
-          name: `root-${email}`,
-          parentDirId: null,
-          userId,
-        },
-      ],
-      { session }
-    );
+      await User.create(
+        [
+          {
+            _id: userId,
+            name,
+            email,
+            password,
+            rootDirId,
+          },
+        ],
+        { session }
+      );
+    });
 
-    await User.create(
-      [
-        {
-          _id: userId,
-          name,
-          email,
-          password,
-          rootDirId,
-        },
-      ],
-      { session }
-    );
-
-    await session.commitTransaction();
-    session.endSession();
-
-    res.status(201).json({ message: "User Registered" });
+    return successResponse(res, null, "User Registered", 201);
   } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
     console.log(err);
     if (err.code === 121) {
-      res
-        .status(400)
-        .json({ error: "Invalid input, please enter valid details" });
+      return errorResponse(res, "Invalid input, please enter valid details", 400);
     } else if (err.code === 11000) {
       if (err.keyValue.email) {
-        return res.status(409).json({
-          error: "This email already exists",
-          message:
-            "A user with this email address already exists. Please try logging in or use a different email.",
+        return errorResponse(res, "This email already exists", 409, {
+          message: "A user with this email address already exists. Please try logging in or use a different email.",
         });
       }
     } else {
@@ -109,48 +81,42 @@ export const register = async (req, res, next) => {
 };
 
 export const login = async (req, res, next) => {
-  const sanitizedBody = {
-    email: getDOMPurify().sanitize(req.body.email),
-    password: getDOMPurify().sanitize(req.body.password),
-  };
+  const sanitizedBody = sanitize(req.body);
 
-  const { success, data, error } = loginSchema.safeParse(sanitizedBody);
+  const { success, data } = validateWithSchema(loginSchema, sanitizedBody);
 
   if (!success) {
-    return res.status(404).json({ error: "Invalid Credentials" });
+    return errorResponse(res, "Invalid Credentials", 404);
   }
 
   const { email, password } = data;
 
   if (!email || !password) {
-    return res.status(400).json({
-      message: "Email and password are required",
-    });
+    return errorResponse(res, "Email and password are required", 400);
   }
   const user = await User.findOne({ email, isDeleted: false });
 
   if (!user) {
-    return res.status(404).json({ error: "Invalid Credentials" });
+    return errorResponse(res, "Invalid Credentials", 404);
   }
 
   // CHECK: If user doesn't have a password (OAuth user who hasn't set password)
   if (!user.password || user.password.length === 0) {
-    return res.status(401).json({
-      error:
-        "No password set. Please login with Google/GitHub or set a password in settings.",
-    });
+    return errorResponse(res, "No password set. Please login with Google/GitHub or set a password in settings.", 401);
   }
 
   const isPasswordValid = await user.comparePassword(password);
 
   if (!isPasswordValid) {
-    return res.status(404).json({ error: "Invalid Credentials" });
+    return errorResponse(res, "Invalid Credentials", 404);
   }
 
   const maxDevicesLimit = user.maxDevices;
+  const userIdStr = user._id.toString();
+  
   const allSessions = await redisClient.ft.search(
     "userIdInx",
-    `@userId:{${user.id}}`,
+    `@userId:{${userIdStr}}`,
     {
       RETURN: [],
     }
@@ -177,18 +143,18 @@ export const login = async (req, res, next) => {
     signed: true,
     maxAge: 60 * 1000 * 60 * 24 * 7,
   });
-  res.json({ message: "logged in" });
+  return successResponse(res, null, "logged in");
 };
 
 export const getCurrentUser = async (req, res) => {
   const user = await User.findById(req.user._id);
   if (!user) {
-    return res.status(404).json({ error: "User not found" });
+    return errorResponse(res, "User not found", 404);
   }
 
   const userDir = await Directory.findById(user.rootDirId);
 
-  res.status(200).json({
+  return successResponse(res, {
     name: user.name,
     email: user.email,
     picture: user.picture,
@@ -210,43 +176,18 @@ export const logout = async (req, res) => {
 export const logoutAll = async (req, res) => {
   const { _id: userId } = req.user;
   try {
-    const allSessions = await redisClient.ft.search(
-      "userIdInx",
-      `@userId:{${userId}}`,
-      {
-        RETURN: [],
-      }
-    );
-
-    if (allSessions.total > 0) {
-      await Promise.all(
-        allSessions.documents.map((doc) => redisClient.del(doc.id))
-      );
-    }
-
+    await deleteUserSessions(userId.toString());
     res.clearCookie("sid");
     res.status(204).end();
   } catch (err) {
-    res.status(500).json({ error: "Logout failed" });
+    return errorResponse(res, "Logout failed", 500);
   }
 };
 
 export const logOutById = async (req, res, next) => {
   try {
     const { userId } = req.params;
-    const allSessions = await redisClient.ft.search(
-      "userIdInx",
-      `@userId:{${userId}}`,
-      {
-        RETURN: [],
-      }
-    );
-
-    if (allSessions.total > 0) {
-      await Promise.all(
-        allSessions.documents.map((doc) => redisClient.del(doc.id))
-      );
-    }
+    await deleteUserSessions(userId);
     res.status(204).end();
   } catch (err) {
     next(err);
@@ -258,10 +199,10 @@ export const getUserPassword = async (req, res, next) => {
     // req.user is already populated by checkAuth middleware
     const hasPassword = req.user.password && req.user.password.length > 0;
 
-    res.json({ hasPassword });
+    return successResponse(res, { hasPassword });
   } catch (err) {
     console.error("Error checking password:", err);
-    res.status(500).json({ message: "Error checking password status" });
+    return errorResponse(res, "Error checking password status", 500);
   }
 };
 
@@ -269,32 +210,26 @@ export const setUserPassword = async (req, res, next) => {
   const { newPassword } = req.body;
 
   if (!newPassword || newPassword < 4) {
-    return res.status(400).json({
-      message: "Password must be at least 4 characters long",
-    });
+    return errorResponse(res, "Password must be at least 4 characters long", 400);
   }
 
   try {
     const user = await User.findById(req.user._id);
 
     if (!user) {
-      return res.status(404).json({ error: "User not Found" });
+      return errorResponse(res, "User not Found", 404);
     }
 
     if (user.password && user.password.length > 0) {
-      return res.status(400).json({
-        message: "Password already set. Use change password instead.",
-      });
+      return errorResponse(res, "Password already set. Use change password instead.", 400);
     }
     user.password = newPassword;
     await user.save();
 
-    return res.json({
-      message: "Password Set Successfully, You may now login with credentials",
-    });
+    return successResponse(res, null, "Password Set Successfully, You may now login with credentials");
   } catch (err) {
     console.error("Error setting password:", err);
-    res.status(500).json({ message: "Error setting password" });
+    return errorResponse(res, "Error setting password", 500);
   }
 };
 
@@ -302,43 +237,35 @@ export const changeUserPassword = async (req, res, next) => {
   const { currentPassword, newPassword } = req.body;
 
   if (!currentPassword || !newPassword) {
-    return res
-      .status(400)
-      .json({ error: "Current and new passwords are required" });
+    return errorResponse(res, "Current and new passwords are required", 400);
   }
 
   if (newPassword.length < 4) {
-    return res
-      .status(400)
-      .json({ error: "New password must be at least 4 characters long" });
+    return errorResponse(res, "New password must be at least 4 characters long", 400);
   }
 
   try {
     const user = await User.findById(req.user._id);
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return errorResponse(res, "User not found", 404);
     }
 
     if (!user.password || user.password.length === 0) {
-      return res
-        .status(400)
-        .json({
-          error: "No existing password set. Please set a password first.",
-        });
+      return errorResponse(res, "No existing password set. Please set a password first.", 400);
     }
 
     const isPasswordValid = await user.comparePassword(currentPassword);
 
     if (!isPasswordValid) {
-      return res.status(400).json({ error: "Current password is incorrect" });
+      return errorResponse(res, "Current password is incorrect", 400);
     }
 
     user.password = newPassword;
     await user.save();
 
-    res.json({ message: "Password changed successfully" });
+    return successResponse(res, null, "Password changed successfully");
   } catch (err) {
-    res.status(500).json({ error: "Error changing password" });
+    return errorResponse(res, "Error changing password", 500);
   }
 };
 
@@ -408,35 +335,23 @@ export const getAllUsers = async (req, res) => {
     razorpaySubscriptionId: subscriptionMap[_id.toString()]?.razorpaySubscriptionId || subscriptionId || null
   }));
 
-  res.status(200).json(transformedUsers);
+  return successResponse(res, transformedUsers);
 };
 
 export const softDeleteUser = async (req, res, next) => {
   const { userId } = req.params;
   if (req.user._id.toString() === userId) {
-    return res.status(403).json({ error: "You cannot delete your self" });
+    return errorResponse(res, "You cannot delete your self", 403);
   }
-  const client = await mongoose.startSession();
+  
   try {
-    client.startTransaction();
-    await User.findByIdAndUpdate({ _id: userId }, { isDeleted: true });
+    await runInTransaction(async (session) => {
+      await User.findByIdAndUpdate({ _id: userId }, { isDeleted: true }, { session });
+      await deleteUserSessions(userId);
+    });
 
-    // Logout all sessions for this user
-    const allSessions = await redisClient.ft.search(
-      "userIdInx",
-      `@userId:{${userId}}`,
-      { RETURN: [] }
-    );
-    if (allSessions.total > 0) {
-      await Promise.all(
-        allSessions.documents.map((doc) => redisClient.del(doc.id))
-      );
-    }
-
-    client.commitTransaction();
     res.status(204).end();
   } catch (err) {
-    client.abortTransaction();
     next(err);
   }
 };
@@ -444,40 +359,33 @@ export const softDeleteUser = async (req, res, next) => {
 export const hardDeleteUser = async (req, res, next) => {
   const { userId } = req.params;
   if (req.user._id.toString() === userId) {
-    return res.status(403).json({ error: "You cannot delete your self" });
+    return errorResponse(res, "You cannot delete your self", 403);
   }
 
   if (req.user.role !== "Owner" && req.user.role !== "Admin") {
-    return res
-      .status(403)
-      .json({ error: "You don't have permission to hard delete users" });
+    return errorResponse(res, "You don't have permission to hard delete users", 403);
   }
 
-  const session = await mongoose.startSession();
   try {
-    session.startTransaction();
+    await runInTransaction(async (session) => {
+      const files = await File.find({ userId }).select("_id extension").lean();
 
-    const files = await File.find({ userId }).select("_id extension").lean();
-
-    for (const { _id, extension } of files) {
-      const filePath = `${import.meta.dirname}/../storage/${_id.toString()}${extension}`;
-      try {
-        await rm(filePath, { force: true });
-      } catch (err) {
-        if (err.code !== "ENOENT") throw err;
+      for (const { _id, extension } of files) {
+        const filePath = `${import.meta.dirname}/../storage/${_id.toString()}${extension}`;
+        try {
+          await rm(filePath, { force: true });
+        } catch (err) {
+          if (err.code !== "ENOENT") throw err;
+        }
       }
-    }
 
-    await File.deleteMany({ userId }, { session });
-    await Directory.deleteMany({ userId }, { session });
-    await User.deleteOne({ _id: userId }, { session });
+      await File.deleteMany({ userId }, { session });
+      await Directory.deleteMany({ userId }, { session });
+      await User.deleteOne({ _id: userId }, { session });
+    });
 
-    await session.commitTransaction();
-    session.endSession();
-
-    res.status(204).end({ message: "User and its data deleted successfully" });
+    res.status(204).end();
   } catch (err) {
-    session.endSession();
     next(err);
   }
 };
@@ -485,24 +393,20 @@ export const hardDeleteUser = async (req, res, next) => {
 export const recoverUser = async (req, res, next) => {
   const { userId } = req.params;
   if (req.user._id.toString() === userId) {
-    return res.status(403).json({ error: "You cannot delete your self" });
+    return errorResponse(res, "You cannot delete your self", 403);
   }
-  const session = await mongoose.startSession();
+  
   try {
-    session.startTransaction();
-    await User.findByIdAndUpdate(
-      { _id: userId },
-      { isDeleted: false },
-      { session }
-    );
-    await session.commitTransaction();
-    session.endSession();
-
-    return res.status(200).json({
-      message: `User has been recovered with UID: ${userId}`,
+    await runInTransaction(async (session) => {
+      await User.findByIdAndUpdate(
+        { _id: userId },
+        { isDeleted: false },
+        { session }
+      );
     });
+
+    return successResponse(res, null, `User has been recovered with UID: ${userId}`);
   } catch (err) {
-    session.endSession();
     next(err);
   }
 };
@@ -511,9 +415,7 @@ export const permissionPage = async (req, res, next) => {
   const loggedInUser = req.user;
 
   if (loggedInUser.role === "User") {
-    return res
-      .status(403)
-      .json({ error: "Access denied: inSufficient permission" });
+    return errorResponse(res, "Access denied: inSufficient permission", 403);
   }
 
   const editableRoles = getEditableRoles(loggedInUser.role);
@@ -523,8 +425,7 @@ export const permissionPage = async (req, res, next) => {
       role: { $in: editableRoles },
     }).select("name email role");
 
-    res.status(200).json({
-      success: true,
+    return successResponse(res, {
       editableRoles,
       users,
     });
@@ -540,36 +441,33 @@ export const updateUserRole = async (req, res, next) => {
   const currentUserRole = req.user.role;
 
   if (currentUserId === userId) {
-    return res.status(403).json({ error: "Cannot change you're own role!" });
+    return errorResponse(res, "Cannot change you're own role!", 403);
   }
 
   try {
     const targetedUser = await User.findById(userId);
 
     if (!targetedUser) {
-      return res.status(404).json({ error: "User not found" });
+      return errorResponse(res, "User not found", 404);
     }
 
     const editableRoles = getEditableRoles(currentUserRole);
 
     if (!editableRoles.includes(role)) {
-      return res.status(403).json({
-        error: `You can only assign these roles: ${editableRoles.join(", ")}`,
-      });
+      return errorResponse(res, `You can only assign these roles: ${editableRoles.join(", ")}`, 403);
     }
 
     targetedUser.role = role;
     await targetedUser.save();
 
-    res.json({
-      message: "Role updated successfully",
+    return successResponse(res, {
       user: {
         id: targetedUser._id,
         name: targetedUser.name,
         email: targetedUser.email,
         role: targetedUser.role,
       },
-    });
+    }, "Role updated successfully");
   } catch (err) {
     next(err);
   }
@@ -580,13 +478,13 @@ export const getUserFiles = async (req, res, next) => {
   const loggedInUser = req.user;
 
   if (!["Owner", "Admin"].includes(loggedInUser.role)) {
-    return res.status(403).json({ error: "Access denied" });
+    return errorResponse(res, "Access denied", 403);
   }
 
   try {
     const files = await File.find({ userId }).lean();
 
-    res.status(200).json(files);
+    return successResponse(res, files);
   } catch (err) {
     next(err);
   }
@@ -597,18 +495,18 @@ export const deleteUserFiles = async (req, res, next) => {
   const loggedInUser = req.user;
 
   if (loggedInUser.role !== "Owner") {
-    return res.status(403).json({ error: "Only Owner can delete files" });
+    return errorResponse(res, "Only Owner can delete files", 403);
   }
 
   try {
     const file = await File.findOneAndDelete({ _id: fileId, userId });
 
     if (!file) {
-      return res.status(404).json({ error: "File not found" });
+      return errorResponse(res, "File not found", 404);
     }
     console.log("File deleted:", file);
 
-    res.status(200).json({ message: "File deleted successfully" });
+    return successResponse(res, null, "File deleted successfully");
   } catch (err) {
     next(err);
   }
@@ -619,7 +517,7 @@ export const getUserFileView = async (req, res, next) => {
   const loggedInUser = req.user;
 
   if (!["Owner", "Admin"].includes(loggedInUser.role)) {
-    return res.status(403).json({ error: "Access denied" });
+    return errorResponse(res, "Access denied", 403);
   }
 
   try {
@@ -629,7 +527,7 @@ export const getUserFileView = async (req, res, next) => {
     }).lean();
 
     if (!fileData) {
-      return res.status(404).json({ error: "File not found" });
+      return errorResponse(res, "File not found", 404);
     }
 
     const s3Key = `${fileId}${fileData.extension}`;
@@ -649,7 +547,7 @@ export const getUserFileView = async (req, res, next) => {
     });
 
     if (req.query.format === "json") {
-      return res.json({ url: getUrl });
+      return successResponse(res, { url: getUrl });
     }
 
     return res.redirect(getUrl);
@@ -663,7 +561,7 @@ export const updateUserFile = async (req, res, next) => {
   const { name } = req.body;
 
   if (!name || !name.trim()) {
-    return res.status(400).json({ error: "File name is required" });
+    return errorResponse(res, "File name is required", 400);
   }
 
   try {
@@ -673,15 +571,13 @@ export const updateUserFile = async (req, res, next) => {
     });
 
     if (!file) {
-      return res.status(404).json({ error: "File not found" });
+      return errorResponse(res, "File not found", 404);
     }
 
     file.name = name.trim();
     await file.save();
 
-    return res.status(200).json({
-      message: "File renamed successfully",
-    });
+    return successResponse(res, null, "File renamed successfully");
   } catch (err) {
     next(err);
   }
@@ -702,8 +598,8 @@ export const getUserList = async (req, res, next) => {
       picture: user.picture || "",
     }));
 
-    res.json(usersList);
+    return successResponse(res, usersList);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch users" });
+    return errorResponse(res, "Failed to fetch users", 500);
   }
 };

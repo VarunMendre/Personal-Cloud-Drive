@@ -11,48 +11,50 @@ import {
   googleLoginSchema,
   otpSchema,
 } from "../validators/authSchema.js";
+import { successResponse, errorResponse } from "../utils/response.js";
+import { validateWithSchema } from "../utils/validationWrapper.js";
+import { runInTransaction } from "../utils/transactionHelper.js";
 
 export const sendOtp = async (req, res, next) => {
   const { email } = req.body;
-  console.log(email);
   const resData = await sendOtpService(email);
-  res.status(201).json(resData);
+  return successResponse(res, resData, null, 201);
 };
 
 export const verifyOtp = async (req, res, next) => {
-  const { success, data } = otpSchema.safeParse(req.body);
+  const { success, data } = validateWithSchema(otpSchema, req.body);
 
   if (!success) {
-    return res.status(400).json({ error: "Invalid or Expired OTP" });
+    return errorResponse(res, "Invalid or Expired OTP", 400);
   }
 
   const { email, otp } = data;
   const optRecord = await OTP.findOne({ email, otp });
   if (!optRecord) {
-    return res.status(400).json({ error: "Invalid or Expired OTP" });
+    return errorResponse(res, "Invalid or Expired OTP", 400);
   }
 
-  res.json({ message: "OTP verified" });
+  return successResponse(res, null, "OTP verified");
 };
 
 export const loginWithGoogle = async (req, res, next) => {
   const { idToken } = req.body;
 
   if (!idToken) {
-    return res.status(400).json({ error: "Id Token not generated" });
+    return errorResponse(res, "Id Token not generated", 400);
   }
 
   const userData = await verifyIdToken(idToken);
   const { name, email, picture } = userData;
 
-  const { success } = googleLoginSchema.safeParse({
+  const { success } = validateWithSchema(googleLoginSchema, {
     name,
     email,
     picture,
   });
 
   if (!success) {
-    return res.status(400).json({ error: "Invalid credentials" });
+    return errorResponse(res, "Invalid credentials", 400);
   }
 
   let user = await User.findOne({ email }).select("-__v");
@@ -60,9 +62,7 @@ export const loginWithGoogle = async (req, res, next) => {
   // ✅ If user exists
   if (user) {
     if (user.isDeleted) {
-      return res.status(403).json({
-        error: "Your account has been deleted. Contact admin to recover it.",
-      });
+      return errorResponse(res, "Your account has been deleted. Contact admin to recover it.", 403);
     }
 
     const maxDevicesLimit = user.maxDevices;
@@ -98,52 +98,50 @@ export const loginWithGoogle = async (req, res, next) => {
       maxAge: 60 * 60 * 24 * 7 * 1000,
     });
 
-    return res.json({ message: "logged in" });
+    return successResponse(res, null, "logged in");
   }
 
   // ✅ If user doesn't exist
-  console.log("user doesn't exist");
-
-  const mongooseSession = await mongoose.startSession();
   try {
-    mongooseSession.startTransaction();
+    const result = await runInTransaction(async (session) => {
+      const rootDirId = new Types.ObjectId();
+      const userId = new Types.ObjectId();
 
-    const rootDirId = new Types.ObjectId();
-    const userId = new Types.ObjectId();
+      const [newUser] = await User.create(
+        [
+          {
+            _id: userId,
+            name,
+            email,
+            picture,
+            rootDirId,
+          },
+        ],
+        { session }
+      );
 
-    const [newUser] = await User.create(
-      [
-        {
-          _id: userId,
-          name,
-          email,
-          picture,
-          rootDirId,
-        },
-      ],
-      { session: mongooseSession }
-    );
+      await Directory.create(
+        [
+          {
+            _id: rootDirId,
+            name: `root-${email}`,
+            parentDirId: null,
+            userId,
+          },
+        ],
+        { session }
+      );
 
-    await Directory.create(
-      [
-        {
-          _id: rootDirId,
-          name: `root-${email}`,
-          parentDirId: null,
-          userId,
-        },
-      ],
-      { session: mongooseSession }
-    );
+      return newUser;
+    });
 
-    // ✅ Use newUser.id instead of user.id
     const allSession = await redisClient.ft.search(
       "userIdInx",
-      `@userId:{${newUser.id}}`,
+      `@userId:{${result.id}}`,
       { RETURN: [] }
     );
 
-    const maxDevicesLimit = newUser.maxDevices;
+    const maxDevicesLimit = result.maxDevices;
 
     if (allSession.total >= maxDevicesLimit) {
       await redisClient.del(allSession.documents[0].id);
@@ -153,8 +151,8 @@ export const loginWithGoogle = async (req, res, next) => {
     const redisKey = `session:${sessionId}`;
 
     await redisClient.json.set(redisKey, "$", {
-      userId: newUser._id,
-      rootDirId: newUser.rootDirId,
+      userId: result._id,
+      rootDirId: result.rootDirId,
       role: "User",
     });
 
@@ -166,22 +164,15 @@ export const loginWithGoogle = async (req, res, next) => {
       maxAge: 60 * 60 * 24 * 7 * 1000,
     });
 
-    await mongooseSession.commitTransaction();
-    mongooseSession.endSession();
-
-    return res
-      .status(201)
-      .json({ message: "logged in", insertedUser: newUser });
+    return successResponse(res, { insertedUser: result }, "logged in", 201);
   } catch (err) {
-    await mongooseSession.abortTransaction();
-    mongooseSession.endSession();
     next(err);
   }
 };
 
 export async function githubLogin(req, res, next) {
   const { code } = req.body;
-  if (!code) return res.status(400).json({ error: "Code is required" });
+  if (!code) return errorResponse(res, "Code is required", 400);
 
   const CLIENT_ID = process.env.GITHUB_CLIENT_ID;
   const CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
@@ -201,7 +192,7 @@ export async function githubLogin(req, res, next) {
     );
 
     const accessToken = tokenResp.data.access_token;
-    if (!accessToken) return res.status(400).json({ error: "No access token" });
+    if (!accessToken) return errorResponse(res, "No access token", 400);
 
     // 2️ Fetch user info
     const userResp = await axios.get("https://api.github.com/user", {
@@ -222,18 +213,18 @@ export async function githubLogin(req, res, next) {
     const { name } = userResp.data;
     const picture = userResp.data.avatar_url || "default-avatar-url";
 
-    const { success } = githubLoginSchema.safeParse({
+    const { success } = validateWithSchema(githubLoginSchema, {
       name,
       email,
       picture,
     });
 
     if (!success) {
-      return res.status(400).json({ error: "Invalid Credentials" });
+      return errorResponse(res, "Invalid Credentials", 400);
     }
 
     if (!email)
-      return res.status(400).json({ error: "Email not available from GitHub" });
+      return errorResponse(res, "Email not available from GitHub", 400);
 
     // 4️ Check if user exists
     let user = await User.findOne({ email }).select("-__v");
@@ -276,44 +267,43 @@ export async function githubLogin(req, res, next) {
         maxAge: 1000 * 60 * 60 * 24 * 7,
       });
 
-      return res.json({ message: "logged in", user });
+      return successResponse(res, { user }, "logged in");
     }
 
     // 5️ If user doesn't exist, create user and root directory
-    console.log("user doesn't exist");
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
     try {
-      const rootDirId = new Types.ObjectId();
-      const userId = new Types.ObjectId();
+      const result = await runInTransaction(async (session) => {
+        const rootDirId = new Types.ObjectId();
+        const userId = new Types.ObjectId();
 
-      //  Include sharedWith and shareLink fields
-      const rootDir = await Directory.create(
-        [
-          {
-            _id: rootDirId,
-            name: `root-${email}`,
-            parentDirId: null,
-            userId,
-          },
-        ],
-        { session }
-      );
+        await Directory.create(
+          [
+            {
+              _id: rootDirId,
+              name: `root-${email}`,
+              parentDirId: null,
+              userId,
+            },
+          ],
+          { session }
+        );
 
-      user = await User.create(
-        [{ _id: userId, name, email, picture, rootDirId }],
-        { session }
-      );
+        const newUser = await User.create(
+          [{ _id: userId, name, email, picture, rootDirId }],
+          { session }
+        );
+        return newUser[0];
+      });
+
       const allSession = await redisClient.ft.search(
         "userIdInx",
-        `@userId:{${user.id}}`,
+        `@userId:{${result.id}}`,
         {
           RETURN: [],
         }
       );
 
-      const maxDevicesLimit = user.maxDevices;
+      const maxDevicesLimit = result.maxDevices;
       if (allSession.total >= maxDevicesLimit) {
         await redisClient.del(allSession.documents[0].id);
       }
@@ -321,9 +311,9 @@ export async function githubLogin(req, res, next) {
       const redisKey = `session:${sessionId}`;
 
       await redisClient.json.set(redisKey, "$", {
-        userId: user._id,
-        rootDirId: user.rootDirId,
-        role: user.role,
+        userId: result._id,
+        rootDirId: result.rootDirId,
+        role: result.role,
       });
 
       await redisClient.expire(redisKey, 60 * 60 * 24 * 7);
@@ -335,26 +325,13 @@ export async function githubLogin(req, res, next) {
         maxAge: 1000 * 60 * 60 * 24 * 7,
       });
 
-      await session.commitTransaction();
-      session.endSession();
-
-      console.log("✅ User and root directory created successfully");
-      res.status(201).json({ message: "logged in", user: user[0] });
+      return successResponse(res, { user: result }, "logged in", 201);
     } catch (err) {
       console.error("Transaction error:", err.message);
-
-      // ✅ ADDED: Detailed error logging
-      if (err.code === 121 && err.errInfo) {
-        console.error("Validation error details:");
-        console.error(JSON.stringify(err.errInfo.details, null, 2));
-      }
-
-      await session.abortTransaction();
-      session.endSession();
       throw err;
     }
   } catch (err) {
     console.error("GitHub login error:", err.response?.data || err.message);
-    res.status(500).json({ error: "GitHub login failed" });
+    return errorResponse(res, "GitHub login failed", 500);
   }
 }

@@ -8,34 +8,24 @@ import {
   renameDirectorySchema,
 } from "../validators/directorySchema.js";
 import { updateDirectorySize } from "../utils/updateDirectorySize.js";
-import { file } from "zod";
 import { deletes3Files } from "../services/s3.js";
+import { successResponse, errorResponse } from "../utils/response.js";
+import { validateWithSchema } from "../utils/validationWrapper.js";
 
 export const getDirectory = async (req, res) => {
   const user = req.user;
   if (!user) {
-    return res
-      .status(401)
-      .json({ error: "Unauthorized. Please log in first." });
+    return errorResponse(res, "Unauthorized. Please log in first.", 401);
   }
   const _id = req.params.id || user.rootDirId.toString();
 
-  if (!_id) {
-    return res
-      .status(400)
-      .json({ error: "Invalid request. Directory ID not found." });
+  const { success, data, error } = validateWithSchema(getDirectorySchema, { id: _id });
+
+  if (!success) {
+    return errorResponse(res, error, 400);
   }
 
-  const validateResult = getDirectorySchema.safeParse({ id: _id });
-
-  if (!validateResult.success) {
-    return res.status(400).json({
-      success: false,
-      message: validateResult.error.errors[0].message,
-    });
-  }
-
-  const { id } = validateResult.data;
+  const { id } = data;
   const directoryData = await Directory.findOne({
     _id: id,
     userId: req.user._id,
@@ -44,9 +34,7 @@ export const getDirectory = async (req, res) => {
     .lean();
 
   if (!directoryData) {
-    return res
-      .status(404)
-      .json({ error: "Directory not found or you do not have access to it!" });
+    return errorResponse(res, "Directory not found or you do not have access to it!", 404);
   }
 
   const files = await File.find({ parentDirId: directoryData._id }).lean();
@@ -73,7 +61,7 @@ export const getDirectory = async (req, res) => {
   // Get recursive counts for this directory
   const { totalFiles, totalFolders } = await getRecursiveCounts(directoryData._id);
   
-  return res.status(200).json({
+  return successResponse(res, {
     ...directoryData,
     files: files.map((dir) => ({ ...dir, id: dir._id })),
     directories: directories.map((dir) => ({ ...dir, id: dir._id })),
@@ -88,15 +76,13 @@ export const createDirectory = async (req, res, next) => {
   const parentDirId = req.params.parentDirId || user.rootDirId.toString();
   const dirname = req.headers.dirname || "New Folder";
 
-  const validateResult = createDirectorySchema.safeParse({
+  const { success, data } = validateWithSchema(createDirectorySchema, {
     parentDirId: parentDirId,
     dirname: dirname,
   });
 
-  if (!validateResult.success) {
-    return res
-      .status(400)
-      .json({ error: "Invalid Directory details while creation" });
+  if (!success) {
+    return errorResponse(res, "Invalid Directory details while creation", 400);
   }
 
   try {
@@ -105,9 +91,7 @@ export const createDirectory = async (req, res, next) => {
     }).lean();
 
     if (!parentDir)
-      return res
-        .status(404)
-        .json({ message: "Parent Directory Does not exist!" });
+      return errorResponse(res, "Parent Directory Does not exist!", 404);
 
      const newPath = [...(parentDir.path || []), parentDir._id];
      
@@ -118,12 +102,10 @@ export const createDirectory = async (req, res, next) => {
       path: newPath,
     });
 
-    return res.status(201).json({ message: "Directory Created!" });
+    return successResponse(res, null, "Directory Created!", 201);
   } catch (err) {
     if (err.code === 121) {
-      res
-        .status(400)
-        .json({ error: "Invalid input, please enter valid details" });
+      return errorResponse(res, "Invalid input, please enter valid details", 400);
     } else {
       next(err);
     }
@@ -133,18 +115,16 @@ export const createDirectory = async (req, res, next) => {
 export const renameDirectory = async (req, res, next) => {
   const user = req.user;
 
-  const validateResult = renameDirectorySchema.safeParse({
+  const { success, data } = validateWithSchema(renameDirectorySchema, {
     dirId: req.params.id,
     newDirName: req.body.newDirName,
   });
 
-  if (!validateResult.success) {
-    return res
-      .status(400)
-      .json({ error: "Invalid Details of Directory while rename" });
+  if (!success) {
+    return errorResponse(res, "Invalid Details of Directory while rename", 400);
   }
 
-  const { dirId, newDirName } = validateResult.data;
+  const { dirId, newDirName } = data;
 
   try {
     await Directory.findOneAndUpdate(
@@ -154,21 +134,21 @@ export const renameDirectory = async (req, res, next) => {
       },
       { name: newDirName }
     );
-    res.status(200).json({ message: "Directory Renamed!" });
+    return successResponse(res, null, "Directory Renamed!");
   } catch (err) {
     next(err);
   }
 };
 
 export const deleteDirectory = async (req, res, next) => {
-  const validateResult = deleteDirectorySchema.safeParse({
+  const { success, data } = validateWithSchema(deleteDirectorySchema, {
     dirId: req.params.id,
   });
 
-  if (!validateResult.success) {
-    return res.status(400).json({ error: "Directory Id not found" });
+  if (!success) {
+    return errorResponse(res, "Directory Id not found", 400);
   }
-  const { dirId } = validateResult.data;
+  const { dirId } = data;
 
   try {
     const directoryData = await Directory.findOne({
@@ -177,7 +157,7 @@ export const deleteDirectory = async (req, res, next) => {
     }).lean();
 
     if (!directoryData) {
-      return res.status(404).json({ error: "Directory not found!" });
+      return errorResponse(res, "Directory not found!", 404);
     }
 
     async function getDirectoryContents(id) {
@@ -215,8 +195,9 @@ export const deleteDirectory = async (req, res, next) => {
     });
 
     await updateDirectorySize(directoryData.parentDirId, -directoryData.size);
+    
+    return successResponse(res, null, "Files deleted successfully");
   } catch (err) {
     next(err);
   }
-  return res.json({ message: "Files deleted successfully" });
 };
