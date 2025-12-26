@@ -2,23 +2,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @theme {
-  /* Custom Color Palette - Ocean Blue Theme */
-  --color-ice-mist: #E7F0FA;
-  --color-sky-blue: #7BA4D0;
-  --color-ocean-blue: #2E5E99;
-  --color-deep-navy: #0D2440;
+  /* Custom Color Palette - Cyan Turquoise Theme */
+  --color-mint-light: #E6FAF5;
+  --color-cyan-light: #A7DDE9;
+  --color-blue-medium: #66B2D6;
+  --color-alice-blue: #F0F8FF;
+  --color-gray-blue: #D1DCE5;
+  --color-blue-gray: #A3C5D9;
   
   /* Semantic Color Tokens */
-  --color-primary: #2E5E99;
-  --color-primary-hover: #254a7f;
-  --color-primary-light: #7BA4D0;
-  --color-secondary: #7BA4D0;
-  --color-background: #E7F0FA;
+  --color-primary: #66B2D6;
+  --color-primary-hover: #5aa0c0;
+  --color-primary-light: #A7DDE9;
+  --color-secondary: #A3C5D9;
+  --color-background: #F0F8FF;
   --color-surface: #FFFFFF;
-  --color-text-primary: #0D2440;
-  --color-text-secondary: #2E5E99;
-  --color-border: #7BA4D0;
-  --color-border-light: #E7F0FA;
+  --color-text-primary: #2C3E50;
+  --color-text-secondary: #66B2D6;
+  --color-border: #D1DCE5;
+  --color-border-light: #E6FAF5;
   
   /* Animation Keyframes */
   @keyframes fadeIn {
