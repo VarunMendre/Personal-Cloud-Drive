@@ -1240,7 +1240,7 @@ function DirectoryView() {
                     {item.name}
                   </h3>
                   <p className="text-xs text-center" style={{ color: '#A3C5D9' }}>
-                    {item.isDirectory ? "Folder" : item.name.split('.').pop().toUpperCase()}
+                    {item.isDirectory ? "Folder" : (item.name && typeof item.name === 'string' ? item.name.split('.').pop()?.toUpperCase() || 'FILE' : 'FILE')}
                   </p>
                 </div>
 
