@@ -9,6 +9,16 @@ import DetailsPopup from "./components/DetailsPopup";
 import ImportFromDrive from "./components/ImportFromDrive";
 import { FaUpload, FaFolderPlus, FaFileImport, FaExclamationTriangle, FaInfoCircle, FaTimes } from "react-icons/fa";
 
+// Helper function to format file sizes
+const formatSize = (bytes) => {
+  const KB = 1024;
+  const MB = KB * 1024;
+  const GB = MB * 1024;
+  if (bytes >= GB) return (bytes / GB).toFixed(2) + " GB";
+  if (bytes >= MB) return (bytes / MB).toFixed(2) + " MB";
+  if (bytes >= KB) return (bytes / KB).toFixed() + " KB";
+  return bytes + " B";
+};
 
 function DirectoryView() {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -1202,7 +1212,90 @@ function DirectoryView() {
               data.
             </p>
           )
+        ) : viewMode === "grid" ? (
+          // Grid View
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
+            {combinedItems.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-xl border-2 p-4 hover:shadow-medium transition-all duration-200 cursor-pointer group"
+                style={{ borderColor: '#E6FAF5' }}
+                onClick={() => handleRowClick(item)}
+                onContextMenu={(e) => handleContextMenu(e, item)}
+              >
+                {/* File/Folder Icon */}
+                <div className="flex justify-center mb-3">
+                  <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#F0F8FF' }}>
+                    {getFileIcon(item)}
+                  </div>
+                </div>
+
+                {/* File Name */}
+                <div className="mb-3">
+                  <h3 
+                    className="text-sm font-semibold truncate text-center mb-1" 
+                    style={{ color: '#2C3E50' }}
+                    title={item.name}
+                  >
+                    {item.name}
+                  </h3>
+                  <p className="text-xs text-center" style={{ color: '#A3C5D9' }}>
+                    {item.isDirectory ? "Folder" : item.name.split('.').pop().toUpperCase()}
+                  </p>
+                </div>
+
+                {/* File Size */}
+                <div className="mb-3 text-center">
+                  <p className="text-xs font-medium" style={{ color: '#66B2D6' }}>
+                    {item.isDirectory ? `${item.fileCount || 0} items` : formatSize(item.size)}
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openDetailsPopup(item);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1 px-2 py-2 text-xs font-semibold rounded-lg transition-all border-2"
+                    style={{
+                      color: '#66B2D6',
+                      backgroundColor: '#FFFFFF',
+                      borderColor: '#E6FAF5'
+                    }}
+                    title="Details"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                  {!item.isDirectory && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const statusStr = String(subscriptionStatus || "").toLowerCase().trim();
+                        if (["halted", "expired", "paused"].includes(statusStr)) {
+                          showToast("Access Restricted: Your subscription is currently paused.", "warning");
+                          return;
+                        }
+                        window.location.href = `${BASE_URL}/file/${item.id}?action=download`;
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1 px-2 py-2 text-xs font-semibold text-white rounded-lg transition-all"
+                      style={{ backgroundColor: '#66B2D6' }}
+                      title="Download"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
+          // List View
           <DirectoryList
             items={combinedItems}
             handleRowClick={handleRowClick}
