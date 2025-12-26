@@ -2,26 +2,31 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DirectoryHeader, { BASE_URL } from "./components/DirectoryHeader";
 import {
-  FaArrowLeft,
-  FaUsers,
-  FaCheckCircle,
-  FaTrash,
-  FaPen,
-  FaEye,
-  FaSignOutAlt,
-  FaUndo,
-  FaExclamationTriangle,
-  FaFile,
-  FaFileImage,
-  FaFileVideo,
-  FaFileAudio,
-  FaFilePdf,
-  FaFileAlt,
-  FaDownload,
-  FaBolt,
-  FaPause,
-  FaPlay,
-} from "react-icons/fa";
+  ArrowLeft,
+  Users,
+  CheckCircle,
+  Trash2,
+  Pencil,
+  Eye,
+  LogOut,
+  RotateCcw,
+  AlertTriangle,
+  File,
+  Image as ImageIcon,
+  Video,
+  Music,
+  FileText,
+  Download,
+  Zap,
+  Pause,
+  Play,
+  RefreshCw,
+  MoreVertical,
+  Mail,
+  User,
+  Shield,
+  Search
+} from "lucide-react";
 
 export default function UsersPage() {
   const navigate = useNavigate();
@@ -471,7 +476,7 @@ export default function UsersPage() {
             onClick={() => navigate("/")}
             className="flex items-center gap-2 px-3 py-1.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
           >
-            <FaArrowLeft className="w-3 h-3" />
+            <ArrowLeft className="w-3 h-3" />
             <span>Back to Home</span>
           </button>
 
@@ -502,7 +507,7 @@ export default function UsersPage() {
           {/* Total Users */}
           <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 border border-gray-100">
             <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white shadow-sm">
-              <FaUsers className="w-5 h-5" />
+              <Users className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-medium text-gray-500">Total Users</p>
@@ -513,7 +518,7 @@ export default function UsersPage() {
           {/* Active Users */}
           <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 border border-gray-100">
             <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center text-white shadow-sm">
-              <FaCheckCircle className="w-5 h-5" />
+              <CheckCircle className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-medium text-gray-500">Active Users</p>
@@ -524,7 +529,7 @@ export default function UsersPage() {
           {/* Online Users */}
           <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 border border-gray-100">
             <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center text-white shadow-sm">
-              <FaBolt className="w-5 h-5" />
+              <Zap className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-medium text-gray-500">Online Users</p>
@@ -537,7 +542,7 @@ export default function UsersPage() {
           {/* Deleted Users */}
           <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 border border-gray-100">
             <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center text-white shadow-sm">
-              <FaTrash className="w-5 h-5" />
+              <Trash2 className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-medium text-gray-500">Deleted Users</p>
@@ -561,8 +566,9 @@ export default function UsersPage() {
               </select>
               <button 
                 onClick={fetchUsers}
-                className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-1"
               >
+                <RefreshCw className="w-3 h-3" />
                 Refresh
               </button>
             </div>
@@ -589,7 +595,7 @@ export default function UsersPage() {
                           <img src={user.picture} alt="" className="w-8 h-8 rounded-full object-cover" />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
-                            <FaUsers />
+                            <User className="w-4 h-4" />
                           </div>
                         )}
                         <div>
@@ -614,7 +620,7 @@ export default function UsersPage() {
                             onClick={() => handleRoleChangeClick(user)}
                             className="text-gray-400 hover:text-blue-600 transition-colors"
                           >
-                            <FaPen className="w-3 h-3" />
+                            <Pencil className="w-3 h-3" />
                           </button>
                         )}
                       </div>
@@ -630,35 +636,35 @@ export default function UsersPage() {
                           {user.razorpaySubscriptionId ? (
                             <>
                               {user.subscriptionStatus === "paused" ? (
-                                <button
-                                  onClick={() => handleResumeSubscription(user)}
-                                  className="p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-1 shadow-sm"
-                                  title="Resume Subscription"
-                                >
-                                  <FaPlay className="w-3 h-3" />
-                                  <span className="text-[10px] font-bold uppercase">Resume</span>
-                                </button>
+                                  <button
+                                    onClick={() => handleResumeSubscription(user)}
+                                    className="p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-1 shadow-sm"
+                                    title="Resume Subscription"
+                                  >
+                                    <Play className="w-3 h-3" />
+                                    <span className="text-[10px] font-bold uppercase">Resume</span>
+                                  </button>
                               ) : (
-                                <button
-                                  onClick={() => handlePauseSubscription(user)}
-                                  className="p-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg transition-all flex items-center gap-1 shadow-sm"
-                                  title="Pause Subscription"
-                                >
-                                  <FaPause className="w-3 h-3" />
-                                  <span className="text-[10px] font-bold uppercase">Pause</span>
-                                </button>
+                                  <button
+                                    onClick={() => handlePauseSubscription(user)}
+                                    className="p-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg transition-all flex items-center gap-1 shadow-sm"
+                                    title="Pause Subscription"
+                                  >
+                                    <Pause className="w-3 h-3" />
+                                    <span className="text-[10px] font-bold uppercase">Pause</span>
+                                  </button>
                               )}
                               
                               {/* Status Label */}
                               <div className="flex items-center ml-1">
                                 {user.subscriptionStatus === "paused" ? (
                                   <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
-                                     <FaExclamationTriangle className="w-2.5 h-2.5 animate-pulse" />
+                                     <AlertTriangle className="w-2.5 h-2.5 animate-pulse" />
                                      <span className="text-[9px] font-bold uppercase">Paused</span>
                                   </div>
                                 ) : user.subscriptionStatus === "active" ? (
                                   <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">
-                                     <FaCheckCircle className="w-2.5 h-2.5" />
+                                     <CheckCircle className="w-2.5 h-2.5" />
                                      <span className="text-[9px] font-bold uppercase">Active</span>
                                   </div>
                                 ) : (
@@ -725,7 +731,7 @@ export default function UsersPage() {
                             className="p-1.5 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                             title="View Files"
                           >
-                            <FaEye className="w-4 h-4" />
+                            <Eye className="w-4 h-4" />
                           </button>
                         )}
                       </div>

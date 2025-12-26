@@ -54,12 +54,23 @@ export async function sendOtpService(email) {
     </html>
   `;
 
-  await resend.emails.send({
-    from: "Storage App <onboarding@resend.dev>",
-    to: email,
-    subject: "Storage App OTP",
-    html,
-  });
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Storage Drive <noreply@cloudvault.cloud>",
+      to: email,
+      subject: "Storage App OTP",
+      html,
+    });
 
-  return { success: true, message: `OTP sent successfully on ${email} `};
+    if (error) {
+      console.error("Resend API Error:", error);
+      return { success: false, message: "Failed to send email via Resend" };
+    }
+
+    console.log("OTP Email Sent Successfully:", data.id);
+    return { success: true, message: `OTP sent successfully on ${email} ` };
+  } catch (err) {
+    console.error("Internal Server Error during email send:", err.message);
+    return { success: false, message: "Internal server error while sending OTP" };
+  }
 }

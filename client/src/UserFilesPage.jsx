@@ -1,19 +1,19 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
-  FaArrowLeft,
-  FaEye,
-  FaPen,
-  FaFile,
-  FaFileImage,
-  FaFileVideo,
-  FaFileAudio,
-  FaFilePdf,
-  FaFileAlt,
-  FaDownload,
-  FaTrash,
-  FaExclamationTriangle,
-} from "react-icons/fa";
+  ArrowLeft,
+  Eye,
+  Pencil,
+  File,
+  Image as ImageIcon,
+  Video,
+  Music,
+  FileText,
+  Download,
+  Trash2,
+  AlertTriangle,
+  X
+} from "lucide-react";
 import { BASE_URL } from "./components/DirectoryHeader";
 
 export default function UserFilesPage() {
@@ -129,13 +129,13 @@ export default function UserFilesPage() {
 
   const getFileIcon = (type) => {
     switch (type) {
-      case "image": return <FaFileImage className="w-8 h-8 text-purple-500" />;
-      case "video": return <FaFileVideo className="w-8 h-8 text-red-500" />;
-      case "audio": return <FaFileAudio className="w-8 h-8 text-yellow-500" />;
-      case "pdf": return <FaFilePdf className="w-8 h-8 text-red-600" />;
-      case "text": return <FaFileAlt className="w-8 h-8 text-gray-500" />;
-      case "office": return <FaFileAlt className="w-8 h-8 text-blue-500" />; // Placeholder for office
-      default: return <FaFile className="w-8 h-8 text-gray-400" />;
+      case "image": return <ImageIcon className="w-8 h-8 text-purple-500" />;
+      case "video": return <Video className="w-8 h-8 text-red-500" />;
+      case "audio": return <Music className="w-8 h-8 text-yellow-500" />;
+      case "pdf": return <FileText className="w-8 h-8 text-red-600" />;
+      case "text": return <FileText className="w-8 h-8 text-gray-500" />;
+      case "office": return <FileText className="w-8 h-8 text-blue-500" />; // Placeholder for office
+      default: return <File className="w-8 h-8 text-gray-400" />;
     }
   };
 
@@ -212,7 +212,7 @@ export default function UserFilesPage() {
             onClick={() => navigate("/users")}
             className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            <FaArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4" />
             <span>Back to Users</span>
           </button>
 
@@ -242,7 +242,7 @@ export default function UserFilesPage() {
       {/* Content */}
       <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-          <FaFile className="text-gray-400" />
+          <File className="w-5 h-5 text-gray-400" />
           Files
         </h2>
 
@@ -252,7 +252,7 @@ export default function UserFilesPage() {
           </div>
         ) : files.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
-            <FaFile className="mx-auto h-12 w-12 text-gray-300" />
+            <File className="mx-auto h-12 w-12 text-gray-300" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No files</h3>
             <p className="mt-1 text-sm text-gray-500">This user hasn't uploaded any files yet.</p>
           </div>
@@ -283,14 +283,14 @@ export default function UserFilesPage() {
                       className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       title="View"
                     >
-                      <FaEye className="w-4 h-4" />
+                      <Eye className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleRenameClick(file)}
                       className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       title="Rename"
                     >
-                      <FaPen className="w-4 h-4" />
+                      <Pencil className="w-4 h-4" />
                     </button>
                   </div>
                 )}
@@ -375,7 +375,7 @@ export default function UserFilesPage() {
               className="absolute top-4 right-4 z-[60] p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 hover:text-gray-200 transition-all"
               title="Close Preview"
             >
-              <span className="text-3xl leading-none">&times;</span>
+              <X className="w-6 h-6" />
             </button>
             <div className="flex-1 w-full flex items-center justify-center overflow-hidden p-4">
               {previewFileType === "image" ? (

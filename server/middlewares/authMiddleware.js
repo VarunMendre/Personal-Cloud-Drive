@@ -10,8 +10,7 @@ export default async function checkAuth(req, res, next) {
     return res.status(401).json({ error: "1 Not logged in!" });
   }
 
-  const sessionRaw = await redisClient.get(`session:${sid}`);
-  const session = sessionRaw ? JSON.parse(sessionRaw) : null;
+  const session = await redisClient.json.get(`session:${sid}`);
 
   if (!session) {
     res.clearCookie("sid");

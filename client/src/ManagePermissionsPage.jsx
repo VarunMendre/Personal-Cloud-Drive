@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  FaArrowLeft,
-  FaLink,
-  FaCopy,
-  FaTrash,
-  FaEye,
-  FaGlobe,
-  FaUserCheck,
-  FaUsers,
-  FaPencilAlt,
-  FaExclamationTriangle,
-  FaFileAlt
-} from "react-icons/fa";
+  ArrowLeft,
+  Link,
+  Copy,
+  Trash2,
+  Eye,
+  Globe,
+  UserCheck,
+  Users,
+  Pencil,
+  AlertTriangle,
+  FileText
+} from "lucide-react";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -213,16 +213,16 @@ function ManagePermissionsPage() {
 
 
   if (error && !owner) {
-     return (
+    return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-            <FaExclamationTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-gray-900 mb-2">Error</h2>
             <p className="text-gray-600 mb-6">{error}</p>
             <button onClick={() => navigate(-1)} className="text-blue-600 hover:underline">Go Back</button>
           </div>
         </div>
-     );
+    );
   }
 
   return (
@@ -235,12 +235,12 @@ function ManagePermissionsPage() {
                   onClick={() => navigate(-1)}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-700"
                 >
-                    <FaArrowLeft className="w-5 h-5"/>
+                    <ArrowLeft className="w-5 h-5"/>
                 </button>
                 <div>
                     <h1 className="text-xl font-bold text-gray-900">Manage Permissions</h1>
                     <p className="text-sm text-gray-500 flex items-center gap-1">
-                        <FaFileAlt className="w-3 h-3" />
+                        <FileText className="w-3 h-3" />
                          {loading ? "Loading..." : "File Settings"}
                     </p>
                 </div>
@@ -266,7 +266,7 @@ function ManagePermissionsPage() {
                             : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                         }`}
                     >
-                        <FaLink className="w-4 h-4" />
+                        <Link className="w-4 h-4" />
                         Share Link
                     </button>
                     <button
@@ -277,7 +277,7 @@ function ManagePermissionsPage() {
                             : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                         }`}
                     >
-                        <FaUsers className="w-4 h-4" />
+                        <Users className="w-4 h-4" />
                         Shared With
                     </button>
                 </div>
@@ -303,7 +303,7 @@ function ManagePermissionsPage() {
                                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                            <FaGlobe className="w-5 h-5 text-blue-600" />
+                                            <Globe className="w-5 h-5 text-blue-600" />
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-semibold text-gray-900">Enable Link Sharing</h4>
@@ -337,7 +337,7 @@ function ManagePermissionsPage() {
                                                         : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
                                                     }`}
                                                 >
-                                                    <FaEye className="w-4 h-4" />
+                                                    <Eye className="w-4 h-4" />
                                                     <span className="font-medium">Viewer</span>
                                                 </button>
                                                 <button
@@ -348,7 +348,7 @@ function ManagePermissionsPage() {
                                                         : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
                                                     }`}
                                                 >
-                                                    <FaPencilAlt className="w-4 h-4" />
+                                                    <Pencil className="w-4 h-4" />
                                                     <span className="font-medium">Editor</span>
                                                 </button>
                                             </div>
@@ -359,7 +359,7 @@ function ManagePermissionsPage() {
                                                 Copy Link
                                             </label>
                                             <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200">
-                                                <FaLink className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                                <Link className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                                 <input
                                                     type="text"
                                                     value={shareLink.url}
@@ -370,7 +370,7 @@ function ManagePermissionsPage() {
                                                     onClick={handleCopyLink}
                                                     className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm"
                                                 >
-                                                    <FaCopy className="w-3 h-3" />
+                                                    <Copy className="w-3 h-3" />
                                                     {copiedLink ? "Copied!" : "Copy"}
                                                 </button>
                                             </div>
@@ -391,7 +391,7 @@ function ManagePermissionsPage() {
                                 {sharedUsers.length === 0 ? (
                                     <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <FaUserCheck className="w-8 h-8 text-gray-400" />
+                                            <UserCheck className="w-8 h-8 text-gray-400" />
                                         </div>
                                         <h3 className="text-lg font-semibold text-gray-900 mb-2">No users shared yet</h3>
                                         <p className="text-sm text-gray-500 px-4">
@@ -433,7 +433,7 @@ function ManagePermissionsPage() {
                                                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                                         title="Remove Access"
                                                     >
-                                                        <FaTrash className="w-4 h-4" />
+                                                        <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             </div>

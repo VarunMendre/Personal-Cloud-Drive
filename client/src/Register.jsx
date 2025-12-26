@@ -114,7 +114,7 @@ const Register = () => {
         setOtpVerified(true);
         setOtpError("");
         // Auto-submit after verification
-        setTimeout(() => handleFinalSubmit(), 500);
+        setTimeout(() => handleFinalSubmit(true), 500);
       } else {
         setOtpError(data.error || "Invalid or expired OTP.");
       }
@@ -127,11 +127,11 @@ const Register = () => {
   };
 
   // Final form submit
-  const handleFinalSubmit = async () => {
+  const handleFinalSubmit = async (isVerifiedOverride = false) => {
     setServerError("");
     setIsSuccess(false);
 
-    if (!otpVerified) {
+    if (!otpVerified && !isVerifiedOverride) {
       setOtpError("Please verify your email with OTP before registering.");
       return;
     }

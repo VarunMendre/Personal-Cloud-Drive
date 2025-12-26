@@ -55,7 +55,7 @@ export async function sendOtp(email) {
   `;
 
   await resend.emails.send({
-    from: "Storage App <onboarding@resend.dev>",
+    from: "Storage Drive <noreply@cloudvault.cloud>",
     to: email,
     subject: "Storage App OTP",
     html,

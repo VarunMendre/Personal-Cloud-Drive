@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginWithGitHub } from "./apis/loginWithGitHub";
+import { Loader2 } from "lucide-react";
 
 const GitHubCallbackHandler = () => {
   const navigate = useNavigate();
@@ -35,8 +36,24 @@ const GitHubCallbackHandler = () => {
   }, [navigate]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <h2 className="text-2xl font-semibold mb-4">Processing GitHub login...</h2>
+    <div className="flex items-center justify-center min-vh-100 h-screen bg-[#F0F8FF]">
+      <div className="p-8 rounded-2xl glass-effect shadow-medium max-w-md w-full animate-fadeIn border-2 border-[#E6FAF5] bg-white flex flex-col items-center gap-6">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full bg-[#E6FAF5] flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-[#66B2D6] animate-spin" />
+          </div>
+          <div className="absolute inset-0 rounded-full border-2 border-[#66B2D6] opacity-20 animate-ping"></div>
+        </div>
+        
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-[#2C3E50] mb-2">Authenticating</h2>
+          <p className="text-[#A3C5D9] font-medium">Securing your connection to GitHub...</p>
+        </div>
+
+        <div className="w-full bg-[#F0F8FF] rounded-full h-1.5 overflow-hidden">
+          <div className="h-full bg-[#66B2D6] rounded-full animate-progressIndeterminate"></div>
+        </div>
+      </div>
     </div>
   );
 };

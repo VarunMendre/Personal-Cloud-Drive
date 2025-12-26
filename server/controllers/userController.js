@@ -281,11 +281,10 @@ export const getAllUsers = async (req, res) => {
 
   if (keys.length > 0) {
     const rawSessions = await Promise.all(
-      keys.map((key) => redisClient.get(key))
+      keys.map((key) => redisClient.json.get(key))
     );
 
-    rawSessions.forEach((raw) => {
-      const session = raw ? JSON.parse(raw) : null;
+    rawSessions.forEach((session) => {
       if (session && session.userId) {
         allSessionsUserIdSet.add(session.userId.toString());
       }

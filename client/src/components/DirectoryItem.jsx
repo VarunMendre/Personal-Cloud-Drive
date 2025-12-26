@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   MoreVertical
 } from "lucide-react";
+import ContextMenu from "./ContextMenu";
 import { formatSize } from "./DetailsPopup";
 
 function DirectoryItem({

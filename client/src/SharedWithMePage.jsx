@@ -1,7 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DirectoryHeader from "./components/DirectoryHeader";
-import { FaArrowLeft, FaFileAlt, FaSearch, FaUserCircle, FaDownload, FaEye, FaExclamationTriangle, FaTimes, FaInfoCircle } from "react-icons/fa";
+import { 
+  ArrowLeft, 
+  FileText, 
+  Search, 
+  UserCircle, 
+  Download, 
+  Eye, 
+  AlertTriangle, 
+  X, 
+  Info 
+} from "lucide-react";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -103,12 +113,12 @@ function SharedWithMePage() {
             onClick={() => navigate("/share")}
             className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4 text-sm font-medium"
           >
-            <FaArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </button>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FaFileAlt className="w-5 h-5 text-blue-600" />
+              <FileText className="w-5 h-5 text-blue-600" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Files Shared with Me</h1>
@@ -126,7 +136,7 @@ function SharedWithMePage() {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search files or people..."
@@ -158,7 +168,7 @@ function SharedWithMePage() {
           ) : filteredFiles.length === 0 ? (
             <div className="text-center py-16 px-6">
               <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FaUserCircle className="w-10 h-10 text-blue-300" />
+                <UserCircle className="w-10 h-10 text-blue-300" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No files shared with you</h3>
               <p className="text-sm text-gray-500 max-w-md mx-auto">
@@ -196,7 +206,7 @@ function SharedWithMePage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <FaFileAlt className="w-4 h-4 text-blue-600" />
+                            <FileText className="w-4 h-4 text-blue-600" />
                           </div>
                           <span className="text-sm font-medium text-gray-900 truncate">
                             {file.fileName}
@@ -247,7 +257,7 @@ function SharedWithMePage() {
                             }`}
                             title={subscriptionStatus?.toLowerCase() === "paused" ? "Paused" : "View File"}
                           >
-                           <FaEye className="w-5 h-5" />
+                            <Eye className="w-5 h-5" />
                           </button>
                           <button 
                             onClick={(e) => {
@@ -271,7 +281,7 @@ function SharedWithMePage() {
                             }`}
                             title={subscriptionStatus?.toLowerCase() === "paused" ? "Paused" : "Download File"}
                           >
-                            <FaDownload className="w-5 h-5" />
+                            <Download className="w-5 h-5" />
                           </button>
                         </div>
                       </td>
@@ -291,9 +301,9 @@ function SharedWithMePage() {
             toast.type === "error" ? "bg-red-50 border-red-200 text-red-800" :
             "bg-blue-50 border-blue-200 text-blue-800"
           }`}>
-            {toast.type === "warning" && <FaExclamationTriangle className="w-5 h-5 text-amber-600" />}
-            {toast.type === "error" && <FaTimes className="w-5 h-5 text-red-600" />}
-            {toast.type === "info" && <FaInfoCircle className="w-5 h-5 text-blue-600" />}
+            {toast.type === "warning" && <AlertTriangle className="w-5 h-5 text-amber-600" />}
+            {toast.type === "error" && <X className="w-5 h-5 text-red-600" />}
+            {toast.type === "info" && <Info className="w-5 h-5 text-blue-600" />}
             <span className="font-semibold">{toast.message}</span>
           </div>
         </div>

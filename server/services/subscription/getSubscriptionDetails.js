@@ -57,10 +57,9 @@ export const getSubscriptionDetailsService = async (userId) => {
     const keys = await redisClient.keys("session:*");
     if (keys.length > 0) {
       const rawSessions = await Promise.all(
-        keys.map((key) => redisClient.get(key))
+        keys.map((key) => redisClient.json.get(key))
       );
       devicesConnected = rawSessions
-        .map(raw => raw ? JSON.parse(raw) : null)
         .filter(
           (s) => s && s.userId && s.userId.toString() === userId.toString()
         ).length;

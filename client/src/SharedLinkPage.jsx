@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { FaFile, FaFileImage, FaDownload, FaExclamationTriangle, FaPencilAlt, FaEye } from "react-icons/fa";
+import { 
+  File, 
+  Image as ImageIcon, 
+  Download, 
+  AlertTriangle, 
+  Pencil, 
+  Eye 
+} from "lucide-react";
 import RenameModal from "./components/RenameModal";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -52,7 +59,7 @@ function SharedLinkPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FaExclamationTriangle className="w-8 h-8 text-red-500" />
+                <AlertTriangle className="w-8 h-8 text-red-500" />
             </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Unavailable</h2>
           <p className="text-gray-600 mb-6">{error}</p>
@@ -149,12 +156,12 @@ function SharedLinkPage() {
             }`}>
               {fileData?.role === 'editor' ? (
                 <>
-                  <FaPencilAlt className="w-3 h-3" />
+                  <Pencil className="w-3 h-3" />
                   <span>Editor Access</span>
                 </>
               ) : (
                 <>
-                  <FaEye className="w-3 h-3" />
+                  <Eye className="w-3 h-3" />
                   <span>Viewer Only</span>
                 </>
               )}
@@ -177,7 +184,7 @@ function SharedLinkPage() {
                             download
                             className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5 text-sm"
                         >
-                            <FaDownload className="w-3.5 h-3.5" />
+                            <Download className="w-3.5 h-3.5" />
                             Download
                         </a>
                     )}
@@ -185,13 +192,13 @@ function SharedLinkPage() {
                         onClick={openRenameModal}
                         className="flex items-center gap-2 px-6 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all font-medium shadow-sm hover:shadow-md text-sm"
                     >
-                        <FaPencilAlt className="w-3.5 h-3.5" />
+                        <Pencil className="w-3.5 h-3.5" />
                         Rename File
                     </button>
                   </>
                 ) : (
                   <div className="px-5 py-2 bg-gray-50 text-gray-500 rounded-lg text-sm font-medium flex items-center gap-2 border border-gray-100 cursor-not-allowed">
-                      <FaEye className="w-3.5 h-3.5" />
+                      <Eye className="w-3.5 h-3.5" />
                       View Only Mode
                   </div>
                 )}
@@ -208,7 +215,7 @@ function SharedLinkPage() {
             />
           ) : (
             <div className="flex flex-col items-center text-gray-400">
-              <FaFile className="w-32 h-32 mb-4" />
+              <File className="w-32 h-32 mb-4" />
               <p className="text-lg">Preview not available for this file type</p>
             </div>
           )}

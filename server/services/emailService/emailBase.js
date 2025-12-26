@@ -63,7 +63,7 @@ export const wrapEmailTemplate = (title, contentHtml, themeColor = "#2563EB") =>
 export const sendEmail = async ({ to, subject, html, text }) => {
   try {
     const data = await resend.emails.send({
-      from: "Storage Drive <onboarding@resend.dev>",
+      from: "Storage Drive <noreply@cloudvault.cloud>",
       to: Array.isArray(to) ? to : [to],
       subject,
       html,

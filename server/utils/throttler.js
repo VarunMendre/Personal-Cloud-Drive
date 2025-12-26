@@ -15,19 +15,19 @@ const createThrottler = ({
   return async (req, res, next) => {
     const now = Date.now();
     const ip = req.ip || req.connection.remoteAddress;
-    const redisKey = `throttle:${ip}:${req.originalUrl}`;
+    const redisKey = `storage_v3_throttle:${ip}:${req.originalUrl}`;
 
     try {
-      const throttleData = await redisClient.get(redisKey);
+      // Use RedisJSON to avoid WRONGTYPE errors
+      const parsed = await redisClient.json.get(redisKey);
 
-      // Get throttle data from Redis
+      // Get throttle data
       let previousDelay = 0;
       let lastRequest = now - waitTime;
       let requestCount = 0;
       let windowStart = now;
 
-      if (throttleData) {
-        const parsed = JSON.parse(throttleData);
+      if (parsed) {
         previousDelay = parsed.previousDelay || 0;
         lastRequest = parsed.lastRequest || now - waitTime;
         requestCount = parsed.requestCount || 0;
@@ -49,17 +49,16 @@ const createThrottler = ({
         delay = Math.max(0, waitTime + previousDelay - timePassed);
       }
 
-      // Store updated throttle data in Redis
-      await redisClient.setEx(
-        redisKey,
-        ttl,
-        JSON.stringify({
-          previousDelay: delay,
-          lastRequest: now,
-          requestCount,
-          windowStart,
-        })
-      );
+      // Store updated throttle data in Redis as JSON
+      await redisClient.json.set(redisKey, "$", {
+        previousDelay: delay,
+        lastRequest: now,
+        requestCount,
+        windowStart,
+      });
+
+      // Set expiration separately for JSON keys
+      await redisClient.expire(redisKey, ttl);
 
       // Apply throttling delay
       if (delay > 0) {

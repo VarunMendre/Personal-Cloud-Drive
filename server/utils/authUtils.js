@@ -55,15 +55,15 @@ export const createSession = async (res, user) => {
     // Continue session creation even if search fails (e.g. index missing)
   }
 
-  // 2. Create session in Redis (Standard String for compatibility)
+  // 2. Create session in Redis using RedisJSON
   const sessionId = crypto.randomUUID();
   const redisKey = `session:${sessionId}`;
 
-  await redisClient.set(redisKey, JSON.stringify({
-    userId: user._id,
-    rootDirId: user.rootDirId,
+  await redisClient.json.set(redisKey, "$", {
+    userId: user._id.toString(),
+    rootDirId: user.rootDirId.toString(),
     role: user.role,
-  }));
+  });
 
   // Set 7-day expiration
   await redisClient.expire(redisKey, 60 * 60 * 24 * 7);

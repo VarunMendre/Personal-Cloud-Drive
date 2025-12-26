@@ -884,7 +884,7 @@ function DirectoryView() {
         <div className="mx-6 mt-6 p-6 rounded-2xl shadow-medium animate-fadeIn" style={{ backgroundColor: '#FFF3CD', border: '2px solid #FDB827' }}>
            <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left" style={{ color: '#856404' }}>
              <div className="p-4 rounded-2xl" style={{ backgroundColor: '#FDB827' }}>
-               <FaExclamationTriangle className="w-10 h-10 text-white" />
+               <AlertTriangle className="w-10 h-10 text-white" />
              </div>
              <div>
                <h2 className="text-2xl font-bold" style={{ color: '#0D2440' }}>Account Paused</h2>
@@ -957,7 +957,7 @@ function DirectoryView() {
         <div className="bg-white rounded-2xl border-2 border-dashed p-8 text-center shadow-soft transition-all duration-300 hover:shadow-medium" style={{ borderColor: '#7BA4D0' }}>
           <div className="mb-6">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#E7F0FA' }}>
-              <FaUpload className="w-8 h-8" style={{ color: '#2E5E99' }} />
+              <Upload className="w-8 h-8" style={{ color: '#2E5E99' }} />
             </div>
             <h2 className="text-xl font-bold mb-1" style={{ color: '#0D2440' }}>
               Upload Files or Create Directory
@@ -987,12 +987,12 @@ function DirectoryView() {
                 onMouseEnter={(e) => ![["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())] && (e.target.style.backgroundColor = '#254a7f')}
                 onMouseLeave={(e) => ![["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())] && (e.target.style.backgroundColor = '#2E5E99')}
               >
-                <FaUpload className="w-4 h-4" />
+                <Upload className="w-4 h-4" />
                 Upload Files {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && "⚠️"}
               </button>
               {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && (
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none flex items-center gap-1 shadow-lg z-50">
-                  <FaExclamationTriangle className="text-amber-400 w-3 h-3" />
+                  <AlertTriangle className="text-amber-400 w-3 h-3" />
                   Access Restricted ⚠️
                 </div>
               )}
@@ -1017,12 +1017,12 @@ function DirectoryView() {
                 onMouseEnter={(e) => ![["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())] && (e.target.style.backgroundColor = '#059669')}
                 onMouseLeave={(e) => ![["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())] && (e.target.style.backgroundColor = '#10B981')}
               >
-                <FaFolderPlus className="w-4 h-4" />
+                <FolderPlus className="w-4 h-4" />
                 Create Directory {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && "⚠️"}
               </button>
               {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && (
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none flex items-center gap-1 shadow-lg z-50">
-                  <FaExclamationTriangle className="text-amber-400 w-3 h-3" />
+                  <AlertTriangle className="text-amber-400 w-3 h-3" />
                   Access Restricted ⚠️
                 </div>
               )}
@@ -1047,7 +1047,7 @@ function DirectoryView() {
               </div>
               {subscriptionStatus?.toLowerCase() === "paused" && (
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none flex items-center gap-1 shadow-lg z-50">
-                  <FaExclamationTriangle className="text-amber-400 w-3 h-3" />
+                  <AlertTriangle className="text-amber-400 w-3 h-3" />
                   Paused: Imports Disabled ⚠️
                 </div>
               )}
@@ -1060,9 +1060,7 @@ function DirectoryView() {
           {/* Search Bar */}
           <div className="flex-1 relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg className="w-5 h-5" style={{ color: '#7BA4D0' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <Search className="w-5 h-5" style={{ color: '#7BA4D0' }} />
             </div>
             <input
               type="text"
@@ -1080,9 +1078,7 @@ function DirectoryView() {
                 className="absolute inset-y-0 right-0 pr-4 flex items-center"
                 style={{ color: '#7BA4D0' }}
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
+                <X className="w-5 h-5" />
               </button>
             )}
           </div>
@@ -1106,16 +1102,12 @@ function DirectoryView() {
           >
             {viewMode === "list" ? (
               <>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
+                <Grid className="w-5 h-5" />
                 Grid View
               </>
             ) : (
               <>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                </svg>
+                <List className="w-5 h-5" />
                 List View
               </>
             )}
@@ -1139,9 +1131,7 @@ function DirectoryView() {
               <option value="size">Sort by Size</option>
             </select>
             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg className="w-5 h-5" style={{ color: '#2E5E99' }} fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
+              <ChevronDown className="w-5 h-5" style={{ color: '#2E5E99' }} />
             </div>
           </div>
         </div>
@@ -1153,9 +1143,7 @@ function DirectoryView() {
             onClick={() => navigate("/")}
             className="hover:text-blue-600 transition-colors"
           >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-            </svg>
+            <Home className="w-4 h-4" />
           </button>
 
           {/* Path Segments */}
