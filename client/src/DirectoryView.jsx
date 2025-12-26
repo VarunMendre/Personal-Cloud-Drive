@@ -76,6 +76,11 @@ function DirectoryView() {
   const [activeContextMenu, setActiveContextMenu] = useState(null);
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
 
+  // Search, view mode, and filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState("list"); // "list" or "grid"
+  const [sortBy, setSortBy] = useState("name"); // "name", "date", "size"
+
   // Fetch user info
   const fetchUser = async () => {
     try {
@@ -744,10 +749,43 @@ function DirectoryView() {
     return () => document.removeEventListener("click", handleDocumentClick);
   }, []);
 
-  const combinedItems = [
-    ...directoriesList.map((d) => ({ ...d, isDirectory: true })),
-    ...filesList.map((f) => ({ ...f, isDirectory: false })),
-  ];
+  // Combine, filter, and sort items
+  const combinedItems = (() => {
+    // Combine directories and files
+    let items = [
+      ...directoriesList.map((d) => ({ ...d, isDirectory: true })),
+      ...filesList.map((f) => ({ ...f, isDirectory: false })),
+    ];
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      items = items.filter((item) =>
+        item.name.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort items
+    items.sort((a, b) => {
+      // Always show directories first
+      if (a.isDirectory && !b.isDirectory) return -1;
+      if (!a.isDirectory && b.isDirectory) return 1;
+
+      // Then sort by selected criteria
+      switch (sortBy) {
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "date":
+          return new Date(b.updatedAt) - new Date(a.updatedAt);
+        case "size":
+          return (b.size || 0) - (a.size || 0);
+        default:
+          return 0;
+      }
+    });
+
+    return items;
+  })();
 
   return (
     <div className="min-h-screen pt-16" style={{ backgroundColor: '#E7F0FA' }}>
@@ -964,6 +1002,97 @@ function DirectoryView() {
                   Paused: Imports Disabled ⚠️
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Search, View Toggle, and Filter Controls */}
+        <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          {/* Search Bar */}
+          <div className="flex-1 relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg className="w-5 h-5" style={{ color: '#7BA4D0' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search files and folders..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-white border-2 rounded-lg transition-all focus:outline-none"
+              style={{ borderColor: '#E7F0FA', color: '#0D2440' }}
+              onFocus={(e) => e.target.style.borderColor = '#2E5E99'}
+              onBlur={(e) => e.target.style.borderColor = '#E7F0FA'}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                style={{ color: '#7BA4D0' }}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* View Toggle Button */}
+          <button
+            onClick={() => setViewMode(viewMode === "list" ? "grid" : "list")}
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-white border-2 rounded-lg font-semibold text-sm transition-all duration-200 hover:shadow-soft whitespace-nowrap"
+            style={{
+              borderColor: '#E7F0FA',
+              color: '#2E5E99'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.borderColor = '#7BA4D0';
+              e.target.style.backgroundColor = '#E7F0FA';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.borderColor = '#E7F0FA';
+              e.target.style.backgroundColor = '#FFFFFF';
+            }}
+          >
+            {viewMode === "list" ? (
+              <>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                Grid View
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                </svg>
+                List View
+              </>
+            )}
+          </button>
+
+          {/* Sort Filter Dropdown */}
+          <div className="relative">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-5 py-3 bg-white border-2 rounded-lg font-semibold text-sm transition-all duration-200 hover:shadow-soft appearance-none pr-10 cursor-pointer"
+              style={{
+                borderColor: '#E7F0FA',
+                color: '#2E5E99'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#2E5E99'}
+              onBlur={(e) => e.target.style.borderColor = '#E7F0FA'}
+            >
+              <option value="name">Sort by Name</option>
+              <option value="date">Sort by Date</option>
+              <option value="size">Sort by Size</option>
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg className="w-5 h-5" style={{ color: '#2E5E99' }} fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
             </div>
           </div>
         </div>
