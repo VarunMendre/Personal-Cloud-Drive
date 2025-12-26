@@ -1,18 +1,17 @@
 import { useState } from "react";
-import {
-  FaFolder,
-  FaFilePdf,
-  FaFileImage,
-  FaFileVideo,
-  FaFileArchive,
-  FaFileCode,
-  FaFileAlt,
-  FaDownload,
-  FaInfoCircle,
-  FaExclamationTriangle,
-} from "react-icons/fa";
-import { BsThreeDotsVertical } from "react-icons/bs";
-import ContextMenu from "../components/ContextMenu";
+import { 
+  Folder, 
+  FileText, 
+  Image as ImageIcon, 
+  Video, 
+  Archive, 
+  FileCode, 
+  File, 
+  Download, 
+  Info, 
+  AlertTriangle,
+  MoreVertical
+} from "lucide-react";
 import { formatSize } from "./DetailsPopup";
 
 function DirectoryItem({
@@ -38,24 +37,13 @@ function DirectoryItem({
 
 
 
-  // Convert the file icon string to the actual Icon component
-  function renderFileIcon(iconString) {
-    switch (iconString) {
-      case "pdf":
-        return <FaFilePdf className="text-red-600" />;
-      case "image":
-        return <FaFileImage className="text-purple-500" />;
-      case "video":
-        return <FaFileVideo className="text-red-500" />;
-      case "archive":
-        return <FaFileArchive className="text-yellow-600" />;
-      case "code":
-        return <FaFileCode className="text-blue-500" />;
-      case "alt":
-      default:
-        return <FaFileAlt className="text-gray-500" />;
+  // Simplified icon rendering since getFileIcon now returns the component
+  const renderIcon = () => {
+    if (item.isDirectory) {
+      return <Folder className="w-6 h-6" style={{ color: '#66B2D6' }} />;
     }
-  }
+    return getFileIcon(item);
+  };
 
   const isUploadingItem = item.id.startsWith("temp-");
 
@@ -79,7 +67,7 @@ function DirectoryItem({
 
   // Helper to get file extension
   const getFileExtension = (filename) => {
-    if (!filename || item.isDirectory) return null;
+    if (!filename || typeof filename !== 'string' || item.isDirectory) return null;
     const parts = filename.split('.');
     if (parts.length > 1) {
       return parts[parts.length - 1].toUpperCase();
@@ -105,7 +93,8 @@ function DirectoryItem({
 
   return (
     <div
-      className="flex flex-col relative gap-1 border border-gray-200 rounded-lg bg-white cursor-pointer hover:bg-gray-50 group transition-colors"
+      className="flex flex-col relative gap-1 border rounded-lg bg-white cursor-pointer hover:bg-opacity-50 group transition-all duration-200"
+      style={{ borderColor: '#E6FAF5' }}
       onClick={() =>
         !(activeContextMenu || isUploading)
           ? handleRowClick(item.isDirectory ? "directory" : "file", item.id)
@@ -118,26 +107,22 @@ function DirectoryItem({
       <div className="flex items-start gap-3 p-3">
         {/* Icon */}
         <div className="flex-shrink-0 mt-0.5">
-          {item.isDirectory ? (
-            <FaFolder className="text-blue-500 text-2xl" />
-          ) : (
-            <div className="text-2xl">
-              {renderFileIcon(getFileIcon(item.name))}
-            </div>
-          )}
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F0F8FF' }}>
+            {renderIcon()}
+          </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Name and Type Badge */}
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-gray-900 truncate">{item.name}</span>
+            <span className="font-semibold text-gray-900 truncate" style={{ color: '#2C3E50' }}>{item.name}</span>
             {item.isDirectory ? (
-              <span className="px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded">
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded" style={{ backgroundColor: '#E6FAF5', color: '#66B2D6' }}>
                 Folder
               </span>
             ) : fileExtension ? (
-              <span className="px-2 py-0.5 text-xs font-medium text-red-600 bg-red-50 rounded">
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded" style={{ backgroundColor: '#F0F8FF', color: '#66B2D6' }}>
                 {fileExtension}
               </span>
             ) : null}
@@ -159,10 +144,10 @@ function DirectoryItem({
                 <div className="relative group/tooltip">
                   <button
                     onClick={handleDownload}
-                    className="flex items-center justify-center p-2 rounded-full transition-colors text-blue-600 hover:bg-blue-100"
+                    className="flex items-center justify-center p-2 rounded-full transition-colors text-[#66B2D6] hover:bg-[#F0F8FF]"
                     title="Download"
                   >
-                    <FaDownload className="text-sm" />
+                    <Download className="w-4 h-4" />
                   </button>
                 </div>
               )}
@@ -170,20 +155,20 @@ function DirectoryItem({
               {/* Details button - for both files and folders */}
               <button
                 onClick={handleDetailsClick}
-                className="flex items-center justify-center p-2 text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
+                className="flex items-center justify-center p-2 text-[#A3C5D9] hover:bg-[#F0F8FF] rounded-full transition-colors"
                 title="Details"
               >
-                <FaInfoCircle className="text-sm" />
+                <Info className="w-4 h-4" />
               </button>
             </>
           )}
 
           {/* Three dots for context menu - always visible */}
           <div
-            className="flex items-center justify-center text-xl cursor-pointer text-gray-700 rounded-full p-2 hover:bg-gray-200"
+            className="flex items-center justify-center cursor-pointer text-[#A3C5D9] rounded-full p-2 hover:bg-[#F0F8FF] transition-colors"
             onClick={(e) => handleContextMenu(e, item.id)}
           >
-            <BsThreeDotsVertical />
+            <MoreVertical className="w-5 h-5" />
           </div>
         </div>
       </div>

@@ -1,11 +1,11 @@
 import {
-  FaInfoCircle,
-  FaDownload,
-  FaShareAlt,
-  FaPencilAlt,
-  FaTrashAlt,
-  FaTimes,
-} from "react-icons/fa";
+  Info,
+  Download,
+  Share2,
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
 
 function ContextMenu({
   item,
@@ -21,9 +21,14 @@ function ContextMenu({
   subscriptionStatus,
   showToast,
 }) {
-  // FIXED - Define the missing itemClass
-  const itemClass = "flex items-center gap-3 px-5 py-2 cursor-pointer whitespace-nowrap text-[#333] hover:bg-[#eee] transition-colors duration-200 text-sm";
-  const disabledClass = "flex items-center gap-3 px-5 py-2 cursor-not-allowed whitespace-nowrap text-gray-400 bg-gray-50 opacity-60 text-sm";
+  const isPaused = subscriptionStatus?.toLowerCase() === "paused";
+  
+  // Design system classes
+  const itemClass = "flex items-center gap-3 px-4 py-2.5 cursor-pointer whitespace-nowrap transition-all duration-200 text-sm font-medium hover:bg-[#F0F8FF]";
+  const disabledClass = "flex items-center gap-3 px-4 py-2.5 cursor-not-allowed whitespace-nowrap text-[#A3C5D9] bg-gray-50 opacity-60 text-sm font-medium";
+  const textPrimary = "text-[#2C3E50]";
+  const iconColor = "#66B2D6";
+  const dangerColor = "#DC2626";
 
   // Determine position style
   const MENU_HEIGHT_ESTIMATE = 250; 
@@ -39,26 +44,25 @@ function ContextMenu({
   if (item.isDirectory) {
     return (
       <div
-        className="fixed bg-white shadow-[0_2px_6px_rgba(0,0,0,0.2)] rounded-[4px] z-[999] py-[5px] min-w-[160px]"
-        style={menuStyle}
+        className="fixed bg-white shadow-strong rounded-xl z-[999] py-2 min-w-[180px] border animate-scaleIn"
+        style={{ ...menuStyle, borderColor: '#E6FAF5' }}
       >
-
         <div
-          className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
-          onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && openRenameModal("directory", item.id, item.name, item.__v)}
+          className={isPaused ? disabledClass : `${itemClass} ${textPrimary}`}
+          onClick={() => !isPaused && openRenameModal("directory", item.id, item.name, item.__v)}
         >
-          <FaPencilAlt className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-gray-600"} />
+          <Pencil className="w-4 h-4" style={{ color: isPaused ? '#A3C5D9' : iconColor }} />
           <span>Rename</span>
         </div>
         <div
-          className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
-          onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && handleDeleteDirectory(item.id)}
+          className={isPaused ? disabledClass : itemClass}
+          onClick={() => !isPaused && handleDeleteDirectory(item.id)}
         >
-          <FaTrashAlt className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-red-600"} />
-          <span className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-400" : "text-red-600"}>Delete</span>
+          <Trash2 className="w-4 h-4" style={{ color: isPaused ? '#A3C5D9' : dangerColor }} />
+          <span style={{ color: isPaused ? '#A3C5D9' : dangerColor }}>Delete</span>
         </div>
-        <div className={itemClass} onClick={() => openDetailsPopup(item)}>
-          <FaInfoCircle className="text-gray-600" />
+        <div className={`${itemClass} ${textPrimary}`} onClick={() => openDetailsPopup(item)}>
+          <Info className="w-4 h-4" style={{ color: iconColor }} />
           <span>Details</span>
         </div>
       </div>
@@ -69,15 +73,15 @@ function ContextMenu({
       // Only show "Cancel"
       return (
         <div
-          className="fixed bg-white shadow-[0_2px_6px_rgba(0,0,0,0.2)] rounded-[4px] z-[999] py-[5px] min-w-[160px]"
-          style={menuStyle}
+          className="fixed bg-white shadow-strong rounded-xl z-[999] py-2 min-w-[180px] border animate-scaleIn"
+          style={{ ...menuStyle, borderColor: '#E6FAF5' }}
         >
           <div
-            className={itemClass}
+            className={`${itemClass} text-red-600 font-semibold`}
             onClick={() => handleCancelUpload(item.id)}
           >
-            <FaTimes className="text-red-600" />
-            <span className="text-red-600">Cancel</span>
+            <X className="w-4 h-4 text-red-600" />
+            <span>Cancel Upload</span>
           </div>
         </div>
       );
@@ -85,50 +89,49 @@ function ContextMenu({
       // Normal file
       return (
         <div
-          className="fixed bg-white shadow-[0_2px_6px_rgba(0,0,0,0.2)] rounded-[4px] z-[999] py-[5px] min-w-[160px]"
-          style={menuStyle}
+          className="fixed bg-white shadow-strong rounded-xl z-[999] py-2 min-w-[180px] border animate-scaleIn"
+          style={{ ...menuStyle, borderColor: '#E6FAF5' }}
         >
           {/* Share option */}
           <div
-            className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
-            onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && handleShare("file", item.id, item.name)}
+            className={isPaused ? disabledClass : `${itemClass} ${textPrimary}`}
+            onClick={() => !isPaused && handleShare("file", item.id, item.name)}
           >
-            <FaShareAlt className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-gray-600"} />
-            <span>Share</span>
+            <Share2 className="w-4 h-4" style={{ color: isPaused ? '#A3C5D9' : iconColor }} />
+            <span>Share Link</span>
           </div>
           <div
-            className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
+            className={isPaused ? disabledClass : `${itemClass} ${textPrimary}`}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               
-              const statusStr = String(subscriptionStatus || "").toLowerCase().trim();
-              if (["halted", "expired", "paused"].includes(statusStr)) {
+              if (isPaused) {
                 showToast("Access Restricted: Your subscription is currently paused.", "warning");
                 return;
               }
               window.location.href = `${BASE_URL}/file/${item.id}?action=download`;
             }}
           >
-            <FaDownload className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-gray-600"} />
+            <Download className="w-4 h-4" style={{ color: isPaused ? '#A3C5D9' : iconColor }} />
             <span>Download</span>
           </div>
           <div
-            className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
-            onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && openRenameModal("file", item.id, item.name, item.__v)}
+            className={isPaused ? disabledClass : `${itemClass} ${textPrimary}`}
+            onClick={() => !isPaused && openRenameModal("file", item.id, item.name, item.__v)}
           >
-            <FaPencilAlt className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-gray-600"} />
+            <Pencil className="w-4 h-4" style={{ color: isPaused ? '#A3C5D9' : iconColor }} />
             <span>Rename</span>
           </div>
           <div
-            className={subscriptionStatus?.toLowerCase() === "paused" ? disabledClass : itemClass}
-            onClick={() => subscriptionStatus?.toLowerCase() !== "paused" && handleDeleteFile(item.id)}
+            className={isPaused ? disabledClass : itemClass}
+            onClick={() => !isPaused && handleDeleteFile(item.id)}
           >
-            <FaTrashAlt className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-300" : "text-red-600"} />
-            <span className={subscriptionStatus?.toLowerCase() === "paused" ? "text-gray-400" : "text-red-600"}>Delete</span>
+            <Trash2 className="w-4 h-4" style={{ color: isPaused ? '#A3C5D9' : dangerColor }} />
+            <span style={{ color: isPaused ? '#A3C5D9' : dangerColor }}>Delete</span>
           </div>
-          <div className={itemClass} onClick={() => openDetailsPopup(item)}>
-            <FaInfoCircle className="text-gray-600" />
+          <div className={`${itemClass} ${textPrimary}`} onClick={() => openDetailsPopup(item)}>
+            <Info className="w-4 h-4" style={{ color: iconColor }} />
             <span>Details</span>
           </div>
         </div>

@@ -7,7 +7,26 @@ import DirectoryList from "./components/DirectoryList";
 import ShareModal from "./components/ShareModal";
 import DetailsPopup from "./components/DetailsPopup";
 import ImportFromDrive from "./components/ImportFromDrive";
-import { FaUpload, FaFolderPlus, FaFileImport, FaExclamationTriangle, FaInfoCircle, FaTimes } from "react-icons/fa";
+import { 
+  Upload, 
+  FolderPlus, 
+  FilePlus, 
+  AlertTriangle, 
+  Info, 
+  X,
+  Folder,
+  FileText,
+  Image as ImageIcon,
+  Video,
+  Archive,
+  FileCode,
+  File,
+  Search,
+  Grid,
+  List,
+  ChevronDown,
+  Home
+} from "lucide-react";
 
 // Helper function to format file sizes
 const formatSize = (bytes) => {
@@ -177,27 +196,40 @@ function DirectoryView() {
   }, [dirId]);
 
   /**
-   * Decide file icon
+   * Decide file icon - Safely handle item object or string
    */
-  function getFileIcon(filename) {
+  function getFileIcon(item) {
+    const filename = typeof item === "string" ? item : item?.name || "";
+    const isDir = typeof item === "object" ? item?.isDirectory : false;
+
+    if (isDir) {
+      return <Folder className="w-5 h-5" style={{ color: '#66B2D6' }} />;
+    }
+
+    if (!filename || typeof filename !== 'string') {
+      return <File className="w-5 h-5" style={{ color: '#A3C5D9' }} />;
+    }
+
     const ext = filename.split(".").pop().toLowerCase();
     switch (ext) {
       case "pdf":
-        return "pdf";
+        return <FileText className="w-5 h-5" style={{ color: '#DC2626' }} />;
       case "png":
       case "jpg":
       case "jpeg":
       case "gif":
-        return "image";
+      case "webp":
+        return <ImageIcon className="w-5 h-5" style={{ color: '#9333EA' }} />;
       case "mp4":
       case "mov":
       case "avi":
-        return "video";
+      case "webm":
+        return <Video className="w-5 h-5" style={{ color: '#DC2626' }} />;
       case "zip":
       case "rar":
       case "tar":
       case "gz":
-        return "archive";
+        return <Archive className="w-5 h-5" style={{ color: '#F97316' }} />;
       case "js":
       case "jsx":
       case "ts":
@@ -206,16 +238,22 @@ function DirectoryView() {
       case "css":
       case "py":
       case "java":
-        return "code";
+      case "json":
+        return <FileCode className="w-5 h-5" style={{ color: '#10B981' }} />;
       default:
-        return "alt";
+        return <File className="w-5 h-5" style={{ color: '#A3C5D9' }} />;
     }
   }
 
   /**
-   * Click row to open directory or file
+   * Click row to open directory or file - Handle both (type, id) or (item)
    */
-  function handleRowClick(type, id) {
+  function handleRowClick(typeOrItem, idIfType) {
+    const type = typeof typeOrItem === "string" ? typeOrItem : (typeOrItem?.isDirectory ? "directory" : "file");
+    const id = idIfType || typeOrItem?.id;
+
+    if (!id) return;
+
     console.log("handleRowClick - status:", subscriptionStatus);
     if (type === "directory") {
       navigate(`/directory/${id}`);
@@ -770,9 +808,10 @@ function DirectoryView() {
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      items = items.filter((item) =>
-        item.name.toLowerCase().includes(query)
-      );
+      items = items.filter((item) => {
+        const name = item?.name || "";
+        return typeof name === 'string' && name.toLowerCase().includes(query);
+      });
     }
 
     // Sort items
@@ -1327,8 +1366,8 @@ function DirectoryView() {
             toast.type === "loading" ? "bg-blue-50 border-blue-200 text-blue-800" :
             "bg-blue-50 border-blue-200 text-blue-800"
           }`}>
-            {toast.type === "warning" && <FaExclamationTriangle className="w-5 h-5 text-amber-600" />}
-            {toast.type === "error" && <FaTimes className="w-5 h-5 text-red-600" />}
+            {toast.type === "warning" && <AlertTriangle className="w-5 h-5 text-amber-600" />}
+            {toast.type === "error" && <X className="w-5 h-5 text-red-600" />}
             {toast.type === "success" && (
                 <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
                     <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1339,7 +1378,7 @@ function DirectoryView() {
             {toast.type === "loading" && (
                 <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
             )}
-            {(toast.type === "info" || !["warning", "error", "success", "loading"].includes(toast.type)) && <FaInfoCircle className="w-5 h-5 text-blue-600" />}
+            {(toast.type === "info" || !["warning", "error", "success", "loading"].includes(toast.type)) && <Info className="w-5 h-5 text-blue-600" />}
             
             <span className="font-semibold">{toast.message}</span>
           </div>
