@@ -93,9 +93,9 @@ export default function SubscriptionDetails() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-600 font-medium">Loading subscription details...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: '#E7F0FA' }}>
+        <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mb-4" style={{ borderColor: '#2E5E99', borderTopColor: 'transparent' }}></div>
+        <p className="font-medium" style={{ color: '#0D2440' }}>Loading subscription details...</p>
       </div>
     );
   }
@@ -103,7 +103,20 @@ export default function SubscriptionDetails() {
   if (!data) return null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 bg-slate-50 min-h-screen relative">
+    <div className="mx-auto max-w-6xl px-4 py-12 min-h-screen relative pt-24" style={{ backgroundColor: '#E7F0FA' }}>
+      {/* Back to Home Arrow */}
+      <Link 
+        to="/" 
+        className="absolute left-4 top-20 flex items-center gap-2 text-sm font-semibold transition-all duration-200 hover:gap-3"
+        style={{ color: '#2E5E99' }}
+        onMouseEnter={(e) => e.target.style.color = '#0D2440'}
+        onMouseLeave={(e) => e.target.style.color = '#2E5E99'}
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back to Home
+      </Link>
       {/* Custom Error Toast */}
       {errorMessage && (
         <div className="fixed top-6 right-6 z-[100] animate-in slide-in-from-right-8 duration-500">
@@ -203,8 +216,8 @@ export default function SubscriptionDetails() {
       )}
 
       <header className="mb-10">
-        <h1 className="text-3xl font-extrabold text-slate-900">Your Subscription</h1>
-        <p className="text-slate-500 mt-1">Manage your plan and view usage details</p>
+        <h1 className="text-3xl font-extrabold" style={{ color: '#0D2440' }}>Your Subscription</h1>
+        <p className="mt-1" style={{ color: '#7BA4D0' }}>Manage your plan and view usage details</p>
       </header>
       
       {/* Bonus Trial Banner */}

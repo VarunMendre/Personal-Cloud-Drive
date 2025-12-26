@@ -750,12 +750,17 @@ function DirectoryView() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen pt-16" style={{ backgroundColor: '#E7F0FA' }}>
       {errorMessage &&
         errorMessage !==
           "Directory not found or you do not have access to it!" && (
-          <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-            {errorMessage}
+          <div className="mx-6 mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-xl text-red-700 shadow-soft animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span className="font-medium">{errorMessage}</span>
+            </div>
           </div>
         )}
 
@@ -789,14 +794,14 @@ function DirectoryView() {
       {/* SUBSCRIPTION ALERTS */}
       {/* 1. PAUSED */}
       {subscriptionStatus?.toLowerCase() === "paused" && (
-        <div className="mx-6 mt-6 p-6 bg-amber-100 border-2 border-amber-400 rounded-xl shadow-md">
-           <div className="flex flex-col sm:flex-row items-center gap-5 text-amber-900 text-center sm:text-left">
-             <div className="p-4 bg-amber-200 rounded-2xl">
-               <FaExclamationTriangle className="w-10 h-10 text-amber-700" />
+        <div className="mx-6 mt-6 p-6 rounded-2xl shadow-medium animate-fadeIn" style={{ backgroundColor: '#FFF3CD', border: '2px solid #FDB827' }}>
+           <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left" style={{ color: '#856404' }}>
+             <div className="p-4 rounded-2xl" style={{ backgroundColor: '#FDB827' }}>
+               <FaExclamationTriangle className="w-10 h-10 text-white" />
              </div>
              <div>
-               <h2 className="text-2xl font-bold">Account Paused</h2>
-               <p className="text-sm text-amber-800 mt-2">
+               <h2 className="text-2xl font-bold" style={{ color: '#0D2440' }}>Account Paused</h2>
+               <p className="text-sm mt-2" style={{ color: '#856404' }}>
                  Administrator has paused your account. Access is restricted.
                </p>
              </div>
@@ -862,13 +867,15 @@ function DirectoryView() {
 
       {/* Upload Section with 3 Buttons */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-8 text-center">
-          <div className="mb-4">
-            <FaUpload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-1">
+        <div className="bg-white rounded-2xl border-2 border-dashed p-8 text-center shadow-soft transition-all duration-300 hover:shadow-medium" style={{ borderColor: '#7BA4D0' }}>
+          <div className="mb-6">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#E7F0FA' }}>
+              <FaUpload className="w-8 h-8" style={{ color: '#2E5E99' }} />
+            </div>
+            <h2 className="text-xl font-bold mb-1" style={{ color: '#0D2440' }}>
               Upload Files or Create Directory
             </h2>
-            <p className="text-gray-600 text-sm">
+            <p className="text-sm" style={{ color: '#7BA4D0' }}>
               Drag and drop files here, or click to select files
             </p>
           </div>
@@ -885,11 +892,13 @@ function DirectoryView() {
                   fileInputRef.current.click();
                 }}
                 disabled={errorMessage === "Directory not found or you do not have access to it!"}
-                className={`flex items-center gap-2 px-5 py-2 text-white rounded-lg transition-all duration-200 font-medium text-sm shadow-md ${
-                  ["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())
-                    ? "bg-gray-400 cursor-not-allowed grayscale" 
-                    : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg hover:scale-105"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                className="flex items-center gap-2 px-5 py-3 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg hover:transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: ["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) ? '#CBD5E0' : '#2E5E99',
+                  cursor: ["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) ? 'not-allowed' : 'pointer'
+                }}
+                onMouseEnter={(e) => ![["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())] && (e.target.style.backgroundColor = '#254a7f')}
+                onMouseLeave={(e) => ![["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())] && (e.target.style.backgroundColor = '#2E5E99')}
               >
                 <FaUpload className="w-4 h-4" />
                 Upload Files {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && "⚠️"}
@@ -913,11 +922,13 @@ function DirectoryView() {
                   setShowCreateDirModal(true);
                 }}
                 disabled={errorMessage === "Directory not found or you do not have access to it!"}
-                className={`flex items-center gap-2 px-5 py-2 text-white rounded-lg transition-all duration-200 font-medium text-sm shadow-md ${
-                  ["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())
-                    ? "bg-gray-400 cursor-not-allowed grayscale" 
-                    : "bg-green-600 hover:bg-green-700 hover:shadow-lg hover:scale-105"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                className="flex items-center gap-2 px-5 py-3 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg hover:transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: ["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) ? '#CBD5E0' : '#10B981',
+                  cursor: ["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) ? 'not-allowed' : 'pointer'
+                }}
+                onMouseEnter={(e) => ![["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())] && (e.target.style.backgroundColor = '#059669')}
+                onMouseLeave={(e) => ![["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())] && (e.target.style.backgroundColor = '#10B981')}
               >
                 <FaFolderPlus className="w-4 h-4" />
                 Create Directory {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && "⚠️"}

@@ -1,447 +1,139 @@
-// import React, { useState, useEffect } from "react";
-// import { useNavigate, Link } from "react-router-dom";
-// import "./Auth.css";
-// import { GoogleLogin } from "@react-oauth/google";
-// import { loginWithGoogle } from "../src/apis/loginWithGoogle";
-// import { loginWithGitHub } from "../src/apis/loginWithGitHub";
+"use client";
 
-// const Register = () => {
-//   const BASE_URL = "http://localhost:4000";
-
-//   const [formData, setFormData] = useState({
-//     name: "Anurag Singh",
-//     email: "anuragprocodrr@gmail.com",
-//     password: "abcd",
-//   });
-
-//   const [serverError, setServerError] = useState("");
-//   const [isSuccess, setIsSuccess] = useState(false);
-
-//   // OTP state
-//   const [otp, setOtp] = useState("");
-//   const [otpSent, setOtpSent] = useState(false);
-//   const [otpVerified, setOtpVerified] = useState(false);
-//   const [otpError, setOtpError] = useState("");
-//   const [isSending, setIsSending] = useState(false);
-//   const [isVerifying, setIsVerifying] = useState(false);
-//   const [countdown, setCountdown] = useState(0);
-
-//   const navigate = useNavigate();
-
-//   // GitHub login function
-//   const loginWithGitHubHandler = () => {
-//     const CLIENT_ID = "Ov23lifBnGMie0EjK9Zz";
-//     window.location.assign(
-//       `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=http://localhost:5173/github-callback&scope=read:user user:email`
-//     );
-//   };
-
-//   // Handle input changes
-//   const handleChange = (e) => {
-//     const { name, value } = e.target;
-//     if (name === "email") {
-//       setServerError("");
-//       setOtpError("");
-//       setOtpSent(false);
-//       setOtpVerified(false);
-//       setCountdown(0);
-//     }
-//     setFormData((prev) => ({ ...prev, [name]: value }));
-//   };
-
-//   // Countdown timer for resend
-//   useEffect(() => {
-//     if (countdown <= 0) return;
-//     const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-//     return () => clearTimeout(timer);
-//   }, [countdown]);
-
-//   // Send OTP handler
-//   const handleSendOtp = async () => {
-//     const { email } = formData;
-//     if (!email) {
-//       setOtpError("Please enter your email first.");
-//       return;
-//     }
-
-//     try {
-//       setIsSending(true);
-//       const res = await fetch(`${BASE_URL}/auth/send-otp`, {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ email }),
-//       });
-//       const data = await res.json();
-
-//       if (res.ok) {
-//         setOtpSent(true);
-//         setCountdown(60); // allow resend after 60s
-//         setOtpError("");
-//       } else {
-//         setOtpError(data.error || "Failed to send OTP.");
-//       }
-//     } catch (err) {
-//       console.error(err);
-//       setOtpError("Something went wrong sending OTP.");
-//     } finally {
-//       setIsSending(false);
-//     }
-//   };
-
-//   // Verify OTP handler
-//   const handleVerifyOtp = async () => {
-//     const { email } = formData;
-//     if (!otp) {
-//       setOtpError("Please enter OTP.");
-//       return;
-//     }
-
-//     try {
-//       setIsVerifying(true);
-//       const res = await fetch(`${BASE_URL}/auth/verify-otp`, {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ email, otp }),
-//       });
-//       const data = await res.json();
-
-//       if (res.ok) {
-//         setOtpVerified(true);
-//         setOtpError("");
-//       } else {
-//         setOtpError(data.error || "Invalid or expired OTP.");
-//       }
-//     } catch (err) {
-//       console.error(err);
-//       setOtpError("Something went wrong verifying OTP.");
-//     } finally {
-//       setIsVerifying(false);
-//     }
-//   };
-
-//   // Final form submit
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     setServerError("");
-//     setIsSuccess(false);
-
-//     if (!otpVerified) {
-//       setOtpError("Please verify your email with OTP before registering.");
-//       return;
-//     }
-
-//     try {
-//       const response = await fetch(`${BASE_URL}/user/register`, {
-//         method: "POST",
-//         body: JSON.stringify({ ...formData, otp }),
-//         headers: { "Content-Type": "application/json" },
-//       });
-//       const data = await response.json();
-
-//       if (data.error || !response.ok) {
-//         setServerError(
-//           typeof data.error === "string"
-//             ? data.error
-//             : "Registration failed. Please try again."
-//         );
-//       } else {
-//         setIsSuccess(true);
-//         setTimeout(() => navigate("/"), 2000);
-//       }
-//     } catch (error) {
-//       console.error(error);
-//       setServerError("Something went wrong. Please try again.");
-//     }
-//   };
-
-//   return (
-//     <div className="container">
-//       <h2 className="heading">Register</h2>
-//       <form className="form" onSubmit={handleSubmit}>
-//         {/* Name */}
-//         <div className="form-group">
-//           <label htmlFor="name" className="label">
-//             Name
-//           </label>
-//           <input
-//             className="input"
-//             type="text"
-//             id="name"
-//             name="name"
-//             value={formData.name}
-//             onChange={handleChange}
-//             placeholder="Enter your name"
-//             required
-//           />
-//         </div>
-
-//         {/* Email + Send OTP */}
-//         <div className="form-group">
-//           <label htmlFor="email" className="label">
-//             Email
-//           </label>
-//           <div className="otp-wrapper">
-//             <input
-//               className={`input ${serverError ? "input-error" : ""}`}
-//               type="email"
-//               id="email"
-//               name="email"
-//               value={formData.email}
-//               onChange={handleChange}
-//               placeholder="Enter your email"
-//               required
-//             />
-//             <button
-//               type="button"
-//               className="otp-button"
-//               onClick={handleSendOtp}
-//               disabled={isSending || countdown > 0}
-//             >
-//               {isSending
-//                 ? "Sending..."
-//                 : countdown > 0
-//                 ? `${countdown}s`
-//                 : "Send OTP"}
-//             </button>
-//           </div>
-//           {serverError && <span className="error-msg">{serverError}</span>}
-//         </div>
-
-//         {/* OTP Input + Verify */}
-//         {otpSent && (
-//           <div className="form-group">
-//             <label htmlFor="otp" className="label">
-//               Enter OTP
-//             </label>
-//             <div className="otp-wrapper">
-//               <input
-//                 className="input"
-//                 type="text"
-//                 id="otp"
-//                 name="otp"
-//                 value={otp}
-//                 onChange={(e) => setOtp(e.target.value)}
-//                 placeholder="4-digit OTP"
-//                 maxLength={4}
-//                 required
-//               />
-//               <button
-//                 type="button"
-//                 className="otp-button"
-//                 onClick={handleVerifyOtp}
-//                 disabled={isVerifying || otpVerified}
-//               >
-//                 {isVerifying
-//                   ? "Verifying..."
-//                   : otpVerified
-//                   ? "Verified"
-//                   : "Verify OTP"}
-//               </button>
-//             </div>
-//             {otpError && <span className="error-msg">{otpError}</span>}
-//           </div>
-//         )}
-
-//         {/* Password */}
-//         <div className="form-group">
-//           <label htmlFor="password" className="label">
-//             Password
-//           </label>
-//           <input
-//             className="input"
-//             type="password"
-//             id="password"
-//             name="password"
-//             value={formData.password}
-//             onChange={handleChange}
-//             placeholder="Enter your password"
-//             required
-//           />
-//         </div>
-
-//         <button
-//           type="submit"
-//           className={`submit-button ${isSuccess ? "success" : ""}`}
-//           disabled={!otpVerified || isSuccess}
-//         >
-//           {isSuccess ? "Registration Successful" : "Register"}
-//         </button>
-//       </form>
-
-//       <p className="link-text">
-//         Already have an account? <Link to="/login">Login</Link>
-//       </p>
-
-//       <div className="or">
-//         <span>Or</span>
-//       </div>
-
-//       <div className="google-login">
-//         <GoogleLogin
-//           onSuccess={async(credentialResponse) => {
-//             const data = await loginWithGoogle(credentialResponse.credential);
-//             if (data.error) {
-//               console.log(data);
-//               return;
-//             }
-//             navigate("/");
-//           }}
-//           shape="pill"
-//           theme="filled_blue"
-//           text="continue_with"
-//           onError={() => {
-//             console.log("Login Failed");
-//           }}
-//           useOneTap
-//         />
-//       </div>
-
-//       <div className="github-login">
-//         <button
-//           onClick={loginWithGitHubHandler}
-//           className="github-button"
-//         >
-//           Continue with GitHub
-//         </button>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Register;
-"use client"
-
-import { useState, useEffect } from "react"
-import { useNavigate, Link } from "react-router-dom"
-import { GoogleLogin } from "@react-oauth/google"
-import DOMPurify from "dompurify"
-import { loginWithGoogle } from "../src/apis/loginWithGoogle"
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+import DOMPurify from "dompurify";
+import { loginWithGoogle } from "../src/apis/loginWithGoogle";
 
 const Register = () => {
-  const BASE_URL = import.meta.env.VITE_BASE_URL
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
 
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: "Anurag Singh",
     email: "anuragprocodrr@gmail.com",
     password: "abcd",
-  })
+  });
 
-  const [serverError, setServerError] = useState("")
-  const [isSuccess, setIsSuccess] = useState(false)
+  const [serverError, setServerError] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   // OTP state
-  const [otp, setOtp] = useState("")
-  const [otpSent, setOtpSent] = useState(false)
-  const [otpVerified, setOtpVerified] = useState(false)
-  const [otpError, setOtpError] = useState("")
-  const [isSending, setIsSending] = useState(false)
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [countdown, setCountdown] = useState(0)
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   // GitHub login function
   const loginWithGitHubHandler = () => {
-    const CLIENT_ID = "Ov23lifBnGMie0EjK9Zz"
+    const CLIENT_ID = "Ov23lifBnGMie0EjK9Zz";
     window.location.assign(
-      `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${window.location.origin}/github-callback&scope=read:user user:email`,
-    )
-  }
+      `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${window.location.origin}/github-callback&scope=read:user user:email`
+    );
+  };
 
   // Handle input changes
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     if (name === "email") {
-      setServerError("")
-      setOtpError("")
-      setOtpSent(false)
-      setOtpVerified(false)
-      setCountdown(0)
+      setServerError("");
+      setOtpError("");
+      setOtpSent(false);
+      setOtpVerified(false);
+      setCountdown(0);
     }
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   // Countdown timer for resend
   useEffect(() => {
-    if (countdown <= 0) return
-    const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
-    return () => clearTimeout(timer)
-  }, [countdown])
+    if (countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   // Send OTP handler
   const handleSendOtp = async () => {
-    const { email } = formData
-    if (!email) {
-      setOtpError("Please enter your email first.")
-      return
+    const { email, name, password } = formData;
+    if (!email || !name || !password) {
+      setOtpError("Please fill in all fields first.");
+      return;
     }
 
     try {
-      setIsSending(true)
+      setIsSending(true);
       const res = await fetch(`${BASE_URL}/auth/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
-      })
-      const data = await res.json()
+      });
+      const data = await res.json();
 
       if (res.ok) {
-        setOtpSent(true)
-        setCountdown(60) // allow resend after 60s
-        setOtpError("")
+        setOtpSent(true);
+        setCountdown(60);
+        setOtpError("");
+        setCurrentStep(2); // Move to step 2
       } else {
-        setOtpError(data.error || "Failed to send OTP.")
+        setOtpError(data.error || "Failed to send OTP.");
       }
     } catch (err) {
-      console.error(err)
-      setOtpError("Something went wrong sending OTP.")
+      console.error(err);
+      setOtpError("Something went wrong sending OTP.");
     } finally {
-      setIsSending(false)
+      setIsSending(false);
     }
-  }
+  };
 
   // Verify OTP handler
   const handleVerifyOtp = async () => {
-    const { email } = formData
+    const { email } = formData;
     if (!otp) {
-      setOtpError("Please enter OTP.")
-      return
+      setOtpError("Please enter OTP.");
+      return;
     }
 
     try {
-      setIsVerifying(true)
-      const sanitizedOtp = DOMPurify.sanitize(otp)
+      setIsVerifying(true);
+      const sanitizedOtp = DOMPurify.sanitize(otp);
 
       const res = await fetch(`${BASE_URL}/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp: sanitizedOtp }),
-      })
-      const data = await res.json()
+      });
+      const data = await res.json();
 
       if (res.ok) {
-        setOtpVerified(true)
-        setOtpError("")
+        setOtpVerified(true);
+        setOtpError("");
+        // Auto-submit after verification
+        setTimeout(() => handleFinalSubmit(), 500);
       } else {
-        setOtpError(data.error || "Invalid or expired OTP.")
+        setOtpError(data.error || "Invalid or expired OTP.");
       }
     } catch (err) {
-      console.error(err)
-      setOtpError("Something went wrong verifying OTP.")
+      console.error(err);
+      setOtpError("Something went wrong verifying OTP.");
     } finally {
-      setIsVerifying(false)
+      setIsVerifying(false);
     }
-  }
+  };
 
   // Final form submit
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setServerError("")
-    setIsSuccess(false)
+  const handleFinalSubmit = async () => {
+    setServerError("");
+    setIsSuccess(false);
 
     if (!otpVerified) {
-      setOtpError("Please verify your email with OTP before registering.")
-      return
+      setOtpError("Please verify your email with OTP before registering.");
+      return;
     }
 
     try {
@@ -450,172 +142,389 @@ const Register = () => {
         email: DOMPurify.sanitize(formData.email),
         password: DOMPurify.sanitize(formData.password),
         otp: DOMPurify.sanitize(otp),
-      }
+      };
 
       const response = await fetch(`${BASE_URL}/user/register`, {
         method: "POST",
         body: JSON.stringify(sanitizedData),
         headers: { "Content-Type": "application/json" },
-      })
-      const data = await response.json()
+      });
+      const data = await response.json();
 
       if (data.error || !response.ok) {
-        setServerError(typeof data.error === "string" ? data.error : "Registration failed. Please try again.")
+        setServerError(typeof data.error === "string" ? data.error : "Registration failed. Please try again.");
+        setCurrentStep(1);
+        setOtpSent(false);
+        setOtpVerified(false);
       } else {
-        setIsSuccess(true)
-        setTimeout(() => navigate("/"), 2000)
+        setIsSuccess(true);
+        setTimeout(() => navigate("/login"), 2000);
       }
     } catch (error) {
-      console.error(error)
-      setServerError("Something went wrong. Please try again.")
+      console.error(error);
+      setServerError("Something went wrong. Please try again.");
+      setCurrentStep(1);
     }
-  }
+  };
 
   return (
-    <div className="max-w-[400px] mx-auto p-5">
-      <h2 className="text-center mb-5 text-2xl font-bold">Register</h2>
-      <form className="flex flex-col" onSubmit={handleSubmit}>
-        {/* Name */}
-        <div className="relative mb-5">
-          <label htmlFor="name" className="block mb-[5px] font-bold">
-            Name
-          </label>
-          <input
-            className="w-full p-2 box-border border border-[#ccc] rounded-[4px]"
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Enter your name"
-            required
-          />
-        </div>
-
-        {/* Email + Send OTP */}
-        <div className="relative mb-5">
-          <label htmlFor="email" className="block mb-[5px] font-bold">
-            Email
-          </label>
-          <div className="relative">
-            <input
-              className={`w-full p-2 box-border border rounded-[4px] pr-[80px] ${serverError ? "border-red-500" : "border-[#ccc]"}`}
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-            />
-            <button
-              type="button"
-              className="absolute top-1/2 right-2 -translate-y-1/2 px-2 py-1 text-xs leading-none border-none rounded-[3px] bg-[#007bff] text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-              onClick={handleSendOtp}
-              disabled={isSending || countdown > 0}
-            >
-              {isSending ? "Sending..." : countdown > 0 ? `${countdown}s` : "Send OTP"}
-            </button>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#E7F0FA' }}>
+      {/* Success Modal */}
+      {isSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 shadow-strong max-w-sm animate-scaleIn text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#10B981' }}>
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold mb-2" style={{ color: '#0D2440' }}>Registration Successful!</h3>
+            <p className="text-sm" style={{ color: '#7BA4D0' }}>Redirecting to login page...</p>
           </div>
-          {serverError && <span className="absolute top-full left-0 text-red-500 text-[0.7rem] mt-[2px] whitespace-nowrap">{serverError}</span>}
         </div>
+      )}
 
-        {/* OTP Input + Verify */}
-        {otpSent && (
-          <div className="relative mb-5">
-            <label htmlFor="otp" className="block mb-[5px] font-bold">
-              Enter OTP
-            </label>
-            <div className="relative">
-              <input
-                className="w-full p-2 box-border border border-[#ccc] rounded-[4px] pr-[80px]"
-                type="text"
-                id="otp"
-                name="otp"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="4-digit OTP"
-                maxLength={4}
-                required
-              />
+      {/* Registration Card */}
+      <div className="w-full max-w-md animate-scaleIn">
+        <div className="bg-white rounded-2xl shadow-strong p-8">
+          {/* Header with Step Indicator */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#2E5E99' }}>
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold mb-2" style={{ color: '#0D2440' }}>Create Account</h2>
+            <p className="text-sm mb-4" style={{ color: '#7BA4D0' }}>
+              {currentStep === 1 ? "Fill in your details to get started" : "Verify your email to complete registration"}
+            </p>
+            
+            {/* Step Indicator */}
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <div className="flex items-center">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
+                  style={{
+                    backgroundColor: currentStep >= 1 ? '#2E5E99' : '#E7F0FA',
+                    color: currentStep >= 1 ? '#FFFFFF' : '#7BA4D0',
+                  }}
+                >
+                  {currentStep > 1 ? (
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  ) : "1"}
+                </div>
+                <span className="ml-2 text-xs font-semibold" style={{ color: currentStep >= 1 ? '#2E5E99' : '#7BA4D0' }}>Details</span>
+              </div>
+              
+              <div className="w-12 h-0.5" style={{ backgroundColor: currentStep >= 2 ? '#2E5E99' : '#E7F0FA' }}></div>
+              
+              <div className="flex items-center">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
+                  style={{
+                    backgroundColor: currentStep >= 2 ? '#2E5E99' : '#E7F0FA',
+                    color: currentStep >= 2 ? '#FFFFFF' : '#7BA4D0',
+                  }}
+                >
+                  2
+                </div>
+                <span className="ml-2 text-xs font-semibold" style={{ color: currentStep >= 2 ? '#2E5E99' : '#7BA4D0' }}>Verify</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 1: Registration Form */}
+          {currentStep === 1 && (
+            <div className="space-y-5 animate-fadeIn">
+              {/* Name Field */}
+              <div>
+                <label htmlFor="name" className="block text-sm font-semibold mb-2" style={{ color: '#0D2440' }}>
+                  Full Name
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5" style={{ color: '#7BA4D0' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    required
+                    className="w-full pl-11 pr-4 py-3 border-2 rounded-lg transition-all duration-200 focus:outline-none"
+                    style={{ borderColor: '#E7F0FA', backgroundColor: '#FFFFFF' }}
+                    onFocus={(e) => e.target.style.borderColor = '#2E5E99'}
+                    onBlur={(e) => e.target.style.borderColor = '#E7F0FA'}
+                  />
+                </div>
+              </div>
+
+              {/* Email Field */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-semibold mb-2" style={{ color: '#0D2440' }}>
+                  Email Address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5" style={{ color: '#7BA4D0' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                    </svg>
+                  </div>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Enter your email"
+                    required
+                    className="w-full pl-11 pr-4 py-3 border-2 rounded-lg transition-all duration-200 focus:outline-none"
+                    style={{
+                      borderColor: serverError ? '#EF4444' : '#E7F0FA',
+                      backgroundColor: '#FFFFFF'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = serverError ? '#EF4444' : '#2E5E99'}
+                    onBlur={(e) => !serverError && (e.target.style.borderColor = '#E7F0FA')}
+                  />
+                </div>
+                {serverError && (
+                  <p className="mt-2 text-sm text-red-500 flex items-center gap-1 animate-fadeIn">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {serverError}
+                  </p>
+                )}
+              </div>
+
+              {/* Password Field */}
+              <div>
+                <label htmlFor="password" className="block text-sm font-semibold mb-2" style={{ color: '#0D2440' }}>
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5" style={{ color: '#7BA4D0' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Create a password"
+                    required
+                    className="w-full pl-11 pr-4 py-3 border-2 rounded-lg transition-all duration-200 focus:outline-none"
+                    style={{ borderColor: '#E7F0FA', backgroundColor: '#FFFFFF' }}
+                    onFocus={(e) => e.target.style.borderColor = '#2E5E99'}
+                    onBlur={(e) => e.target.style.borderColor = '#E7F0FA'}
+                  />
+                </div>
+              </div>
+
+              {/* Send Verification Code Button */}
               <button
                 type="button"
-                className="absolute top-1/2 right-2 -translate-y-1/2 px-2 py-1 text-xs leading-none border-none rounded-[3px] bg-[#007bff] text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={handleSendOtp}
+                disabled={isSending}
+                className="w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 hover:shadow-medium hover:transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: '#2E5E99' }}
+                onMouseEnter={(e) => !isSending && (e.target.style.backgroundColor = '#254a7f')}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#2E5E99'}
+              >
+                {isSending ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Sending...
+                  </span>
+                ) : "Send Verification Code"}
+              </button>
+
+              {/* Login Link */}
+              <p className="text-center text-sm" style={{ color: '#0D2440' }}>
+                Already have an account?{" "}
+                <Link to="/login" className="font-semibold hover:underline" style={{ color: '#2E5E99' }}>
+                  Sign In
+                </Link>
+              </p>
+
+              {/* Divider */}
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t" style={{ borderColor: '#E7F0FA' }}></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 bg-white" style={{ color: '#7BA4D0' }}>Or register with</span>
+                </div>
+              </div>
+
+              {/* OAuth Buttons */}
+              <div className="space-y-3">
+                <div className="flex justify-center">
+                  <GoogleLogin
+                    onSuccess={async (credentialResponse) => {
+                      const data = await loginWithGoogle(credentialResponse.credential);
+                      if (data && data.error) {
+                        console.error("Google login error:", data.error);
+                        setServerError(typeof data.error === "string" ? data.error : "Google login failed");
+                        return;
+                      }
+                      if (data && data.success) {
+                        navigate("/");
+                      }
+                    }}
+                    shape="rectangular"
+                    theme="outline"
+                    text="continue_with"
+                    width="320"
+                    onError={() => console.log("Login Failed")}
+                    useOneTap
+                  />
+                </div>
+
+                <button
+                  onClick={loginWithGitHubHandler}
+                  className="w-full flex items-center justify-center gap-3 py-3 px-4 border-2 rounded-lg font-semibold transition-all duration-200 hover:shadow-soft"
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    borderColor: '#E7F0FA',
+                    color: '#0D2440'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#E7F0FA';
+                    e.target.style.borderColor = '#7BA4D0';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = '#FFFFFF';
+                    e.target.style.borderColor = '#E7F0FA';
+                  }}
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                  </svg>
+                  Continue with GitHub
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: OTP Verification */}
+          {currentStep === 2 && (
+            <div className="space-y-5 animate-fadeIn">
+              {/* Info Message */}
+              <div className="p-4 rounded-lg" style={{ backgroundColor: '#E7F0FA' }}>
+                <p className="text-sm" style={{ color: '#2E5E99' }}>
+                  We've sent a verification code to <strong>{formData.email}</strong>
+                </p>
+              </div>
+
+              {/* OTP Input */}
+              <div>
+                <label htmlFor="otp" className="block text-sm font-semibold mb-2" style={{ color: '#0D2440' }}>
+                  Verification Code
+                </label>
+                <input
+                  type="text"
+                  id="otp"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  placeholder="Enter 4-digit code"
+                  maxLength={4}
+                  className="w-full px-4 py-3 border-2 rounded-lg text-center text-2xl font-bold tracking-widest transition-all duration-200 focus:outline-none"
+                  style={{
+                    borderColor: otpError ? '#EF4444' : '#E7F0FA',
+                    backgroundColor: '#FFFFFF',
+                    color: '#0D2440'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = otpError ? '#EF4444' : '#2E5E99'}
+                  onBlur={(e) => !otpError && (e.target.style.borderColor = '#E7F0FA')}
+                />
+                {otpError && (
+                  <p className="mt-2 text-sm text-red-500 flex items-center gap-1 animate-fadeIn">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {otpError}
+                  </p>
+                )}
+              </div>
+
+              {/* Verify Button */}
+              <button
                 onClick={handleVerifyOtp}
                 disabled={isVerifying || otpVerified}
+                className="w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 hover:shadow-medium hover:transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: otpVerified ? '#10B981' : '#2E5E99'
+                }}
+                onMouseEnter={(e) => !isVerifying && !otpVerified && (e.target.style.backgroundColor = '#254a7f')}
+                onMouseLeave={(e) => !otpVerified && (e.target.style.backgroundColor = '#2E5E99')}
               >
-                {isVerifying ? "Verifying..." : otpVerified ? "Verified" : "Verify OTP"}
+                {isVerifying ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Verifying...
+                  </span>
+                ) : otpVerified ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Verified
+                  </span>
+                ) : "Verify Code"}
+              </button>
+
+              {/* Resend Code */}
+              <div className="text-center">
+                {countdown > 0 ? (
+                  <p className="text-sm" style={{ color: '#7BA4D0' }}>
+                    Resend code in {countdown}s
+                  </p>
+                ) : (
+                  <button
+                    onClick={handleSendOtp}
+                    className="text-sm font-semibold hover:underline"
+                    style={{ color: '#2E5E99' }}
+                  >
+                    Resend verification code
+                  </button>
+                )}
+              </div>
+
+              {/* Back Button */}
+              <button
+                onClick={() => {
+                  setCurrentStep(1);
+                  setOtp("");
+                  setOtpError("");
+                  setOtpVerified(false);
+                }}
+                className="w-full py-2 text-sm font-semibold"
+                style={{ color: '#7BA4D0' }}
+              >
+                ← Back to details
               </button>
             </div>
-            {otpError && <span className="absolute top-full left-0 text-red-500 text-[0.7rem] mt-[2px] whitespace-nowrap">{otpError}</span>}
-          </div>
-        )}
-
-        {/* Password */}
-        <div className="relative mb-5">
-          <label htmlFor="password" className="block mb-[5px] font-bold">
-            Password
-          </label>
-          <input
-            className="w-full p-2 box-border border border-[#ccc] rounded-[4px]"
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Enter your password"
-            required
-          />
+          )}
         </div>
-
-        <button
-          type="submit"
-          className={`bg-[#007bff] text-white border-none rounded-[4px] p-[10px_15px] w-full cursor-pointer text-[1rem] hover:opacity-90 disabled:bg-[#92a6bc] disabled:cursor-not-allowed ${isSuccess ? "bg-green-600" : ""}`}
-          disabled={!otpVerified || isSuccess}
-        >
-          {isSuccess ? "Registration Successful" : "Register"}
-        </button>
-      </form>
-
-      <p className="text-center mt-[10px]">
-        Already have an account? <Link to="/login" className="text-[#0066cc] no-underline font-medium hover:underline hover:text-[#004a99]">Login</Link>
-      </p>
-
-      <div className="text-center my-5 relative">
-        <span className="bg-white px-[15px] text-[#666] text-[0.9rem] relative z-10">Or</span>
-        <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-[#ddd] -z-10"></div>
-      </div>
-
-      <div className="flex justify-center mt-[10px]">
-        <GoogleLogin
-          onSuccess={async (credentialResponse) => {
-            const data = await loginWithGoogle(credentialResponse.credential)
-            if (data && data.error) {
-              console.error("Google login error:", data.error)
-              setServerError(typeof data.error === "string" ? data.error : "Google login failed")
-              return
-            }
-            if (data && data.success) {
-              navigate("/")
-            }
-          }}
-          shape="pill"
-          theme="filled_blue"
-          text="continue_with"
-          onError={() => {
-            console.log("Login Failed")
-          }}
-          useOneTap
-        />
-      </div>
-
-      <div className="flex justify-center mt-[10px]">
-        <button onClick={loginWithGitHubHandler} className="bg-[#24292e] text-white border-none rounded-md px-5 py-[10px] text-sm font-medium cursor-pointer flex items-center gap-2 transition-colors duration-200 hover:bg-[#1a1e22] active:bg-[#0d1117]">
-          Continue with GitHub
-        </button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Register
+export default Register;

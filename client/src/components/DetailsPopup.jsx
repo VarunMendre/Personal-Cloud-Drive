@@ -138,21 +138,21 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
   const getIcon = (type) => {
     switch (type) {
       case "folder":
-        return <FaFolder className="w-10 h-10 text-blue-500" />;
+        return <FaFolder className="w-10 h-10" style={{ color: '#2E5E99' }} />;
       case "image":
-        return <FaFileImage className="w-10 h-10 text-purple-500" />;
+        return <FaFileImage className="w-10 h-10" style={{ color: '#9333EA' }} />;
       case "video":
-        return <FaFileVideo className="w-10 h-10 text-red-500" />;
+        return <FaFileVideo className="w-10 h-10" style={{ color: '#DC2626' }} />;
       case "audio":
-        return <FaFileAudio className="w-10 h-10 text-yellow-500" />;
+        return <FaFileAudio className="w-10 h-10" style={{ color: '#EAB308' }} />;
       case "pdf":
-        return <FaFilePdf className="w-10 h-10 text-red-600" />;
+        return <FaFilePdf className="w-10 h-10" style={{ color: '#DC2626' }} />;
       case "code":
-        return <FaFileCode className="w-10 h-10 text-green-500" />;
+        return <FaFileCode className="w-10 h-10" style={{ color: '#10B981' }} />;
       case "archive":
-        return <FaFileArchive className="w-10 h-10 text-orange-500" />;
+        return <FaFileArchive className="w-10 h-10" style={{ color: '#F97316' }} />;
       default:
-        return <FaFile className="w-10 h-10 text-gray-400" />;
+        return <FaFile className="w-10 h-10" style={{ color: '#7BA4D0' }} />;
     }
   };
 
@@ -172,29 +172,30 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[9999] p-4 animate-fadeIn"
+      className="fixed inset-0 flex items-center justify-center z-[9999] p-4 animate-fadeIn modal-backdrop"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-xl max-w-lg w-full animate-slideUp"
+        className="bg-white rounded-2xl shadow-strong max-w-lg w-full animate-scaleIn"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-6 py-5 border-b flex items-center justify-between" style={{ borderColor: '#E7F0FA' }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FaInfoCircle className="w-5 h-5 text-blue-600" />
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#E7F0FA' }}>
+              <FaInfoCircle className="w-6 h-6" style={{ color: '#2E5E99' }} />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Details</h3>
-              <p className="text-sm text-gray-500 mt-0.5">
+              <h3 className="text-lg font-bold" style={{ color: '#0D2440' }}>Details</h3>
+              <p className="text-sm mt-0.5" style={{ color: '#7BA4D0' }}>
                 {isDirectory ? "Folder" : "File"} information
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-2"
+            className="hover:bg-opacity-10 transition-colors p-2 rounded-lg"
+            style={{ color: '#7BA4D0' }}
           >
             <FaTimes className="w-5 h-5" />
           </button>
@@ -301,10 +302,23 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <div className="px-6 py-4 border-t flex justify-end gap-3" style={{ borderColor: '#E7F0FA' }}>
           {!isDirectory && (
              <button
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+              className="flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 border-2"
+              style={{
+                color: '#2E5E99',
+                backgroundColor: '#FFFFFF',
+                borderColor: '#E7F0FA'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#E7F0FA';
+                e.target.style.borderColor = '#7BA4D0';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#FFFFFF';
+                e.target.style.borderColor = '#E7F0FA';
+              }}
               onClick={handleDownload}
             >
               <FaDownload className="text-sm" />
@@ -312,7 +326,10 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
             </button>
           )}
           <button
-            className="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-3 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-medium"
+            style={{ backgroundColor: '#2E5E99' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#254a7f'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#2E5E99'}
             onClick={onClose}
           >
             Close

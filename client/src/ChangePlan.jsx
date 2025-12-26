@@ -157,9 +157,9 @@ export default function ChangePlan() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-6"></div>
-        <p className="text-slate-500 font-bold animate-pulse uppercase tracking-widest text-xs">Preparing upgrade options...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: '#E7F0FA' }}>
+        <div className="w-16 h-16 border-4 border-t-transparent rounded-full animate-spin mb-6" style={{ borderColor: '#2E5E99', borderTopColor: 'transparent' }}></div>
+        <p className="font-bold animate-pulse uppercase tracking-widest text-xs" style={{ color: '#7BA4D0' }}>Preparing upgrade options...</p>
       </div>
     );
   }
@@ -167,8 +167,22 @@ export default function ChangePlan() {
   if (!currentPlan) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-16 px-4">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen py-16 px-4 pt-24" style={{ backgroundColor: '#E7F0FA' }}>
+      <div className="max-w-5xl mx-auto relative">
+        {/* Back to Subscription Arrow */}
+        <Link 
+          to="/subscription" 
+          className="absolute left-0 -top-8 flex items-center gap-2 text-sm font-semibold transition-all duration-200 hover:gap-3"
+          style={{ color: '#2E5E99' }}
+          onMouseEnter={(e) => e.target.style.color = '#0D2440'}
+          onMouseLeave={(e) => e.target.style.color = '#2E5E99'}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Subscription
+        </Link>
+        
         {errorAlert.show && (
           <SubscriptionAlert 
             title={errorAlert.title}
