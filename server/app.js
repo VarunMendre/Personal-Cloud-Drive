@@ -66,9 +66,18 @@ app.use("/share", shareRoutes);
 app.use("/webhooks", webhookRoutes);
 app.use("/subscriptions", checkAuth, subscriptionRoutes);
 
+// Testing rotes for AWS EC2
 app.get("/", (req, res) => {
 	res.json({message: "Backend is Live from AWS"});
 })
+
+// Checking how pm2 not restarts the with npm command
+
+app.get("/err", (req, res) => {
+  console.log("Process exited with error");
+  process.exit(1);
+});
+
 
 app.use((err, req, res, next) => {
   console.error(err);
