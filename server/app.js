@@ -66,6 +66,10 @@ app.use("/share", shareRoutes);
 app.use("/webhooks", webhookRoutes);
 app.use("/subscriptions", checkAuth, subscriptionRoutes);
 
+app.get("/", (req, res) => {
+	res.json({message: "Backend is Live from AWS"});
+})
+
 app.use((err, req, res, next) => {
   console.error(err);
   const status = err.status || 500;
