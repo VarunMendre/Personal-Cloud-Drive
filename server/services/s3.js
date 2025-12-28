@@ -18,7 +18,7 @@ export const s3Client = new S3Client({
 
 export const createUploadSignedUrl = async ({ key, contentType }) => {
   const command = new PutObjectCommand({
-    Bucket: "varun-personal-stuff",
+    Bucket: process.env.BUCKET_NAME,
     Key: key,
     ContentType: contentType,
   });
@@ -33,7 +33,7 @@ export const createUploadSignedUrl = async ({ key, contentType }) => {
 
 export const completeUploadCheck = async ({ filename }) => {
   const command = new ListObjectsV2Command({
-    Bucket: "varun-personal-stuff",
+    Bucket: process.env.BUCKET_NAME,
     Prefix: filename,
     MaxKeys: 1,
   });
@@ -51,7 +51,7 @@ export const completeUploadCheck = async ({ filename }) => {
 
 export const getFileUrl = async ({ Key, download = false, filename }) => {
   const command = new GetObjectCommand({
-    Bucket: "varun-personal-stuff",
+    Bucket: process.env.BUCKET_NAME,
     Key: Key,
     ResponseContentDisposition: `${download ? "attachment" : "inline"}; filename=${encodeURIComponent(filename)}`,
   });
@@ -64,7 +64,7 @@ export const getFileUrl = async ({ Key, download = false, filename }) => {
 
 export const deletes3File = async (Key) => {
   const command = new DeleteObjectCommand({
-    Bucket: "varun-personal-stuff",
+    Bucket: process.env.BUCKET_NAME,
     Key: Key,
   });
 
@@ -73,7 +73,7 @@ export const deletes3File = async (Key) => {
 
 export const deletes3Files = async (keys) => {
   const command = new DeleteObjectsCommand({
-    Bucket: "varun-personal-stuff",
+    Bucket: process.env.BUCKET_NAME,
     Delete: {
       Objects: keys,
       Quiet: false, // set true to skip individual delete responses

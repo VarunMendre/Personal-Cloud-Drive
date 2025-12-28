@@ -2,10 +2,10 @@ import { getSignedUrl } from "@aws-sdk/cloudfront-signer";
 
 
 const privateKey = process.env.CLOUDFRONT_PRIVATE_KEY;
-const keyPairId = process.env.CLOUDFRONT_KEY_PAIR_ID || "K1Z0NXWPQ270K1";
+const keyPairId = process.env.CLOUDFRONT_KEY_PAIR_ID;
 const dateLessThan = new Date(Date.now() + 1000 * 60 * 60).toISOString(); // any Date constructor compatible
 
-const distributionName = process.env.CLOUDFRONT_DOMAIN || `https://d1ckynu1o8h8wy.cloudfront.net`;
+const distributionName = process.env.CLOUDFRONT_DOMAIN;
 
 export const createCloudFrontSignedGetUrl = ({key, filename}) => {
   const url = `${distributionName}/${key}?response-content-disposition=${encodeURIComponent(`attachment;filename="${filename || 'file'}"`)}`;

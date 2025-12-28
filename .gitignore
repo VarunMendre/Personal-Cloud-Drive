@@ -1,3 +1,5 @@
 node_modules
 .env
 storage
+private_key.pem
+public_key.pem
