@@ -15,12 +15,15 @@ import {
   X
 } from "lucide-react";
 import { BASE_URL } from "./components/DirectoryHeader";
+import { useAuth } from "./context/AuthContext";
 
 export default function UserFilesPage() {
   const { userId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [user, setUser] = useState(location.state?.user || null);
+  const { user: currentUser } = useAuth();
+  
+  const [targetUser, setTargetUser] = useState(location.state?.user || null);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,7 +35,6 @@ export default function UserFilesPage() {
   const [previewFileUrl, setPreviewFileUrl] = useState("");
   const [previewFileType, setPreviewFileType] = useState("");
 
-  const [currentUser, setCurrentUser] = useState(location.state?.currentUser || null);
   const hasInitialized = useRef(false);
   const renameInputRef = useRef(null);
 
@@ -40,35 +42,22 @@ export default function UserFilesPage() {
     if (hasInitialized.current) return;
     
     const initData = async () => {
-      // 1. Fetch Current User if missing
-      let activeUser = currentUser;
-      if (!activeUser) {
-        try {
-          const res = await fetch(`${BASE_URL}/user`, { credentials: "include" });
-          if (res.ok) {
-            activeUser = await res.json();
-            setCurrentUser(activeUser);
-          } else {
-            navigate("/login");
-            return;
-          }
-        } catch (err) {
-          console.error("Error fetching current user:", err);
-          navigate("/login");
-          return;
-        }
+      // 1. We rely on AuthContext for currentUser. If not logged in, AuthContext handles it or we redirect.
+      if (!currentUser) {
+         // Optionally wait or redirect if strict auth is needed
+         // But here we just proceed to fetch target user files
       }
 
       // 2. Fetch Target User if missing
-      let targetUser = user;
-      if (!targetUser) {
+      let tUser = targetUser;
+      if (!tUser) {
         try {
           const res = await fetch(`${BASE_URL}/users`, { credentials: "include" });
           if (res.ok) {
             const usersList = await res.json();
-            targetUser = usersList.find((u) => (u._id || u.id) === userId);
-            if (targetUser) {
-              setUser(targetUser);
+            tUser = usersList.find((u) => (u._id || u.id) === userId);
+            if (tUser) {
+              setTargetUser(tUser);
             } else {
               alert("User not found or access denied.");
               navigate("/users");
@@ -86,7 +75,7 @@ export default function UserFilesPage() {
       }
 
       // 3. Fetch Files
-      if (targetUser) {
+      if (tUser) {
         await fetchFiles();
       }
       
@@ -94,7 +83,7 @@ export default function UserFilesPage() {
     };
 
     initData();
-  }, [userId]);
+  }, [userId, currentUser]);
 
   const fetchFiles = async () => {
     setLoading(true);
@@ -218,22 +207,22 @@ export default function UserFilesPage() {
 
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <div className="text-sm font-medium text-gray-900">{user.name}</div>
-              <div className="text-xs text-gray-500">{user.email}</div>
+              <div className="text-sm font-medium text-gray-900">{targetUser.name}</div>
+              <div className="text-xs text-gray-500">{targetUser.email}</div>
             </div>
-            {user.picture ? (
+            {targetUser.picture ? (
               <img
-                src={user.picture}
-                alt={user.name}
+                src={targetUser.picture}
+                alt={targetUser.name}
                 className="w-10 h-10 rounded-full object-cover border border-gray-200"
               />
             ) : (
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
-                {user.name.charAt(0)}
+                {targetUser.name.charAt(0)}
               </div>
             )}
             <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-              {user.role}
+              {targetUser.role}
             </span>
           </div>
         </div>

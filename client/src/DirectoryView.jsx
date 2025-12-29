@@ -156,6 +156,7 @@ function DirectoryView() {
       setFilesList([...data.files].reverse());
     } catch (error) {
       setErrorMessage(error.message);
+      showToast(error.message, "error");
     }
   }
 
@@ -306,6 +307,7 @@ function DirectoryView() {
     } catch (error) {
       console.error("Import from Drive failed:", error);
       setErrorMessage("Failed to import file from Google Drive: " + error.message);
+      showToast("Failed to import from Drive: " + error.message, "error");
     } finally {
       setIsImporting(false);
     }
@@ -533,7 +535,7 @@ function DirectoryView() {
       setErrorMessage(
         `Upload failed for ${currentItem.name}: ${error.message}`
       );
-      showToast(`Upload failed for ${currentItem.name}`, "error");
+      showToast(`Upload failed: ${error.message}`, "error");
 
       processUploadQueue();
     }
@@ -686,6 +688,7 @@ function DirectoryView() {
       getDirectoryItems();
     } catch (error) {
       setErrorMessage(error.message);
+      showToast(error.message, "error");
     }
   }
 
@@ -738,6 +741,7 @@ function DirectoryView() {
       getDirectoryItems();
     } catch (error) {
       setErrorMessage(error.message);
+      showToast(error.message, "error");
     }
   }
 
@@ -807,18 +811,7 @@ function DirectoryView() {
 
   return (
     <div className="min-h-screen pt-16" style={{ backgroundColor: '#E7F0FA' }}>
-      {errorMessage &&
-        errorMessage !==
-          "Directory not found or you do not have access to it!" && (
-          <div className="mx-6 mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-xl text-red-700 shadow-soft animate-fadeIn">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <span className="font-medium">{errorMessage}</span>
-            </div>
-          </div>
-        )}
+
 
       {isImporting && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -922,7 +915,7 @@ function DirectoryView() {
       />
 
       {/* Upload Section with 3 Buttons */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 pt-24 pb-8">
         <div className="bg-white rounded-2xl border-2 border-dashed p-8 text-center shadow-soft transition-all duration-300 hover:shadow-medium" style={{ borderColor: '#7BA4D0' }}>
           <div className="mb-6">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#E7F0FA' }}>

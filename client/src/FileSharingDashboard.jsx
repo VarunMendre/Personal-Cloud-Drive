@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DirectoryHeader from "./components/DirectoryHeader";
+import { useAuth } from "./context/AuthContext";
 import { FaShare, FaUsers, FaFileAlt, FaArrowRight, FaClock } from "react-icons/fa";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 function FileSharingDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     sharedWithMeCount: 0,
     sharedByMeCount: 0,
@@ -15,34 +17,10 @@ function FileSharingDashboard() {
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // User info for header
-  const [userName, setUserName] = useState("Guest User");
-  const [userEmail, setUserEmail] = useState("guest@example.com");
-  const [userPicture, setUserPicture] = useState("");
-  const [userRole, setUserRole] = useState("User");
-
   useEffect(() => {
-    fetchUser();
     fetchStats();
     fetchRecentActivity();
   }, []);
-
-  const fetchUser = async () => {
-    try {
-      const response = await fetch(`${BASE_URL}/user`, {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUserName(data.name);
-        setUserEmail(data.email);
-        setUserPicture(data.picture);
-        setUserRole(data.role);
-      }
-    } catch (err) {
-      console.error("Error fetching user info:", err);
-    }
-  };
 
   const fetchStats = async () => {
     try {
@@ -91,13 +69,13 @@ function FileSharingDashboard() {
       <DirectoryHeader
         directoryName="File Sharing"
         path={[]}
-        userName={userName}
-        userEmail={userEmail}
-        userPicture={userPicture}
-        userRole={userRole}
+        userName={user?.name || "Guest User"}
+        userEmail={user?.email || "guest@example.com"}
+        userPicture={user?.picture}
+        userRole={user?.role || "User"}
       />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 pt-24 pb-8">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">File Sharing Dashboard</h1>

@@ -289,7 +289,7 @@ function UserSettings() {
         userEmail={user?.email || "guest@example.com"}
         userPicture={user?.picture}
       />
-      <div className="py-8">
+      <div className="pt-24 pb-8">
         <div className="max-w-4xl mx-auto px-6">
         {/* Back Button */}
         <button

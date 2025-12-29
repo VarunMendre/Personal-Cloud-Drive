@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 import DirectoryHeader from "./components/DirectoryHeader";
 import { FaArrowLeft, FaFileAlt, FaSearch, FaUsers } from "react-icons/fa";
 
@@ -7,38 +8,15 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 function SharedByMePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [sharedFiles, setSharedFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
 
-  // User info for header
-  const [userName, setUserName] = useState("Guest User");
-  const [userEmail, setUserEmail] = useState("guest@example.com");
-  const [userPicture, setUserPicture] = useState("");
-  const [userRole, setUserRole] = useState("User");
-
   useEffect(() => {
-    fetchUser();
     fetchSharedFiles();
   }, []);
-
-  const fetchUser = async () => {
-    try {
-      const response = await fetch(`${BASE_URL}/user`, {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUserName(data.name);
-        setUserEmail(data.email);
-        setUserPicture(data.picture);
-        setUserRole(data.role);
-      }
-    } catch (err) {
-      console.error("Error fetching user info:", err);
-    }
-  };
 
   const fetchSharedFiles = async () => {
     try {
@@ -72,13 +50,13 @@ function SharedByMePage() {
       <DirectoryHeader
         directoryName="Shared By Me"
         path={[]}
-        userName={userName}
-        userEmail={userEmail}
-        userPicture={userPicture}
-        userRole={userRole}
+        userName={user?.name || "Guest User"}
+        userEmail={user?.email || "guest@example.com"}
+        userPicture={user?.picture}
+        userRole={user?.role || "User"}
       />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 pt-24 pb-8">
         {/* Header */}
         <div className="mb-6">
           <button

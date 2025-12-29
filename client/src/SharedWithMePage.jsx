@@ -78,7 +78,7 @@ function SharedWithMePage() {
         userRole={user?.role || "User"}
       />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 pt-24 pb-8">
         {/* Header */}
         <div className="mb-6">
           <button

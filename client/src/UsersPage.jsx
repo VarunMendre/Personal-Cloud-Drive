@@ -35,7 +35,7 @@ export default function UsersPage() {
 
   // --- State ---
   const [users, setUsers] = useState([]);
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isAuthenticating } = useAuth();
 
   // Modals
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -371,6 +371,7 @@ export default function UsersPage() {
 
   const confirmResume = async () => {
     if (!selectedUser) return;
+    console.log("Resuming subscription for user:", selectedUser.name, "ID:", selectedUser.razorpaySubscriptionId);
     try {
       const response = await fetch(`${BASE_URL}/subscriptions/${selectedUser.razorpaySubscriptionId}/resume`, {
         method: "POST",
@@ -397,6 +398,15 @@ export default function UsersPage() {
       setTimeout(() => setShowErrorToast(false), 3000);
     }
   };
+
+  // --- Loading Check ---
+  if (isAuthenticating || !currentUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   // --- Permissions ---
   const canViewFiles = currentUser.role === "Owner" || currentUser.role === "Admin";
@@ -441,13 +451,13 @@ export default function UsersPage() {
       <DirectoryHeader
         directoryName="Users"
         path={[]}
-        userName={currentUser.name}
-        userEmail={currentUser.email}
-        userPicture={currentUser.picture}
-        userRole={currentUser.role}
+        userName={currentUser?.name || "Guest User"}
+        userEmail={currentUser?.email || "guest@example.com"}
+        userPicture={currentUser?.picture}
+        userRole={currentUser?.role || "User"}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-6">
         {/* Top Section: Back Button & User Info */}
         <div className="bg-white rounded-lg shadow-sm p-3 mb-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <button
