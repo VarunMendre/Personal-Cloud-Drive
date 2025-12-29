@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 import DirectoryHeader, { BASE_URL } from "./components/DirectoryHeader";
 import {
   FaGoogle,
@@ -9,18 +10,14 @@ import {
   FaEye,
   FaEyeSlash,
 } from "react-icons/fa";
+import { Alert, AlertDescription, AlertTitle } from "./components/lightswind/alert";
 
 function UserSettings() {
-  const navigate = useNavigate();
-
-  // User info
-  const [userName, setUserName] = useState("");
-  const [userEmail, setUserEmail] = useState("");
-  const [userPicture, setUserPicture] = useState("");
+  const { user } = useAuth();
 
   // Storage info
-  const [maxStorageLimit, setMaxStorageLimit] = useState(1073741824); // 1GB default
-  const [usedStorageInBytes, setUsedStorageInBytes] = useState(0);
+  const maxStorageLimit = user?.maxStorageLimit || 1073741824;
+  const usedStorageInBytes = user?.usedStorageInBytes || 0;
 
   // Connected accounts
   const [connectedProvider, setConnectedProvider] = useState(null); // 'google' or 'github'
@@ -65,84 +62,60 @@ function UserSettings() {
   // Calculate storage stats
   const usagePercentage = (usedStorageInBytes / maxStorageLimit) * 100;
 
-  // Fetch user data on mount
+  // Fetch user data on mount (only for non-global data like password status)
   useEffect(() => {
-    async function fetchUserData() {
+    async function fetchAdditionalUserData() {
+      if (!user) return;
+
       try {
-        // Fetch user info
-        const userResponse = await fetch(`${BASE_URL}/user`, {
+        // Check password status from backend
+        const passwordResponse = await fetch(`${BASE_URL}/user/has-password`, {
           credentials: "include",
         });
 
-        if (userResponse.status === 401) {
-          navigate("/login");
-          return;
+        let passwordStatus = false;
+        if (passwordResponse.ok) {
+          const passwordData = await passwordResponse.json();
+          passwordStatus = passwordData.hasPassword;
         }
 
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setUserName(userData.name);
-          setUserEmail(userData.email);
-          setUserPicture(userData.picture);
-          setMaxStorageLimit(userData.maxStorageLimit);
-          setUsedStorageInBytes(userData.usedStorageInBytes);
+        // WORKAROUND: Backend /user/has-password is broken
+        const storedPasswordStatus = localStorage.getItem(`hasPassword_${user.email}`);
+        if (storedPasswordStatus !== null) {
+          passwordStatus = storedPasswordStatus === 'true';
+        }
+        
+        setHasPassword(passwordStatus);
 
-          // Check password status from backend
-          const passwordResponse = await fetch(`${BASE_URL}/user/has-password`, {
-            credentials: "include",
-          });
+        // Detect connected provider
+        const isGoogleImage = user.picture?.includes("googleusercontent.com");
+        const isGithubImage = user.picture?.includes("githubusercontent.com") || user.picture?.includes("avatars.github");
 
-          let passwordStatus = false;
-          if (passwordResponse.ok) {
-            const passwordData = await passwordResponse.json();
-            passwordStatus = passwordData.hasPassword;
+        if (!passwordStatus && user.picture) {
+          if (user.email.includes("@gmail.com") || user.email.includes("@googlemail.com") || isGoogleImage) {
+            setConnectedProvider("google");
+          } else if (user.email.includes("@users.noreply.github.com") || user.email.includes("github") || isGithubImage) {
+            setConnectedProvider("github");
           } else {
-            console.error("Failed to fetch password status:", passwordResponse.status);
+            setConnectedProvider("google");
           }
-
-          // WORKAROUND: Backend /user/has-password is broken (doesn't include password field in req.user)
-          // Use localStorage to track if user has set a password
-          const storedPasswordStatus = localStorage.getItem(`hasPassword_${userData.email}`);
-          if (storedPasswordStatus !== null) {
-            passwordStatus = storedPasswordStatus === 'true';
-          }
-          
-          setHasPassword(passwordStatus);
-
-          // Detect connected provider - improved logic
-          const isGoogleImage = userData.picture?.includes("googleusercontent.com");
-          const isGithubImage = userData.picture?.includes("githubusercontent.com") || userData.picture?.includes("avatars.github");
-
-          // If user has no password and has a picture, they likely logged in via OAuth
-          if (!passwordStatus && userData.picture) {
-            // Check email domain or image URL to determine provider
-            if (userData.email.includes("@gmail.com") || userData.email.includes("@googlemail.com") || isGoogleImage) {
-              setConnectedProvider("google");
-            } else if (userData.email.includes("@users.noreply.github.com") || userData.email.includes("github") || isGithubImage) {
-              setConnectedProvider("github");
-            } else {
-              // Generic OAuth user - default to google if they have a picture
-              setConnectedProvider("google");
-            }
-          } else if (userData.picture) {
-            // User has password but also has picture - might have set password after OAuth login (or is a regular user with an avatar, but in this app picture usually comes from OAuth)
-            if (userData.email.includes("@gmail.com") || userData.email.includes("@googlemail.com") || isGoogleImage) {
-              setConnectedProvider("google");
-            } else if (userData.email.includes("@users.noreply.github.com") || userData.email.includes("github") || isGithubImage) {
-              setConnectedProvider("github");
-            }
+        } else if (user.picture) {
+          if (user.email.includes("@gmail.com") || user.email.includes("@googlemail.com") || isGoogleImage) {
+            setConnectedProvider("google");
+          } else if (user.email.includes("@users.noreply.github.com") || user.email.includes("github") || isGithubImage) {
+            setConnectedProvider("github");
           }
         }
       } catch (err) {
-        console.error("Error fetching user data:", err);
-        setError("Failed to load user settings");
+        console.error("Error fetching additional user data:", err);
+        setError("Failed to load some settings");
       } finally {
         setLoading(false);
       }
     }
 
-    fetchUserData();
-  }, [navigate]);
+    fetchAdditionalUserData();
+  }, [user]);
 
   // Handle password change/set
   const handlePasswordSubmit = async (e) => {
@@ -233,7 +206,7 @@ function UserSettings() {
         setHasPassword(true);
         
         // Store password status in localStorage
-        localStorage.setItem(`hasPassword_${userEmail}`, 'true');
+        localStorage.setItem(`hasPassword_${user?.email}`, 'true');
         
         // Show custom success notification
         setShowSuccessNotification(true);
@@ -312,9 +285,9 @@ function UserSettings() {
       <DirectoryHeader
         directoryName="Settings"
         path={[]}
-        userName={userName}
-        userEmail={userEmail}
-        userPicture={userPicture}
+        userName={user?.name || "Guest User"}
+        userEmail={user?.email || "guest@example.com"}
+        userPicture={user?.picture}
       />
       <div className="py-8">
         <div className="max-w-4xl mx-auto px-6">
@@ -335,16 +308,17 @@ function UserSettings() {
           </p>
         </div>
 
+
         {/* Error/Success Messages */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-            {error}
-          </div>
+          <Alert variant="destructive" withIcon dismissible onDismiss={() => setError("")} className="mb-6 bg-white shadow-sm">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
         {success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
-            {success}
-          </div>
+          <Alert variant="success" withIcon dismissible onDismiss={() => setSuccess("")} className="mb-6 bg-white shadow-sm">
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
         )}
 
         {/* Storage Usage Section */}
@@ -475,7 +449,7 @@ function UserSettings() {
                   <div className="font-semibold text-gray-900 capitalize">
                     {connectedProvider}
                   </div>
-                  <div className="text-sm text-gray-600">{userEmail}</div>
+                  <div className="text-sm text-gray-600">{user?.email}</div>
                 </div>
               </div>
               <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full">
@@ -521,11 +495,12 @@ function UserSettings() {
               : "Set a password to enable login with email and password."}
           </p>
 
+
           {/* Password-specific error message */}
           {passwordError && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              {passwordError}
-            </div>
+            <Alert variant="destructive" withIcon className="mb-4 bg-white shadow-sm">
+              <AlertDescription>{passwordError}</AlertDescription>
+            </Alert>
           )}
 
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
@@ -715,28 +690,14 @@ function UserSettings() {
         </div>
       )}
 
+
       {/* Custom Success Notification */}
       {showSuccessNotification && (
-        <div className="fixed top-4 right-4 z-50 animate-slideDown">
-          <div className="bg-white rounded-lg shadow-2xl p-4 flex items-center gap-3 border-l-4 border-green-500 min-w-[320px]">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h4 className="font-semibold text-gray-900">Success!</h4>
-              <p className="text-sm text-gray-600">{success}</p>
-            </div>
-            <button
-              onClick={() => setShowSuccessNotification(false)}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+        <div className="fixed top-24 right-6 z-50 max-w-sm w-full md:w-[380px]">
+          <Alert variant="success" withIcon duration={4000} dismissible onDismiss={() => setShowSuccessNotification(false)} className="bg-white/95 backdrop-blur-md shadow-2xl border-green-100">
+            <AlertTitle>Success!</AlertTitle>
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
         </div>
       )}
     </div>

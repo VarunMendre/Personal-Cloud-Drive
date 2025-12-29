@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 import DirectoryHeader from "./components/DirectoryHeader";
 import { 
   ArrowLeft, 
@@ -12,22 +13,12 @@ import {
   X, 
   Info 
 } from "lucide-react";
+import { Alert, AlertDescription } from "./components/lightswind/alert";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 function SharedWithMePage() {
-  const navigate = useNavigate();
-  const [sharedFiles, setSharedFiles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState("all");
-
-  // User info for header
-  const [userName, setUserName] = useState("Guest User");
-  const [userEmail, setUserEmail] = useState("guest@example.com");
-  const [userPicture, setUserPicture] = useState("");
-  const [userRole, setUserRole] = useState("User");
-  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const { user } = useAuth();
 
   // Toast state
   const [toast, setToast] = useState({ show: false, message: "", type: "info" });
@@ -38,27 +29,8 @@ function SharedWithMePage() {
   };
 
   useEffect(() => {
-    fetchUser();
     fetchSharedFiles();
   }, []);
-
-  const fetchUser = async () => {
-    try {
-      const response = await fetch(`${BASE_URL}/user`, {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUserName(data.name);
-        setUserEmail(data.email);
-        setUserPicture(data.picture);
-        setUserRole(data.role);
-        setSubscriptionStatus(data.subscriptionStatus || "active");
-      }
-    } catch (err) {
-      console.error("Error fetching user info:", err);
-    }
-  };
 
   const fetchSharedFiles = async () => {
     try {
@@ -100,10 +72,10 @@ function SharedWithMePage() {
       <DirectoryHeader
         directoryName="Shared With Me"
         path={[]}
-        userName={userName}
-        userEmail={userEmail}
-        userPicture={userPicture}
-        userRole={userRole}
+        userName={user?.name || "Guest User"}
+        userEmail={user?.email || "guest@example.com"}
+        userPicture={user?.picture}
+        userRole={user?.role || "User"}
       />
 
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -251,11 +223,11 @@ function SharedWithMePage() {
                               window.open(`${BASE_URL}/file/${file.fileId}`, '_blank');
                             }}
                             className={`p-2 rounded-full transition-colors ${
-                              subscriptionStatus?.toLowerCase() === "paused"
+                              user?.subscriptionStatus?.toLowerCase() === "paused"
                                 ? "text-gray-400 cursor-not-allowed bg-gray-50"
                                 : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
                             }`}
-                            title={subscriptionStatus?.toLowerCase() === "paused" ? "Paused" : "View File"}
+                            title={user?.subscriptionStatus?.toLowerCase() === "paused" ? "Paused" : "View File"}
                           >
                             <Eye className="w-5 h-5" />
                           </button>
@@ -275,11 +247,11 @@ function SharedWithMePage() {
                               window.location.href = `${BASE_URL}/file/${file.fileId}?action=download`;
                             }}
                             className={`p-2 rounded-full transition-colors ${
-                              subscriptionStatus?.toLowerCase() === "paused"
+                              user?.subscriptionStatus?.toLowerCase() === "paused"
                                 ? "text-gray-400 cursor-not-allowed bg-gray-50"
                                 : "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                             }`}
-                            title={subscriptionStatus?.toLowerCase() === "paused" ? "Paused" : "Download File"}
+                            title={user?.subscriptionStatus?.toLowerCase() === "paused" ? "Paused" : "Download File"}
                           >
                             <Download className="w-5 h-5" />
                           </button>
@@ -293,19 +265,22 @@ function SharedWithMePage() {
           )}
         </div>
       </div>
+
       {/* Toast Notification */}
       {toast.show && (
-        <div className="fixed bottom-6 right-6 z-[100] animate-slideUp">
-          <div className={`flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl border ${
-            toast.type === "warning" ? "bg-amber-50 border-amber-200 text-amber-800" :
-            toast.type === "error" ? "bg-red-50 border-red-200 text-red-800" :
-            "bg-blue-50 border-blue-200 text-blue-800"
-          }`}>
-            {toast.type === "warning" && <AlertTriangle className="w-5 h-5 text-amber-600" />}
-            {toast.type === "error" && <X className="w-5 h-5 text-red-600" />}
-            {toast.type === "info" && <Info className="w-5 h-5 text-blue-600" />}
-            <span className="font-semibold">{toast.message}</span>
-          </div>
+        <div className="fixed top-24 right-6 z-[100] max-w-sm w-full md:w-[380px]">
+          <Alert 
+            variant={toast.type === "error" ? "destructive" : toast.type === "warning" ? "warning" : "info"}
+            withIcon
+            duration={3000}
+            dismissible
+            onDismiss={() => setToast({ ...toast, show: false })}
+            className="bg-white/95 backdrop-blur-md shadow-2xl border-gray-100"
+          >
+            <AlertDescription className="font-semibold">
+              {toast.message}
+            </AlertDescription>
+          </Alert>
         </div>
       )}
     </div>

@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   FileText
 } from "lucide-react";
+import { Alert, AlertDescription } from "./components/lightswind/alert";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -212,15 +213,18 @@ function ManagePermissionsPage() {
   };
 
 
+
   if (error && !owner) {
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Error</h2>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <button onClick={() => navigate(-1)} className="text-blue-600 hover:underline">Go Back</button>
-          </div>
+          <Alert variant="destructive" withIcon className="max-w-md bg-white shadow-xl p-8 text-center ring-1 ring-red-100">
+            <div className="flex flex-col items-center">
+              <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
+              <div className="text-xl font-bold text-gray-900 mb-2">Error</div>
+              <AlertDescription className="text-gray-600 mb-6">{error}</AlertDescription>
+              <button onClick={() => navigate(-1)} className="text-blue-600 hover:underline">Go Back</button>
+            </div>
+          </Alert>
         </div>
     );
   }
@@ -250,9 +254,22 @@ function ManagePermissionsPage() {
 
       <div className="max-w-4xl mx-auto px-6 py-8">
         
+
         {/* Alerts */}
-        {error && <div className="mb-4 p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl">{error}</div>}
-        {success && <div className="mb-4 p-4 bg-green-50 text-green-700 border border-green-200 rounded-xl">{success}</div>}
+        {error && (
+          <div className="fixed top-24 right-6 z-[100] max-w-sm w-full md:w-[380px]">
+            <Alert variant="destructive" withIcon duration={4000} dismissible onDismiss={() => setError("")} className="bg-white/95 backdrop-blur-md shadow-2xl border-red-100">
+              <AlertDescription className="font-semibold">{error}</AlertDescription>
+            </Alert>
+          </div>
+        )}
+        {success && (
+          <div className="fixed top-24 right-6 z-[100] max-w-sm w-full md:w-[380px]">
+            <Alert variant="success" withIcon duration={3000} dismissible onDismiss={() => setSuccess("")} className="bg-white/95 backdrop-blur-md shadow-2xl border-green-100">
+              <AlertDescription className="font-semibold">{success}</AlertDescription>
+            </Alert>
+          </div>
+        )}
 
         <div className="flex flex-col md:flex-row gap-8">
             {/* Sidebar / Tabs */}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FaGoogleDrive } from "react-icons/fa";
 import axios from "axios";
+import { Alert, AlertDescription } from "./lightswind/alert";
 
 // Ideally these should be in a config file or env variables
 // But for now we use process.env as per React standard
@@ -178,22 +179,14 @@ export default function ImportFromDrive({ onFilesSelected, className, disabled }
         )}
       </button>
       
+
       {error && (
-        <div className="absolute top-full left-0 mt-2 p-3 bg-red-50 border border-red-200 rounded-lg shadow-lg z-50 min-w-[300px]">
-          <div className="flex items-start gap-2">
-            <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-red-800">{error}</p>
-              <button
-                onClick={() => setError(null)}
-                className="mt-1 text-xs text-red-600 hover:text-red-800 underline"
-              >
-                Dismiss
-              </button>
-            </div>
-          </div>
+        <div className="fixed top-24 right-6 z-[100] max-w-sm w-full md:w-[380px]">
+          <Alert variant="destructive" withIcon duration={5000} dismissible onDismiss={() => setError(null)} className="bg-white/95 backdrop-blur-md shadow-2xl border-red-100">
+            <AlertDescription className="text-sm font-medium">
+              {error}
+            </AlertDescription>
+          </Alert>
         </div>
       )}
     </div>

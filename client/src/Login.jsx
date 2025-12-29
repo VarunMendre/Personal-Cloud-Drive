@@ -6,6 +6,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { loginWithGoogle } from "../src/apis/loginWithGoogle";
 import DOMPurify from "dompurify";
 import { Cloud, Mail, Lock, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "./components/lightswind/alert";
 
 const Login = () => {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -83,13 +84,15 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#F0F8FF' }}>
+
       {/* Notification Toast */}
       {notification && (
-        <div className="fixed top-6 right-6 z-50 animate-slideInRight">
-          <div className="bg-red-500 text-white px-6 py-4 rounded-xl shadow-strong flex items-start gap-3 max-w-md">
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium">{notification}</p>
-          </div>
+        <div className="fixed top-24 right-6 z-50 max-w-sm w-full md:w-[380px]">
+          <Alert variant="destructive" withIcon duration={4000} dismissible onDismiss={() => setNotification("")} className="bg-white/95 backdrop-blur-md shadow-2xl border-red-100">
+            <AlertDescription className="font-medium">
+              {notification}
+            </AlertDescription>
+          </Alert>
         </div>
       )}
 
@@ -161,11 +164,13 @@ const Login = () => {
                   onBlur={(e) => !hasError && (e.target.style.borderColor = '#E6FAF5')}
                 />
               </div>
+
               {serverError && (
-                <p className="mt-2 text-sm text-red-500 flex items-center gap-1 animate-fadeIn">
-                  <AlertCircle className="w-4 h-4" />
-                  {serverError}
-                </p>
+                <Alert variant="destructive" withIcon className="mt-4 p-3 text-xs bg-red-50/50">
+                  <AlertDescription>
+                    {serverError}
+                  </AlertDescription>
+                </Alert>
               )}
             </div>
 

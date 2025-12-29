@@ -17,6 +17,8 @@ import ManagePermissionsPage from "./ManagePermissionsPage";
 import Plans from "./Plans";
 import SubscriptionDetails from "./SubscriptionDetails";
 import ChangePlan from "./ChangePlan";
+import { useAuth } from "./context/AuthContext";
+import LoadingOverlay from "./components/LoadingOverlay";
 
 const router = createBrowserRouter([
   {
@@ -90,8 +92,17 @@ const router = createBrowserRouter([
   },
 ]);
 
+
+
 function App() {
-  return <RouterProvider router={router} />;
+  const { isAuthenticating } = useAuth();
+
+  return (
+    <>
+      {isAuthenticating && <LoadingOverlay />}
+      <RouterProvider router={router} />
+    </>
+  );
 }
 
 export default App;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 import DirectoryHeader, { BASE_URL } from "./components/DirectoryHeader";
 import {
   ArrowLeft,
@@ -27,18 +28,14 @@ import {
   Shield,
   Search
 } from "lucide-react";
+import { Alert, AlertDescription } from "./components/lightswind/alert";
 
 export default function UsersPage() {
   const navigate = useNavigate();
 
   // --- State ---
   const [users, setUsers] = useState([]);
-  const [currentUser, setCurrentUser] = useState({
-    name: "Guest User",
-    email: "",
-    picture: "",
-    role: "User",
-  });
+  const { user: currentUser } = useAuth();
 
   // Modals
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -68,29 +65,10 @@ export default function UsersPage() {
 
   // --- Effects ---
   useEffect(() => {
-    fetchCurrentUser();
     fetchUsers();
   }, []);
 
   // --- Fetching ---
-  async function fetchCurrentUser() {
-    try {
-      const response = await fetch(`${BASE_URL}/user`, { credentials: "include" });
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentUser({
-          name: data.name,
-          email: data.email,
-          picture: data.picture,
-          role: data.role,
-        });
-      } else if (response.status === 401) {
-        navigate("/login");
-      }
-    } catch (err) {
-      console.error("Error fetching user info:", err);
-    }
-  }
 
   async function fetchUsers() {
     try {
@@ -811,7 +789,7 @@ export default function UsersPage() {
             <div className="px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                  <FaExclamationTriangle className="w-5 h-5 text-red-600" />
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Delete User</h3>
@@ -860,7 +838,7 @@ export default function UsersPage() {
             <div className="px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                  <FaExclamationTriangle className="w-5 h-5 text-red-600" />
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-red-600">Permanent Delete</h3>
@@ -897,8 +875,9 @@ export default function UsersPage() {
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
             <div className="px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-3">
+
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <FaSignOutAlt className="w-5 h-5 text-blue-600" />
+                  <LogOut className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Confirm Logout</h3>
@@ -933,8 +912,9 @@ export default function UsersPage() {
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
             <div className="px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-3">
+
                 <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                  <FaPause className="w-5 h-5 text-amber-600" />
+                  <Pause className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Pause Subscription</h3>
@@ -948,7 +928,8 @@ export default function UsersPage() {
               </p>
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5">
                 <p className="text-xs text-amber-800 font-medium flex items-start gap-2">
-                  <FaExclamationTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+
+                  <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
                   <span>This will block their uploads and downloads until the subscription is resumed.</span>
                 </p>
               </div>
@@ -977,8 +958,9 @@ export default function UsersPage() {
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
             <div className="px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-3">
+
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <FaPlay className="w-5 h-5 text-green-600" />
+                  <Play className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Resume Subscription</h3>
@@ -992,7 +974,8 @@ export default function UsersPage() {
               </p>
               <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-5">
                 <p className="text-xs text-green-800 font-medium flex items-start gap-2">
-                  <FaCheckCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+
+                  <CheckCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
                   <span>This will restore their ability to upload and download files.</span>
                 </p>
               </div>
@@ -1015,27 +998,22 @@ export default function UsersPage() {
         </div>
       )}
 
-      {/* Success Toast */}
+
+      {/* Success Alert */}
       {showSuccessToast && (
-        <div className="fixed bottom-6 right-6 z-[100] animate-slideUp">
-          <div className="flex items-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl shadow-2xl border border-green-500">
-            <div className="w-6 h-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-              <FaCheckCircle className="w-4 h-4" />
-            </div>
-            <span className="font-semibold text-sm">{successMessage}</span>
-          </div>
+        <div className="fixed top-24 right-6 z-[100] max-w-sm w-full md:w-[380px]">
+           <Alert variant="success" withIcon duration={3000} dismissible onDismiss={() => setShowSuccessToast(false)} className="bg-white/95 backdrop-blur-md shadow-2xl border-green-100">
+              <AlertDescription className="font-semibold">{successMessage}</AlertDescription>
+           </Alert>
         </div>
       )}
 
-      {/* Error Toast */}
+      {/* Error Alert */}
       {showErrorToast && (
-        <div className="fixed bottom-6 right-6 z-[100] animate-slideUp">
-          <div className="flex items-center gap-3 px-6 py-4 bg-red-600 text-white rounded-xl shadow-2xl border border-red-500">
-            <div className="w-6 h-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-              <FaExclamationTriangle className="w-4 h-4" />
-            </div>
-            <span className="font-semibold text-sm">{errorMessage}</span>
-          </div>
+        <div className="fixed top-24 right-6 z-[100] max-w-sm w-full md:w-[380px]">
+           <Alert variant="destructive" withIcon duration={4000} dismissible onDismiss={() => setShowErrorToast(false)} className="bg-white/95 backdrop-blur-md shadow-2xl border-red-100">
+              <AlertDescription className="font-semibold">{errorMessage}</AlertDescription>
+           </Alert>
         </div>
       )}
 

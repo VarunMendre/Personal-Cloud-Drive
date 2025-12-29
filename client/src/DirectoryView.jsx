@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 import DirectoryHeader from "./components/DirectoryHeader";
 import CreateDirectoryModal from "./components/CreateDirectoryModal";
 import RenameModal from "./components/RenameModal";
@@ -7,6 +8,7 @@ import DirectoryList from "./components/DirectoryList";
 import ShareModal from "./components/ShareModal";
 import DetailsPopup from "./components/DetailsPopup";
 import ImportFromDrive from "./components/ImportFromDrive";
+import { Alert, AlertTitle, AlertDescription } from "./components/lightswind/alert";
 import { 
   Upload, 
   FolderPlus, 
@@ -44,13 +46,7 @@ function DirectoryView() {
   const { dirId } = useParams();
   const navigate = useNavigate();
 
-  // User info for header
-  const [userName, setUserName] = useState("Guest User");
-  const [userEmail, setUserEmail] = useState("guest@example.com");
-  const [userPicture, setUserPicture] = useState("");
-  const [userRole, setUserRole] = useState("User");
-  const [subscriptionId, setSubscriptionId] = useState(null);
-  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const { user } = useAuth();
 
   // Displayed directory name
   const [directoryName, setDirectoryName] = useState("My Drive");
@@ -109,33 +105,6 @@ function DirectoryView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("list"); // "list" or "grid"
   const [sortBy, setSortBy] = useState("name"); // "name", "date", "size"
-
-  // Fetch user info
-  const fetchUser = async () => {
-    try {
-      const response = await fetch(`${BASE_URL}/user`, {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUserName(data.name);
-        setUserEmail(data.email);
-        setUserPicture(data.picture);
-        setUserRole(data.role);
-        setSubscriptionId(data.subscriptionId);
-        setSubscriptionStatus(data.subscriptionStatus || "active");
-      } else if (response.status === 401) {
-        setUserName("Guest User");
-        setUserEmail("guest@example.com");
-      }
-    } catch (err) {
-      console.error("Error fetching user info:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchUser();
-  }, []);
 
   // Details functions
   const openDetailsPopup = (item) => {
@@ -258,10 +227,10 @@ function DirectoryView() {
     if (type === "directory") {
       navigate(`/directory/${id}`);
     } else {
-      if (["halted", "expired", "paused"].includes(subscriptionStatus?.toLowerCase())) {
-        showToast("Your account is restricted. Downloads are disabled.", "warning");
-        return;
-      }
+    if (["halted", "expired", "paused"].includes(user?.subscriptionStatus?.toLowerCase())) {
+      showToast("Your account is restricted. Downloads are disabled.", "warning");
+      return;
+    }
       
       // Fixed: Fetch the URL via JSON first to ensure auth cookies are sent cross-origin
       fetch(`${BASE_URL}/file/${id}?json=true`, { credentials: "include" })
@@ -459,7 +428,7 @@ function DirectoryView() {
    * Select multiple files
    */
   function handleFileSelect(e) {
-    if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+    if (["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase())) {
       showToast("Restricted access: Cannot upload files.", "warning");
       e.target.value = "";
       return;
@@ -637,7 +606,7 @@ function DirectoryView() {
    * Delete a file/directory
    */
   async function handleDeleteFile(id) {
-    if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+    if (["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase())) {
         showToast("Restricted access: Cannot delete files.", "warning");
         return;
     }
@@ -666,7 +635,7 @@ function DirectoryView() {
   }
 
   async function handleDeleteDirectory(id) {
-    if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+    if (["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase())) {
         showToast("Restricted access: Cannot delete folders.", "warning");
         return;
     }
@@ -698,7 +667,7 @@ function DirectoryView() {
    */
   async function handleCreateDirectory(e) {
     e.preventDefault();
-    if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+    if (["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase())) {
       showToast("Restricted access: Cannot create directories.", "warning");
       return;
     }
@@ -870,17 +839,17 @@ function DirectoryView() {
         onStorageUpdate={(refreshFn) => {
           refreshStorageRef.current = refreshFn;
         }}
-        userName={userName}
-        userEmail={userEmail}
-        userPicture={userPicture}
-        userRole={userRole}
-        subscriptionId={subscriptionId}
-        subscriptionStatus={subscriptionStatus}
+        userName={user?.name || "Guest User"}
+        userEmail={user?.email || "guest@example.com"}
+        userPicture={user?.picture || ""}
+        userRole={user?.role || "User"}
+        subscriptionId={user?.subscriptionId}
+        subscriptionStatus={user?.subscriptionStatus || "active"}
       />
 
       {/* SUBSCRIPTION ALERTS */}
       {/* 1. PAUSED */}
-      {subscriptionStatus?.toLowerCase() === "paused" && (
+      {user?.subscriptionStatus?.toLowerCase() === "paused" && (
         <div className="mx-6 mt-6 p-6 rounded-2xl shadow-medium animate-fadeIn" style={{ backgroundColor: '#FFF3CD', border: '2px solid #FDB827' }}>
            <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left" style={{ color: '#856404' }}>
              <div className="p-4 rounded-2xl" style={{ backgroundColor: '#FDB827' }}>
@@ -897,7 +866,7 @@ function DirectoryView() {
       )}
 
       {/* 2. PENDING (Grace Period) */}
-      {subscriptionStatus?.toLowerCase() === "pending" && (
+      {user?.subscriptionStatus?.toLowerCase() === "pending" && (
         <div className="mx-6 mt-6 p-6 bg-yellow-50 border-2 border-yellow-400 rounded-xl shadow-md">
            <div className="flex flex-col sm:flex-row items-center gap-5 text-yellow-900 text-center sm:text-left">
              <div className="p-4 bg-yellow-100 rounded-2xl">
@@ -920,7 +889,7 @@ function DirectoryView() {
       )}
 
       {/* 3. HALTED / EXPIRED (Hard Block) */}
-      {["halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && (
+      {["halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && (
         <div className="mx-6 mt-6 p-6 bg-red-50 border-2 border-red-400 rounded-xl shadow-md">
            <div className="flex flex-col sm:flex-row items-center gap-5 text-red-900 text-center sm:text-left">
              <div className="p-4 bg-red-100 rounded-2xl">
@@ -972,7 +941,7 @@ function DirectoryView() {
             <div className="relative group/btn cursor-not-allowed">
               <button
                 onClick={() => {
-                  if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+                  if (["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase())) {
                     showToast("Restricted: Uploads disabled.", "warning");
                     return;
                   }
@@ -981,16 +950,16 @@ function DirectoryView() {
                 disabled={errorMessage === "Directory not found or you do not have access to it!"}
                 className="flex items-center gap-2 px-5 py-3 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg hover:transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  backgroundColor: ["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) ? '#CBD5E0' : '#2E5E99',
-                  cursor: ["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) ? 'not-allowed' : 'pointer'
+                  backgroundColor: ["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) ? '#CBD5E0' : '#2E5E99',
+                  cursor: ["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) ? 'not-allowed' : 'pointer'
                 }}
-                onMouseEnter={(e) => ![["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())] && (e.target.style.backgroundColor = '#254a7f')}
-                onMouseLeave={(e) => ![["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())] && (e.target.style.backgroundColor = '#2E5E99')}
+                onMouseEnter={(e) => !["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && (e.target.style.backgroundColor = '#254a7f')}
+                onMouseLeave={(e) => !["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && (e.target.style.backgroundColor = '#2E5E99')}
               >
                 <Upload className="w-4 h-4" />
-                Upload Files {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && "⚠️"}
+                Upload Files {["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && "⚠️"}
               </button>
-              {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && (
+              {["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && (
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none flex items-center gap-1 shadow-lg z-50">
                   <AlertTriangle className="text-amber-400 w-3 h-3" />
                   Access Restricted ⚠️
@@ -1002,7 +971,7 @@ function DirectoryView() {
             <div className="relative group/btn cursor-not-allowed">
               <button
                 onClick={() => {
-                  if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+                  if (["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase())) {
                     showToast("Restricted: Directory creation disabled.", "warning");
                     return;
                   }
@@ -1011,16 +980,16 @@ function DirectoryView() {
                 disabled={errorMessage === "Directory not found or you do not have access to it!"}
                 className="flex items-center gap-2 px-5 py-3 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg hover:transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  backgroundColor: ["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) ? '#CBD5E0' : '#10B981',
-                  cursor: ["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) ? 'not-allowed' : 'pointer'
+                  backgroundColor: ["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) ? '#CBD5E0' : '#10B981',
+                  cursor: ["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) ? 'not-allowed' : 'pointer'
                 }}
-                onMouseEnter={(e) => ![["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())] && (e.target.style.backgroundColor = '#059669')}
-                onMouseLeave={(e) => ![["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())] && (e.target.style.backgroundColor = '#10B981')}
+                onMouseEnter={(e) => !["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && (e.target.style.backgroundColor = '#059669')}
+                onMouseLeave={(e) => !["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && (e.target.style.backgroundColor = '#10B981')}
               >
                 <FolderPlus className="w-4 h-4" />
-                Create Directory {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && "⚠️"}
+                Create Directory {["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && "⚠️"}
               </button>
-              {["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase()) && (
+              {["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && (
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none flex items-center gap-1 shadow-lg z-50">
                   <AlertTriangle className="text-amber-400 w-3 h-3" />
                   Access Restricted ⚠️
@@ -1031,21 +1000,21 @@ function DirectoryView() {
             {/* Import from Drive Button - NEW */}
             <div className="relative group/btn cursor-not-allowed">
               <div onClick={() => {
-                if (["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())) {
+                if (["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase())) {
                   showToast("Restricted: Import disabled.", "warning");
                 }
               }}>
                 <ImportFromDrive
                   onFilesSelected={handleDriveFileImport}
-                  disabled={["paused", "halted", "expired"].includes(subscriptionStatus?.toLowerCase())}
+                  disabled={["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase())}
                   className={`flex items-center gap-2 px-5 py-2 text-gray-700 border border-gray-300 rounded-lg shadow-sm transition-all duration-200 font-medium text-sm ${
-                    subscriptionStatus?.toLowerCase() === "paused"
+                    user?.subscriptionStatus?.toLowerCase() === "paused"
                       ? "bg-gray-100 cursor-not-allowed opacity-50 grayscale pointer-events-none"
                       : "bg-white hover:bg-gray-50 hover:border-gray-400 hover:shadow-lg hover:scale-105"
                   }`}
                 />
               </div>
-              {subscriptionStatus?.toLowerCase() === "paused" && (
+              {user?.subscriptionStatus?.toLowerCase() === "paused" && (
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none flex items-center gap-1 shadow-lg z-50">
                   <AlertTriangle className="text-amber-400 w-3 h-3" />
                   Paused: Imports Disabled ⚠️
@@ -1221,7 +1190,7 @@ function DirectoryView() {
           BASE_URL={BASE_URL}
           handleShare={handleShare}
           openDetailsPopup={openDetailsPopup} 
-          subscriptionStatus={subscriptionStatus}
+          subscriptionStatus={user?.subscriptionStatus}
           showToast={showToast}
         />
       )}
@@ -1301,7 +1270,7 @@ function DirectoryView() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        const statusStr = String(subscriptionStatus || "").toLowerCase().trim();
+                        const statusStr = String(user?.subscriptionStatus || "").toLowerCase().trim();
                         if (["halted", "expired", "paused"].includes(statusStr)) {
                           showToast("Access Restricted: Your subscription is currently paused.", "warning");
                           return;
@@ -1327,7 +1296,7 @@ function DirectoryView() {
             items={combinedItems}
             handleRowClick={handleRowClick}
             activeContextMenu={activeContextMenu}
-            subscriptionStatus={subscriptionStatus}
+            subscriptionStatus={user?.subscriptionStatus}
             contextMenuPos={contextMenuPos}
             handleContextMenu={handleContextMenu}
             getFileIcon={getFileIcon}
@@ -1344,32 +1313,27 @@ function DirectoryView() {
           />
         )}
       </div>
+
       {/* Toast Notification */}
       {toast.show && (
-        <div className="fixed bottom-6 right-6 z-[100] animate-slideUp">
-          <div className={`flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl border ${
-            toast.type === "warning" ? "bg-amber-50 border-amber-200 text-amber-800" :
-            toast.type === "error" ? "bg-red-50 border-red-200 text-red-800" :
-            toast.type === "success" ? "bg-green-50 border-green-200 text-green-800" :
-            toast.type === "loading" ? "bg-blue-50 border-blue-200 text-blue-800" :
-            "bg-blue-50 border-blue-200 text-blue-800"
-          }`}>
-            {toast.type === "warning" && <AlertTriangle className="w-5 h-5 text-amber-600" />}
-            {toast.type === "error" && <X className="w-5 h-5 text-red-600" />}
-            {toast.type === "success" && (
-                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
-                    <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                    </svg>
-                </div>
-            )}
-            {toast.type === "loading" && (
-                <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-            )}
-            {(toast.type === "info" || !["warning", "error", "success", "loading"].includes(toast.type)) && <Info className="w-5 h-5 text-blue-600" />}
-            
-            <span className="font-semibold">{toast.message}</span>
-          </div>
+        <div className="fixed top-24 right-6 z-[100] max-w-sm w-full md:w-[380px]">
+           <Alert 
+             variant={toast.type === "error" ? "destructive" : toast.type === "success" ? "success" : toast.type === "warning" ? "warning" : "info"}
+             withIcon
+             dismissible
+             duration={3000}
+             onDismiss={() => setToast({ ...toast, show: false })}
+             className="shadow-2xl bg-white/95 backdrop-blur-md border-gray-100"
+           >
+             <AlertDescription className="font-semibold">
+               {toast.message}
+               {toast.type === "loading" && (
+                 <div className="mt-2 w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                   <div className="h-full bg-blue-600 animate-progress-indeterminate"></div>
+                 </div>
+               )}
+             </AlertDescription>
+           </Alert>
         </div>
       )}
     </div>

@@ -12,6 +12,7 @@ import {
   FaPencilAlt,
   FaUserCheck,
 } from "react-icons/fa";
+import { Alert, AlertDescription } from "./lightswind/alert";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -414,15 +415,20 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
 
         {/* Tab Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+
           {/* Messages */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
+            <div className="fixed top-24 right-6 z-[100] max-w-sm w-full md:w-[380px]">
+              <Alert variant="destructive" withIcon duration={4000} dismissible onDismiss={() => setError("")} className="bg-white/95 backdrop-blur-md shadow-2xl border-red-100">
+                <AlertDescription className="font-semibold">{error}</AlertDescription>
+              </Alert>
             </div>
           )}
           {success && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-              {success}
+            <div className="fixed top-24 right-6 z-[100] max-w-sm w-full md:w-[380px]">
+              <Alert variant="success" withIcon duration={3000} dismissible onDismiss={() => setSuccess("")} className="bg-white/95 backdrop-blur-md shadow-2xl border-green-100">
+                <AlertDescription className="font-semibold">{success}</AlertDescription>
+              </Alert>
             </div>
           )}
 

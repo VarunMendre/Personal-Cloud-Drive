@@ -12,6 +12,7 @@ import {
   BsStars
 } from "react-icons/bs";
 import { getSubscriptionDetails, getInvoiceUrl, cancelSubscription } from "./apis/subscriptionApi";
+import { Alert, AlertDescription } from "./components/lightswind/alert";
 
 const MOCK_DATA = {
 // ... existing MOCK_DATA ...
@@ -117,22 +118,15 @@ export default function SubscriptionDetails() {
         </svg>
         Back to Home
       </Link>
+
       {/* Custom Error Toast */}
       {errorMessage && (
-        <div className="fixed top-6 right-6 z-[100] animate-in slide-in-from-right-8 duration-500">
-          <div className="flex items-center gap-3 bg-red-600 text-white px-6 py-4 rounded-2xl shadow-2xl border border-red-500/50 backdrop-blur-sm">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-            <p className="font-bold text-sm tracking-wide">{errorMessage}</p>
-            <button onClick={() => setErrorMessage(null)} className="ml-2 opacity-50 hover:opacity-100 transition">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+        <div className="fixed top-24 right-6 z-[100] max-w-sm w-full md:w-[380px]">
+          <Alert variant="destructive" withIcon duration={4000} dismissible onDismiss={() => setErrorMessage(null)} className="bg-white/95 backdrop-blur-md shadow-2xl border-red-100">
+            <AlertDescription className="font-bold text-sm tracking-wide">
+              {errorMessage}
+            </AlertDescription>
+          </Alert>
         </div>
       )}
 

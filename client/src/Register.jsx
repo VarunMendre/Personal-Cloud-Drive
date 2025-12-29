@@ -5,6 +5,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import DOMPurify from "dompurify";
 import { loginWithGoogle } from "../src/apis/loginWithGoogle";
+import { Alert, AlertTitle, AlertDescription } from "./components/lightswind/alert";
+import { CheckCircle } from "lucide-react";
 
 const Register = () => {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -169,18 +171,19 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#E7F0FA' }}>
+
       {/* Success Modal */}
       {isSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-8 shadow-strong max-w-sm animate-scaleIn text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#10B981' }}>
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm p-4">
+          <Alert variant="success" withIcon className="max-w-sm bg-white shadow-2xl p-8 border-t-4 border-green-500">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-green-50">
+                <CheckCircle className="w-10 h-10 text-green-500" />
+              </div>
+              <AlertTitle size="lg" className="text-slate-900 mb-2">Registration Successful!</AlertTitle>
+              <AlertDescription className="text-slate-500">Redirecting to login page...</AlertDescription>
             </div>
-            <h3 className="text-xl font-bold mb-2" style={{ color: '#0D2440' }}>Registration Successful!</h3>
-            <p className="text-sm" style={{ color: '#7BA4D0' }}>Redirecting to login page...</p>
-          </div>
+          </Alert>
         </div>
       )}
 
@@ -293,13 +296,13 @@ const Register = () => {
                     onBlur={(e) => !serverError && (e.target.style.borderColor = '#E7F0FA')}
                   />
                 </div>
+
                 {serverError && (
-                  <p className="mt-2 text-sm text-red-500 flex items-center gap-1 animate-fadeIn">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    {serverError}
-                  </p>
+                  <Alert variant="destructive" withIcon className="mt-4 p-3 text-xs bg-red-50/50">
+                    <AlertDescription>
+                      {serverError}
+                    </AlertDescription>
+                  </Alert>
                 )}
               </div>
 
@@ -422,12 +425,13 @@ const Register = () => {
           {/* Step 2: OTP Verification */}
           {currentStep === 2 && (
             <div className="space-y-5 animate-fadeIn">
+
               {/* Info Message */}
-              <div className="p-4 rounded-lg" style={{ backgroundColor: '#E7F0FA' }}>
-                <p className="text-sm" style={{ color: '#2E5E99' }}>
+              <Alert variant="info" withIcon className="bg-blue-50/50 border-blue-200/50">
+                <AlertDescription className="text-sm text-blue-700">
                   We've sent a verification code to <strong>{formData.email}</strong>
-                </p>
-              </div>
+                </AlertDescription>
+              </Alert>
 
               {/* OTP Input */}
               <div>
@@ -450,13 +454,13 @@ const Register = () => {
                   onFocus={(e) => e.target.style.borderColor = otpError ? '#EF4444' : '#2E5E99'}
                   onBlur={(e) => !otpError && (e.target.style.borderColor = '#E7F0FA')}
                 />
+
                 {otpError && (
-                  <p className="mt-2 text-sm text-red-500 flex items-center gap-1 animate-fadeIn">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    {otpError}
-                  </p>
+                  <Alert variant="destructive" withIcon className="mt-4 p-3 text-xs bg-red-50/50">
+                    <AlertDescription>
+                      {otpError}
+                    </AlertDescription>
+                  </Alert>
                 )}
               </div>
 
