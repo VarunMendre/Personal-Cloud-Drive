@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   X
 } from "lucide-react";
-import { BASE_URL } from "./components/DirectoryHeader";
+import DirectoryHeader, { BASE_URL } from "./components/DirectoryHeader";
 import { useAuth } from "./context/AuthContext";
 
 export default function UserFilesPage() {
@@ -190,12 +190,20 @@ export default function UserFilesPage() {
     }
   };
 
-  if (!user) return null;
+  if (!currentUser) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col pt-20">
+      <DirectoryHeader
+        userName={currentUser?.name || "Guest User"}
+        userEmail={currentUser?.email || "guest@example.com"}
+        userPicture={currentUser?.picture || ""}
+        userRole={currentUser?.role || "User"}
+        subscriptionId={currentUser?.subscriptionId}
+        subscriptionStatus={currentUser?.subscriptionStatus || "active"}
+      />
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-white border-b border-gray-200 sticky top-[72px] z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <button
             onClick={() => navigate("/users")}

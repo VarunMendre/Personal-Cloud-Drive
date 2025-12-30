@@ -19,6 +19,11 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 function SharedWithMePage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [sharedFiles, setSharedFiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState("all");
 
   // Toast state
   const [toast, setToast] = useState({ show: false, message: "", type: "info" });
@@ -212,7 +217,7 @@ function SharedWithMePage() {
                               e.preventDefault();
                               e.stopPropagation();
                               
-                              const statusStr = String(subscriptionStatus || "").toLowerCase().trim();
+                              const statusStr = String(user?.subscriptionStatus || "").toLowerCase().trim();
                               const isPaused = statusStr === "paused";
                               console.log("SharedWithMe View - statusStr:", statusStr, "isPaused:", isPaused);
                               
@@ -236,7 +241,7 @@ function SharedWithMePage() {
                               e.preventDefault();
                               e.stopPropagation();
                               
-                              const statusStr = String(subscriptionStatus || "").toLowerCase().trim();
+                              const statusStr = String(user?.subscriptionStatus || "").toLowerCase().trim();
                               const isPaused = statusStr === "paused";
                               console.log("SharedWithMe Download - statusStr:", statusStr, "isPaused:", isPaused);
                               

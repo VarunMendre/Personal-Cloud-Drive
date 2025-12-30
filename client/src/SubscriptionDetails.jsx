@@ -13,12 +13,15 @@ import {
 } from "react-icons/bs";
 import { getSubscriptionDetails, getInvoiceUrl, cancelSubscription } from "./apis/subscriptionApi";
 import { Alert, AlertDescription } from "./components/lightswind/alert";
+import DirectoryHeader from "./components/DirectoryHeader";
+import { useAuth } from "./context/AuthContext";
 
 const MOCK_DATA = {
 // ... existing MOCK_DATA ...
 };
 
 export default function SubscriptionDetails() {
+  const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
@@ -104,20 +107,16 @@ export default function SubscriptionDetails() {
   if (!data) return null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 min-h-screen relative pt-24" style={{ backgroundColor: '#E7F0FA' }}>
-      {/* Back to Home Arrow */}
-      <Link 
-        to="/" 
-        className="absolute left-4 top-20 flex items-center gap-2 text-sm font-semibold transition-all duration-200 hover:gap-3"
-        style={{ color: '#2E5E99' }}
-        onMouseEnter={(e) => e.target.style.color = '#0D2440'}
-        onMouseLeave={(e) => e.target.style.color = '#2E5E99'}
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Back to Home
-      </Link>
+    <div className="min-h-screen" style={{ backgroundColor: '#E7F0FA' }}>
+      <DirectoryHeader
+        userName={user?.name || "Guest User"}
+        userEmail={user?.email || "guest@example.com"}
+        userPicture={user?.picture || ""}
+        userRole={user?.role || "User"}
+        subscriptionId={user?.subscriptionId}
+        subscriptionStatus={user?.subscriptionStatus || "active"}
+      />
+    <div className="mx-auto max-w-6xl px-4 py-12 min-h-screen relative pt-24">
 
       {/* Custom Error Toast */}
       {errorMessage && (
@@ -396,6 +395,7 @@ export default function SubscriptionDetails() {
           bgColor="bg-orange-50"
         />
       </div>
+    </div>
     </div>
   );
 }

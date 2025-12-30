@@ -1,39 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaFolder, FaFile, FaEye, FaEdit, FaArrowLeft } from "react-icons/fa";
+import { useAuth } from "./context/AuthContext";
 
 import DirectoryHeader, { BASE_URL } from "./components/DirectoryHeader";
 
 function SharedWithMe() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [directories, setDirectories] = useState([]);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [userName, setUserName] = useState("Guest User");
-  const [userEmail, setUserEmail] = useState("");
-  const [userPicture, setUserPicture] = useState("");
 
   useEffect(() => {
     fetchSharedResources();
-    fetchUser();
   }, []);
-
-  const fetchUser = async () => {
-    try {
-      const response = await fetch(`${BASE_URL}/user`, {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUserName(data.name);
-        setUserEmail(data.email);
-        setUserPicture(data.picture);
-      }
-    } catch (err) {
-      console.error("Error fetching user info:", err);
-    }
-  };
 
   const fetchSharedResources = async () => {
     try {
@@ -112,11 +94,14 @@ function SharedWithMe() {
       <DirectoryHeader
         directoryName="Shared with Me"
         path={[]}
-        userName={userName}
-        userEmail={userEmail}
-        userPicture={userPicture}
+        userName={user?.name || "Guest User"}
+        userEmail={user?.email || "guest@example.com"}
+        userPicture={user?.picture}
+        userRole={user?.role || "User"}
+        subscriptionId={user?.subscriptionId}
+        subscriptionStatus={user?.subscriptionStatus || "active"}
       />
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 pt-24">
         <div className="mb-8">
           <button className="flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-4 transition-colors font-medium" onClick={() => navigate("/")}>
             <FaArrowLeft /> Back to My Drive

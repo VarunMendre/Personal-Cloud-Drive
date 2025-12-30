@@ -22,7 +22,7 @@ function DirectoryHeader({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 shadow-sm" style={{ backgroundColor: '#66B2D6' }}>
+    <header className="fixed top-0 left-0 right-0 z-40" style={{ backgroundColor: '#E6F3FC', boxShadow: '0 4px 20px -2px rgba(31, 62, 102, 0.15), 0 2px 8px -2px rgba(31, 62, 102, 0.1)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left side: Logo */}
@@ -31,11 +31,11 @@ function DirectoryHeader({
             onClick={() => navigate("/")}
           >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 group-hover:scale-105" style={{ backgroundColor: '#FFFFFF' }}>
-              <Cloud className="w-6 h-6" style={{ color: '#66B2D6' }} />
+              <Cloud className="w-6 h-6" style={{ color: '#1F3E66' }} />
             </div>
             <div>
-              <span className="text-lg font-bold text-white">CloudDrive</span>
-              <p className="text-xs" style={{ color: '#E6FAF5' }}>Your secure storage</p>
+              <span className="text-lg font-bold" style={{ color: '#1F3E66' }}>CloudVault</span>
+              <p className="text-xs" style={{ color: '#64748B' }}>Your secure storage</p>
             </div>
           </div>
 
@@ -59,7 +59,8 @@ function DirectoryHeader({
                 className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 hover:transform hover:-translate-y-0.5"
                 style={{
                   backgroundColor: subscriptionId ? '#A7DDE9' : '#FFFFFF',
-                  color: subscriptionId ? '#FFFFFF' : '#66B2D6'
+                  color: subscriptionId ? '#FFFFFF' : '#2E5E99',
+                  border: subscriptionId ? 'none' : '1px solid #E2E8F0'
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.boxShadow = '0 4px 12px rgba(102, 178, 214, 0.3)';
@@ -79,14 +80,15 @@ function DirectoryHeader({
                 onClick={() => navigate("/share")}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200"
                 style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                  color: '#FFFFFF'
+                  backgroundColor: '#FFFFFF',
+                  color: '#1F3E66',
+                  border: '1px solid #E2E8F0'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.25)';
+                  e.target.style.backgroundColor = '#F8FAFC';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                  e.target.style.backgroundColor = '#FFFFFF';
                 }}
               >
                 <Share2 className="w-4 h-4" />
@@ -99,14 +101,15 @@ function DirectoryHeader({
                   onClick={() => navigate("/users")}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200"
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    color: '#FFFFFF'
+                    backgroundColor: '#FFFFFF',
+                    color: '#1F3E66',
+                    border: '1px solid #E2E8F0'
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.25)';
+                    e.target.style.backgroundColor = '#F8FAFC';
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                    e.target.style.backgroundColor = '#FFFFFF';
                   }}
                 >
                   <Users className="w-4 h-4" />
@@ -116,7 +119,7 @@ function DirectoryHeader({
             </div>
 
             {/* Divider */}
-            <div className="h-8 w-px" style={{ backgroundColor: 'rgba(255, 255, 255, 0.3)' }}></div>
+            <div className="h-8 w-px" style={{ backgroundColor: '#CBD5E1' }}></div>
 
             {/* Profile Section */}
             <div
@@ -126,17 +129,17 @@ function DirectoryHeader({
                 backgroundColor: 'transparent'
               }}
               onMouseEnter={(e) => {
-                e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                e.target.style.backgroundColor = '#FFFFFF';
               }}
               onMouseLeave={(e) => {
                 e.target.style.backgroundColor = 'transparent';
               }}
             >
               <div className="text-right hidden sm:block">
-                <div className="text-sm font-semibold text-white">
+                <div className="text-sm font-semibold" style={{ color: '#1F3E66' }}>
                   {userName}
                 </div>
-                <div className="text-xs" style={{ color: '#E6FAF5' }}>{userEmail}</div>
+                <div className="text-xs" style={{ color: '#64748B' }}>{userEmail}</div>
               </div>
               {userPicture ? (
                 <img

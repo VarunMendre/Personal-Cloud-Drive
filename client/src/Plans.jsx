@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createSubscription, getSubscriptionDetails } from "./apis/subscriptionApi";
 import SubscriptionAlert from "./components/SubscriptionAlert";
+import DirectoryHeader from "./components/DirectoryHeader";
+import { useAuth } from "./context/AuthContext";
 
 const PLAN_CATALOG = {
   monthly: [
@@ -265,6 +267,7 @@ function PlanCard({ plan, onSelect, isLoading, isDisabled }) {
 }
 
 export default function Plans() {
+  const { user } = useAuth();
   const [mode, setMode] = useState("monthly");
   const [loadingPlanId, setLoadingPlanId] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -381,7 +384,16 @@ export default function Plans() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 relative">
+    <div className="min-h-screen bg-white">
+      <DirectoryHeader
+        userName={user?.name || "Guest User"}
+        userEmail={user?.email || "guest@example.com"}
+        userPicture={user?.picture || ""}
+        userRole={user?.role || "User"}
+        subscriptionId={user?.subscriptionId}
+        subscriptionStatus={user?.subscriptionStatus || "active"}
+      />
+      <div className="mx-auto max-w-6xl px-4 py-12 pt-24 relative">
       {errorAlert.show && (
         <SubscriptionAlert 
           title={errorAlert.title}
@@ -405,13 +417,6 @@ export default function Plans() {
       )}
       {/* Rest of the UI remains the same */}
       <header className="mb-12 text-center relative">
-        <Link 
-          to="/" 
-          className="absolute left-0 top-0 flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-          Back to Home
-        </Link>
         <h1 className="text-4xl font-extrabold text-slate-900 mb-3">
           Choose Your Perfect Plan
         </h1>
@@ -467,6 +472,7 @@ export default function Plans() {
         Prices are indicative for demo. Integrate with Razorpay Subscriptions to
         start billing. You can prefill the plan IDs inside a static config.
       </p>
+    </div>
     </div>
   );
 }

@@ -14,10 +14,13 @@ import {
   FileText
 } from "lucide-react";
 import { Alert, AlertDescription } from "./components/lightswind/alert";
+import DirectoryHeader from "./components/DirectoryHeader";
+import { useAuth } from "./context/AuthContext";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 function ManagePermissionsPage() {
+  const { user } = useAuth();
   const { resourceType, resourceId } = useParams();
   const navigate = useNavigate();
 
@@ -213,7 +216,6 @@ function ManagePermissionsPage() {
   };
 
 
-
   if (error && !owner) {
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -230,9 +232,17 @@ function ManagePermissionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-50 font-sans pt-20">
+      <DirectoryHeader
+        userName={user?.name || "Guest User"}
+        userEmail={user?.email || "guest@example.com"}
+        userPicture={user?.picture || ""}
+        userRole={user?.role || "User"}
+        subscriptionId={user?.subscriptionId}
+        subscriptionStatus={user?.subscriptionStatus || "active"}
+      />
       {/* Navbar / Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10 px-6 py-4">
+      <div className="bg-white border-b border-gray-200 sticky top-[72px] z-10 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
                 <button 
