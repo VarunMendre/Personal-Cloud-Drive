@@ -218,7 +218,7 @@ function ManagePermissionsPage() {
 
   if (error && !owner) {
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="min-h-screen flex items-center justify-center p-4">
           <Alert variant="destructive" withIcon className="max-w-md bg-white shadow-xl p-8 text-center ring-1 ring-red-100">
             <div className="flex flex-col items-center">
               <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
@@ -232,7 +232,7 @@ function ManagePermissionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans pt-20">
+    <div className="min-h-screen font-sans pt-20">
       <DirectoryHeader
         userName={user?.name || "Guest User"}
         userEmail={user?.email || "guest@example.com"}

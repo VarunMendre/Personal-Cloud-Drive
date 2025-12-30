@@ -170,7 +170,7 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#E7F0FA' }}>
+    <div className="min-h-screen flex items-center justify-center p-4">
 
       {/* Success Modal */}
       {isSuccess && (

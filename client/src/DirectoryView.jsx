@@ -810,7 +810,7 @@ function DirectoryView() {
   })();
 
   return (
-    <div className="min-h-screen pt-16" style={{ backgroundColor: '#E7F0FA' }}>
+    <div className="min-h-screen pt-16">
 
 
       {isImporting && (

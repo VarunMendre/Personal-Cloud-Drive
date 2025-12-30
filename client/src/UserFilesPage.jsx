@@ -193,7 +193,7 @@ export default function UserFilesPage() {
   if (!currentUser) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col pt-20">
+    <div className="min-h-screen flex flex-col pt-20">
       <DirectoryHeader
         userName={currentUser?.name || "Guest User"}
         userEmail={currentUser?.email || "guest@example.com"}

@@ -160,7 +160,7 @@ export default function ChangePlan() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: '#E7F0FA' }}>
+      <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="w-16 h-16 border-4 border-t-transparent rounded-full animate-spin mb-6" style={{ borderColor: '#2E5E99', borderTopColor: 'transparent' }}></div>
         <p className="font-bold animate-pulse uppercase tracking-widest text-xs" style={{ color: '#7BA4D0' }}>Preparing upgrade options...</p>
       </div>
@@ -170,7 +170,7 @@ export default function ChangePlan() {
   if (!currentPlan) return null;
 
   return (
-    <div className="min-h-screen bg-[#E7F0FA]">
+    <div className="min-h-screen">
       <DirectoryHeader
         userName={user?.name || "Guest User"}
         userEmail={user?.email || "guest@example.com"}

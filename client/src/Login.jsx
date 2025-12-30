@@ -83,7 +83,7 @@ const Login = () => {
   const hasError = Boolean(serverError);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#F0F8FF' }}>
+    <div className="min-h-screen flex items-center justify-center p-4">
 
       {/* Notification Toast */}
       {notification && (

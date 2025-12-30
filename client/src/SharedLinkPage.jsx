@@ -144,7 +144,7 @@ function SharedLinkPage() {
   const isImage = fileData?.fileType?.startsWith("image/") || fileData?.mimeType?.startsWith("image/");
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden">
         {/* Header */}
         <div className="bg-white border-b border-gray-100 p-6 flex flex-col items-center relative">

@@ -107,7 +107,7 @@ export default function SubscriptionDetails() {
   if (!data) return null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#E7F0FA' }}>
+    <div className="min-h-screen">
       <DirectoryHeader
         userName={user?.name || "Guest User"}
         userEmail={user?.email || "guest@example.com"}

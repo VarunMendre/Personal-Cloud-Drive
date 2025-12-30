@@ -73,7 +73,7 @@ function SharedWithMePage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <DirectoryHeader
         directoryName="Shared With Me"
         path={[]}
