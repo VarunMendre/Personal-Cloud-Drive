@@ -224,7 +224,7 @@ function DirectoryView() {
 
     if (!id) return;
 
-    console.log("handleRowClick - status:", subscriptionStatus);
+    console.log("handleRowClick - status:", user?.subscriptionStatus);
     if (type === "directory") {
       navigate(`/directory/${id}`);
     } else {
@@ -915,7 +915,7 @@ function DirectoryView() {
       />
 
       {/* Upload Section with 3 Buttons */}
-      <div className="max-w-7xl mx-auto px-6 pt-24 pb-8">
+      <div className="max-w-7xl mx-auto px-6 pt-8 pb-8">
         <div className="bg-white rounded-2xl border-2 border-dashed p-8 text-center shadow-soft transition-all duration-300 hover:shadow-medium" style={{ borderColor: '#7BA4D0' }}>
           <div className="mb-6">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#E7F0FA' }}>
