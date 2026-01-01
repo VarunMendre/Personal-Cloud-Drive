@@ -7,13 +7,15 @@ import { loginWithGoogle } from "../src/apis/loginWithGoogle";
 import DOMPurify from "dompurify";
 import { Cloud, Mail, Lock, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "./components/lightswind/alert";
+import { useAuth } from "./context/AuthContext";
 
 const Login = () => {
+  const { refreshUser } = useAuth();
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const [formData, setFormData] = useState({
-    email: "varunmm0404@gmail.com",
-    password: "Varun@786",
+    email: "",
+    password: "",
   });
 
   const [serverError, setServerError] = useState("");
@@ -72,6 +74,7 @@ const Login = () => {
       if (data.error) {
         setServerError(data.error);
       } else {
+        await refreshUser();
         navigate("/");
       }
     } catch (error) {
@@ -219,6 +222,7 @@ const Login = () => {
                     console.log(data);
                     return;
                   }
+                  await refreshUser();
                   navigate("/");
                 }}
                 shape="rectangular"

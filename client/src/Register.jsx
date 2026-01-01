@@ -14,9 +14,9 @@ const Register = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: "Anurag Singh",
-    email: "anuragprocodrr@gmail.com",
-    password: "abcd",
+    name: "",
+    email: "",
+    password: "",
   });
 
   const [serverError, setServerError] = useState("");

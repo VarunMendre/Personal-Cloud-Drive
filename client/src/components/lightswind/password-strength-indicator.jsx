@@ -70,23 +70,23 @@ export function PasswordStrengthIndicator({
   showVisibilityToggle = true,
   inputProps,
 }) {
-  const [password, setPassword] = useState(value || "");
   const [showPassword, setShowPassword] = useState(false);
+  const displayValue = value || "";
   
   // Calculate raw strength
-  const { score: rawScore, level: rawLevel } = calculateStrength(password);
+  const { score: rawScore, level: rawLevel } = calculateStrength(displayValue);
   
   // Determine if we are in "matching" mode
   const isComparing = compareValue !== undefined;
-  const isMatching = isComparing && password && password === compareValue;
-  const isMismatched = isComparing && password && password !== compareValue;
+  const isMatching = isComparing && displayValue && displayValue === compareValue;
+  const isMismatched = isComparing && displayValue && displayValue !== compareValue;
   
   // Adjust score and level based on matching status if in comparison mode
   let score = rawScore;
   let level = rawLevel;
   let displayLabel = strengthLabels[level];
   
-  if (isComparing && password) {
+  if (isComparing && displayValue) {
     if (isMatching) {
       score = 6;
       level = StrengthLevel.VERY_STRONG;
@@ -107,10 +107,9 @@ export function PasswordStrengthIndicator({
   }, [level, onStrengthChange]);
   
   const handleChange = (e) => {
-    const newValue = e.target.value;
-    setPassword(newValue);
-    if (onChange) onChange(newValue);
+    if (onChange) onChange(e.target.value);
   };
+
   
   const toggleVisibility = () => {
     setShowPassword(!showPassword);
@@ -138,7 +137,7 @@ export function PasswordStrengthIndicator({
           ref={inputRef}
           id="password"
           type={showPassword ? "text" : "password"}
-          value={password}
+          value={displayValue}
           onChange={handleChange}
           placeholder={placeholder}
           className="pr-10"
@@ -160,7 +159,7 @@ export function PasswordStrengthIndicator({
           </button>
         )}
         
-        {password && (
+        {displayValue && (
           <div className="absolute right-10 top-1/2 -translate-y-1/2">
             <div className={cn(
               "w-6 h-6 rounded-full flex items-center justify-center transition-colors duration-300",
