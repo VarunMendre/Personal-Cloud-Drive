@@ -54,6 +54,12 @@ const Alert = React.forwardRef(
       info: "bg-blue-500"
     };
 
+    const onDismissRef = React.useRef(onDismiss);
+    
+    React.useEffect(() => {
+      onDismissRef.current = onDismiss;
+    }, [onDismiss]);
+
     React.useEffect(() => {
       if (duration > 0) {
         const startTime = Date.now();
@@ -69,19 +75,19 @@ const Alert = React.forwardRef(
             clearInterval(interval);
             setIsVisible(false);
             setTimeout(() => {
-              if (onDismiss) onDismiss();
-            }, 300); // Wait for fade-out animation
+              if (onDismissRef.current) onDismissRef.current();
+            }, 300);
           }
-        }, 10);
+        }, 16); // ~60fps
 
         return () => clearInterval(interval);
       }
-    }, [duration, onDismiss]);
+    }, [duration]); // Only reset if duration changes, not onDismiss
 
     const handleDismiss = () => {
       setIsVisible(false);
       setTimeout(() => {
-        if (onDismiss) onDismiss();
+        if (onDismissRef.current) onDismissRef.current();
       }, 300);
     };
 
@@ -127,7 +133,7 @@ const Alert = React.forwardRef(
         {duration > 0 && (
           <div className="absolute bottom-0 left-0 h-1 w-full bg-background/20 overflow-hidden">
             <div 
-              className={cn("h-full transition-all duration-100 ease-linear", progressColors[variant])} 
+              className={cn("h-full transition-all duration-[16ms] ease-linear", progressColors[variant])} 
               style={{ width: `${progress}%` }}
             />
           </div>

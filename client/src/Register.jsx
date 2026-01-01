@@ -21,6 +21,7 @@ const Register = () => {
   });
 
   const [serverError, setServerError] = useState("");
+  const [notification, setNotification] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
 
   // OTP state
@@ -117,8 +118,9 @@ const Register = () => {
       if (res.ok) {
         setOtpVerified(true);
         setOtpError("");
+        setNotification("Email verified successfully!");
         // Auto-submit after verification
-        setTimeout(() => handleFinalSubmit(true), 500);
+        setTimeout(() => handleFinalSubmit(true), 1500);
       } else {
         setOtpError(data.error || "Invalid or expired OTP.");
       }
@@ -161,7 +163,7 @@ const Register = () => {
         setOtpSent(false);
         setOtpVerified(false);
       } else {
-        setIsSuccess(true);
+        setNotification("Registration successful! Redirecting to login...");
         setTimeout(() => navigate("/login"), 2000);
       }
     } catch (error) {
@@ -174,17 +176,13 @@ const Register = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
 
-      {/* Success Modal */}
-      {isSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm p-4">
-          <Alert variant="success" withIcon className="max-w-sm bg-white shadow-2xl p-8 border-t-4 border-green-500">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-green-50">
-                <CheckCircle className="w-10 h-10 text-green-500" />
-              </div>
-              <AlertTitle size="lg" className="text-slate-900 mb-2">Registration Successful!</AlertTitle>
-              <AlertDescription className="text-slate-500">Redirecting to login page...</AlertDescription>
-            </div>
+      {/* Notification Toast */}
+      {notification && (
+        <div className="fixed top-24 right-6 z-50 max-w-sm w-full md:w-[380px]">
+          <Alert variant="success" withIcon duration={4000} dismissible onDismiss={() => setNotification("")} className="bg-white/95 backdrop-blur-md shadow-2xl border-green-100">
+            <AlertDescription className="font-medium">
+              {notification}
+            </AlertDescription>
           </Alert>
         </div>
       )}
