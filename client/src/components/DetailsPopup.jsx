@@ -167,7 +167,7 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
         <div className="px-6 py-5 border-b flex items-center justify-between" style={{ borderColor: '#D1D5DB' }}>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
-              <Info className="w-6 h-6" style={{ color: '#000000' }} />
+              <Info className="w-6 h-6" style={{ color: '#2563EB' }} />
             </div>
             <div>
               <h3 className="text-lg font-bold" style={{ color: '#000000' }}>Details</h3>
@@ -312,9 +312,9 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
           )}
           <button
             className="px-4 py-3 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-medium"
-            style={{ backgroundColor: '#000000' }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#374151'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
+            style={{ backgroundColor: '#2563EB' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#1D4ED8'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#2563EB'}
             onClick={onClose}
           >
             Close

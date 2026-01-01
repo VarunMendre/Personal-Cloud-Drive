@@ -89,7 +89,7 @@ function RenameModal({
         <div className="px-6 py-5 border-b" style={{ borderColor: '#D1D5DB' }}>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
-              <Edit3 className="w-6 h-6" style={{ color: '#000000' }} />
+              <Edit3 className="w-6 h-6" style={{ color: '#2563EB' }} />
             </div>
             <div>
               <h3 className="text-lg font-bold" style={{ color: '#000000' }}>
@@ -135,7 +135,7 @@ function RenameModal({
                   borderColor: extensionError ? '#EF4444' : '#D1D5DB',
                   color: '#000000'
                 }}
-                onFocus={(e) => e.target.style.borderColor = extensionError ? '#EF4444' : '#000000'}
+                onFocus={(e) => e.target.style.borderColor = extensionError ? '#EF4444' : '#2563EB'}
                 onBlur={(e) => e.target.style.borderColor = extensionError ? '#EF4444' : '#D1D5DB'}
                 placeholder={`Enter new ${renameType === "file" ? "file" : "folder"} name`}
               />
@@ -173,9 +173,9 @@ function RenameModal({
                 type="submit"
                 disabled={!renameValue.trim() || !!extensionError}
                 className="flex-1 px-4 py-3 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: '#000000' }}
-                onMouseEnter={(e) => !e.target.disabled && (e.target.style.backgroundColor = '#374151')}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
+                style={{ backgroundColor: '#2563EB' }}
+                onMouseEnter={(e) => !e.target.disabled && (e.target.style.backgroundColor = '#1D4ED8')}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#2563EB'}
               >
                 Save Changes
               </button>

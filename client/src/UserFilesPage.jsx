@@ -32,6 +32,7 @@ export default function UserFilesPage() {
   const [showFilePreview, setShowFilePreview] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [newFileName, setNewFileName] = useState("");
+  const [extensionError, setExtensionError] = useState("");
   const [previewFileUrl, setPreviewFileUrl] = useState("");
   const [previewFileType, setPreviewFileType] = useState("");
 
@@ -168,6 +169,26 @@ export default function UserFilesPage() {
       }
     }
   }, [showRenameModal]); // Only run when modal opens, not when filename changes
+
+  // Validate file extension
+  useEffect(() => {
+    if (!selectedFile || !newFileName) {
+      setExtensionError("");
+      return;
+    }
+
+    const originalName = selectedFile.name;
+    const originalExt = originalName.includes('.') ? originalName.split('.').pop().toLowerCase() : '';
+    const newExt = newFileName.includes('.') ? newFileName.split('.').pop().toLowerCase() : '';
+
+    if (originalExt && !newExt) {
+      setExtensionError("File extension is required. Please keep the original extension.");
+    } else if (originalExt && newExt && originalExt !== newExt) {
+      setExtensionError(`Extension cannot be changed. Please keep '.${originalExt}' extension.`);
+    } else {
+      setExtensionError("");
+    }
+  }, [newFileName, selectedFile]);
 
   const confirmRenameFile = async () => {
     if (!selectedFile || !newFileName.trim()) return;
@@ -334,9 +355,17 @@ export default function UserFilesPage() {
                   type="text"
                   value={newFileName}
                   onChange={(e) => setNewFileName(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900"
+                  className={`w-full px-3 py-2.5 bg-white border-2 rounded-lg focus:ring-2 focus:border-transparent transition-all text-gray-900 ${
+                    extensionError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   placeholder="Enter new file name"
                 />
+                {extensionError && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1 animate-fadeIn">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>{extensionError}</span>
+                  </p>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -349,7 +378,7 @@ export default function UserFilesPage() {
                 </button>
                 <button
                   onClick={confirmRenameFile}
-                  disabled={!newFileName.trim()}
+                  disabled={!newFileName.trim() || !!extensionError}
                   className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                 >
                   Save

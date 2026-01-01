@@ -34,7 +34,7 @@ function CreateDirectoryModal({
         <div className="px-6 py-5 border-b" style={{ borderColor: '#D1D5DB' }}>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
-              <FolderPlus className="w-6 h-6" style={{ color: '#000000'}} />
+              <FolderPlus className="w-6 h-6" style={{ color: '#2563EB'}} />
             </div>
             <div>
               <h3 className="text-lg font-bold" style={{ color: '#000000' }}>Create New Folder</h3>
@@ -58,7 +58,7 @@ function CreateDirectoryModal({
                 onChange={(e) => setNewDirname(e.target.value)}
                 className="w-full px-4 py-3 bg-white border-2 rounded-lg transition-all focus:outline-none"
                 style={{ borderColor: '#D1D5DB', color: '#000000' }}
-                onFocus={(e) => e.target.style.borderColor = '#000000'}
+                onFocus={(e) => e.target.style.borderColor = '#2563EB'}
                 onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
                 placeholder="Enter folder name"
               />
@@ -90,9 +90,9 @@ function CreateDirectoryModal({
                 type="submit"
                 disabled={!newDirname.trim()}
                 className="flex-1 px-4 py-3 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: '#000000' }}
-                onMouseEnter={(e) => !e.target.disabled && (e.target.style.backgroundColor = '#374151')}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
+                style={{ backgroundColor: '#2563EB' }}
+                onMouseEnter={(e) => !e.target.disabled && (e.target.style.backgroundColor = '#1D4ED8')}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#2563EB'}
               >
                 Create Folder
               </button>

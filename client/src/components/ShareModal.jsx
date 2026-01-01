@@ -360,7 +360,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
         {/* Header */}
         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center shadow-md">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
               <FaUsers className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -382,7 +382,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
             onClick={() => setActiveTab("shareLink")}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative ${
               activeTab === "shareLink"
-                ? "text-gray-900 border-b-2 border-gray-900 bg-white"
+                ? "text-blue-600 border-b-2 border-blue-600 bg-white"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             }`}
           >
@@ -393,7 +393,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
             onClick={() => setActiveTab("emailInvite")}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative ${
               activeTab === "emailInvite"
-                ? "text-gray-900 border-b-2 border-gray-900 bg-white"
+                ? "text-blue-600 border-b-2 border-blue-600 bg-white"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             }`}
           >
@@ -404,7 +404,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
             onClick={() => setActiveTab("sharedWith")}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative ${
               activeTab === "sharedWith"
-                ? "text-gray-900 border-b-2 border-gray-900 bg-white"
+                ? "text-blue-600 border-b-2 border-blue-600 bg-white"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             }`}
           >
@@ -437,7 +437,9 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
             <div className="space-y-6">
               {loading ? (
                 <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
                 </div>
               ) : (
                 <>
@@ -455,7 +457,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                     <button
                       onClick={handleToggleLink}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        linkEnabled ? "bg-black" : "bg-gray-300"
+                        linkEnabled ? "bg-blue-600" : "bg-gray-300"
                       }`}
                     >
                       <span
@@ -476,22 +478,22 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleUpdateLinkRole("viewer")}
-                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                              linkRole === "viewer"
-                                ? "border-black bg-gray-50 text-black"
-                                : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                            }`}
+                              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                                linkRole === "viewer"
+                                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                                  : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                              }`}
                           >
                             <FaEye className="w-4 h-4" />
                             <span className="font-medium">Viewer</span>
                           </button>
                           <button
                             onClick={() => handleUpdateLinkRole("editor")}
-                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                              linkRole === "editor"
-                                ? "border-black bg-gray-50 text-black"
-                                : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                            }`}
+                              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                                linkRole === "editor"
+                                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                                  : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                              }`}
                           >
                             <FaPencilAlt className="w-4 h-4" />
                             <span className="font-medium">Editor</span>
@@ -514,7 +516,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                           />
                           <button
                             onClick={handleCopyLink}
-                            className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
+                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
                           >
                             <FaCopy className="w-3 h-3" />
                             {copiedLink ? "Copied!" : "Copy"}
@@ -540,7 +542,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                   placeholder="Choose users to invite"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-all text-sm text-gray-900"
+                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900"
                 />
               </div>
 
@@ -566,7 +568,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                         <div className="text-xs text-gray-500 truncate">{user.email}</div>
                       </div>
                       {isSelected && (
-                        <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center">
+                        <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
                           <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path
                               fillRule="evenodd"
@@ -585,7 +587,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
               <button
                 onClick={handleSendInvites}
                 disabled={selectedUsers.length === 0 || isSharing}
-                className="w-full px-4 py-3 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="w-full px-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 {isSharing
                   ? "Sending..."
@@ -608,7 +610,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
 
               {loading ? (
                 <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
               ) : sharedUsers.length === 0 ? (
                 <div className="text-center py-12">
@@ -647,7 +649,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                       <select
                         value={user.role}
                         onChange={(e) => handleUpdateAccess(user.userId, e.target.value)}
-                        className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent"
+                        className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="viewer">Viewer</option>
                         <option value="editor">Editor</option>

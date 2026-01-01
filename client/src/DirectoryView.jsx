@@ -70,6 +70,8 @@ function DirectoryView() {
   const [renameId, setRenameId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const [renameVersion, setRenameVersion] = useState(undefined);
+  const [extensionError, setExtensionError] = useState("");
+  const [originalRenameValue, setOriginalRenameValue] = useState("");
 
   // Share modal state
   const [showShareModal, setShowShareModal] = useState(false);
@@ -701,7 +703,9 @@ function DirectoryView() {
     setRenameType(type);
     setRenameId(id);
     setRenameValue(currentName);
+    setOriginalRenameValue(currentName);
     setRenameVersion(version);
+    setExtensionError("");
     setShowRenameModal(true);
   }
 
@@ -746,6 +750,25 @@ function DirectoryView() {
       showToast(error.message, "error");
     }
   }
+
+  // Validate file extension when renaming files
+  useEffect(() => {
+    if (!showRenameModal || renameType !== "file" || !originalRenameValue || !renameValue) {
+      setExtensionError("");
+      return;
+    }
+
+    const originalExt = originalRenameValue.includes('.') ? originalRenameValue.split('.').pop().toLowerCase() : '';
+    const newExt = renameValue.includes('.') ? renameValue.split('.').pop().toLowerCase() : '';
+
+    if (originalExt && !newExt) {
+      setExtensionError("File extension is required. Please keep the original extension.");
+    } else if (originalExt && newExt && originalExt !== newExt) {
+      setExtensionError(`Extension cannot be changed. Please keep '.${originalExt}' extension.`);
+    } else {
+      setExtensionError("");
+    }
+  }, [renameValue, originalRenameValue, renameType, showRenameModal]);
 
   /**
    * Context Menu
@@ -1161,6 +1184,7 @@ function DirectoryView() {
           setRenameValue={setRenameValue}
           onClose={() => setShowRenameModal(false)}
           onRenameSubmit={handleRenameSubmit}
+          extensionError={extensionError}
         />
       )}
 
