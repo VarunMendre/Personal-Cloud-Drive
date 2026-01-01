@@ -59,6 +59,7 @@ const strengthLabels = {
 
 export function PasswordStrengthIndicator({
   value,
+  compareValue, // Value to compare against (e.g., for "Confirm Password" field)
   className,
   label = "Password",
   showScore = true,
@@ -71,7 +72,32 @@ export function PasswordStrengthIndicator({
 }) {
   const [password, setPassword] = useState(value || "");
   const [showPassword, setShowPassword] = useState(false);
-  const { score, level } = calculateStrength(password);
+  
+  // Calculate raw strength
+  const { score: rawScore, level: rawLevel } = calculateStrength(password);
+  
+  // Determine if we are in "matching" mode
+  const isComparing = compareValue !== undefined;
+  const isMatching = isComparing && password && password === compareValue;
+  const isMismatched = isComparing && password && password !== compareValue;
+  
+  // Adjust score and level based on matching status if in comparison mode
+  let score = rawScore;
+  let level = rawLevel;
+  let displayLabel = strengthLabels[level];
+  
+  if (isComparing && password) {
+    if (isMatching) {
+      score = 6;
+      level = StrengthLevel.VERY_STRONG;
+      displayLabel = "Passwords match";
+    } else if (isMismatched) {
+      score = 1;
+      level = StrengthLevel.WEAK;
+      displayLabel = "Passwords do not match";
+    }
+  }
+  
   const inputRef = useRef(null);
   
   useEffect(() => {
@@ -99,7 +125,7 @@ export function PasswordStrengthIndicator({
       {label && (
         <div className="flex justify-between items-center">
           <Label htmlFor="password">{label}</Label>
-          {showScoreNumber && (
+          {showScoreNumber && !isComparing && (
             <span className="text-xs text-gray-500">
               {Math.floor((score / 6) * 10)}/10
             </span>
@@ -137,7 +163,7 @@ export function PasswordStrengthIndicator({
         {password && (
           <div className="absolute right-10 top-1/2 -translate-y-1/2">
             <div className={cn(
-              "w-6 h-6 rounded-full flex items-center justify-center",
+              "w-6 h-6 rounded-full flex items-center justify-center transition-colors duration-300",
               level === StrengthLevel.WEAK ? "bg-red-500" : level === StrengthLevel.MEDIUM ? "bg-orange-500" : "bg-green-500"
             )}>
               {level === StrengthLevel.WEAK ? (
@@ -163,18 +189,19 @@ export function PasswordStrengthIndicator({
         ))}
       </div>
       
-      {/* Strength label */}
+      {/* Strength/Match label */}
       {showScore && level !== StrengthLevel.EMPTY && (
         <p className={cn(
-          "text-xs transition-colors",
+          "text-xs font-medium transition-colors duration-300",
           level === StrengthLevel.WEAK ? "text-red-500" :
           level === StrengthLevel.MEDIUM ? "text-orange-500" :
           level === StrengthLevel.STRONG ? "text-green-500" :
           "text-emerald-500"
         )}>
-          {strengthLabels[level]}
+          {displayLabel}
         </p>
       )}
     </div>
   );
 }
+

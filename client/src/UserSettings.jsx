@@ -550,6 +550,7 @@ function UserSettings() {
             <div>
               <PasswordStrengthIndicator
                 value={confirmPassword}
+                compareValue={newPassword}
                 onChange={(value) => setConfirmPassword(value)}
                 label="Confirm New Password"
                 placeholder="Confirm new password"
