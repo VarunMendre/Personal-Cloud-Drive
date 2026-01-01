@@ -7,13 +7,16 @@ const dateLessThan = new Date(Date.now() + 1000 * 60 * 60).toISOString(); // any
 
 const distributionName = process.env.CLOUDFRONT_DOMAIN;
 
-export const createCloudFrontSignedGetUrl = ({key, filename}) => {
-  const url = `${distributionName}/${key}?response-content-disposition=${encodeURIComponent(`attachment;filename="${filename || 'file'}"`)}`;
+export const createCloudFrontSignedGetUrl = ({ key, filename, download = false, expiresInMinutes = 60 }) => {
+  const disposition = download ? "attachment" : "inline";
+  const url = `${distributionName}/${key}?response-content-disposition=${encodeURIComponent(`${disposition};filename="${filename || 'file'}"`)}`;
   
+  const expiryDate = new Date(Date.now() + 1000 * 60 * expiresInMinutes).toISOString();
+
   const signedUrl = getSignedUrl({
     url,
     keyPairId,
-    dateLessThan,
+    dateLessThan: expiryDate,
     privateKey,
   });
 

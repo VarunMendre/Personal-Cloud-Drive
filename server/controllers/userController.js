@@ -8,7 +8,7 @@ import Subscription from "../models/subscriptionModel.js";
 import { getEditableRoles } from "../utils/permissions.js";
 import redisClient from "../config/redis.js";
 import { loginSchema, registerSchema } from "../validators/authSchema.js";
-import { getFileUrl } from "../services/s3.js";
+import { getFileUrl, createUploadSignedUrl } from "../services/s3.js";
 import { createCloudFrontSignedGetUrl } from "../services/cloudFront.js";
 import { successResponse, errorResponse } from "../utils/response.js";
 import { sanitize } from "../utils/sanitizer.js";
@@ -131,16 +131,56 @@ export const getCurrentUser = async (req, res) => {
 
   const userDir = await Directory.findById(user.rootDirId);
 
+  let pictureUrl = user.picture;
+  // If the picture is an S3 key (starts with 'profile-pictures/'), sign it
+  if (user.picture && user.picture.startsWith("profile-pictures/")) {
+    try {
+      pictureUrl = createCloudFrontSignedGetUrl({
+        key: user.picture,
+        filename: "profile-picture",
+        download: false,
+        expiresInMinutes: 60 * 24, // 24 hours for profile pictures
+      });
+    } catch (err) {
+      console.error("Error signing profile picture URL:", err);
+    }
+  }
+
   return successResponse(res, {
     name: user.name,
     email: user.email,
-    picture: user.picture,
+    picture: pictureUrl,
     role: user.role,
     subscriptionId: user.subscriptionId,
     maxStorageLimit: user.maxStorageLimit,
     usedStorageInBytes: userDir ? userDir.size : 0,
     subscriptionStatus: user.subscriptionId ? (await Subscription.findOne({ razorpaySubscriptionId: user.subscriptionId }))?.status || "none" : "none",
   });
+};
+
+export const getProfilePictureUploadUrl = async (req, res) => {
+  try {
+    const { contentType, filename } = req.query;
+    if (!contentType) {
+      return errorResponse(res, "contentType is required", 400);
+    }
+
+    const extension = filename?.includes(".")
+      ? filename.substring(filename.lastIndexOf("."))
+      : ".jpg";
+
+    const key = `profile-pictures/${req.user._id}-${Date.now()}${extension}`;
+
+    const uploadUrl = await createUploadSignedUrl({
+      key,
+      contentType,
+    });
+
+    return successResponse(res, { uploadUrl, key });
+  } catch (error) {
+    console.error("Error getting profile picture upload URL:", error);
+    return errorResponse(res, "Failed to get upload URL", 500);
+  }
 };
 
 export const logout = async (req, res) => {
@@ -583,5 +623,47 @@ export const getUserList = async (req, res, next) => {
     return successResponse(res, usersList);
   } catch (err) {
     return errorResponse(res, "Failed to fetch users", 500);
+  }
+};
+
+
+export const updateUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return errorResponse(res, "User not found", 404);
+    }
+
+    const { name, picture } = sanitize(req.body);
+
+    if (name) {
+      user.name = name;
+    }
+
+    if (picture) {
+      user.picture = picture;
+    }
+
+    await user.save();
+
+    let pictureUrl = user.picture;
+    if (user.picture && user.picture.startsWith("profile-pictures/")) {
+      pictureUrl = createCloudFrontSignedGetUrl({
+        key: user.picture,
+        filename: "profile-picture",
+        download: false,
+        expiresInMinutes: 60 * 24,
+      });
+    }
+
+    const userObj = user.toObject();
+    delete userObj.password;
+    userObj.picture = pictureUrl;
+
+    return successResponse(res, userObj, "Profile updated successfully");
+  } catch (error) {
+    console.error("Update profile error:", error);
+    return errorResponse(res, "Failed to update profile", 500);
   }
 };

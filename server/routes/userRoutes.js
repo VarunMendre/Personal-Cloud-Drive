@@ -14,6 +14,7 @@ import {
   getUserFileView,
   getUserList,
   getUserPassword,
+  getProfilePictureUploadUrl,
   hardDeleteUser,
   login,
   logout,
@@ -25,6 +26,7 @@ import {
   setUserPassword,
   softDeleteUser,
   updateUserFile,
+  updateUserProfile,
   updateUserRole,
 } from "../controllers/userController.js";
 import { rateLimiters } from "../utils/rateLimiting.js";
@@ -174,6 +176,21 @@ router.put(
   rateLimiters.updateUserFile,
   throttlers.updateUserFile,
   updateUserFile
+);
+
+// User Profile Operations
+router.get(
+  "/user/profile/picture-upload-url",
+  checkAuth,
+  checkUserDeleted,
+  getProfilePictureUploadUrl
+);
+
+router.put(
+  "/user/profile",
+  checkAuth,
+  checkUserDeleted,
+  updateUserProfile
 );
 
 // Permissions Page & Changing Roles

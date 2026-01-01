@@ -9,13 +9,24 @@ import {
   FaArrowLeft,
   FaEye,
   FaEyeSlash,
+  FaUser,
+  FaCamera,
+  FaSave,
 } from "react-icons/fa";
 import { Alert, AlertDescription, AlertTitle } from "./components/lightswind/alert";
 import { PasswordStrengthIndicator } from "./components/lightswind/password-strength-indicator";
+import { Loader2 } from "lucide-react";
 
 function UserSettings() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
+
+  // Profile management
+  const [profileName, setProfileName] = useState("");
+  const [profilePicture, setProfilePicture] = useState("");
+  const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState("");
+  const [profileError, setProfileError] = useState("");
 
   // Storage info
   const maxStorageLimit = user?.maxStorageLimit || 1073741824;
@@ -114,6 +125,118 @@ function UserSettings() {
 
     fetchAdditionalUserData();
   }, [user]);
+
+  // Sync profile state when user data is available
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || "");
+      setProfilePicture(user.picture || "");
+    }
+  }, [user]);
+
+  // Handle profile update
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    setUpdatingProfile(true);
+    setProfileError("");
+    setProfileSuccess("");
+
+    try {
+      const response = await fetch(`${BASE_URL}/user/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name: profileName,
+          picture: profilePicture,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setProfileSuccess("Profile updated successfully!");
+        refreshUser(); // Refresh global user state
+        setTimeout(() => setProfileSuccess(""), 4000);
+      } else {
+        setProfileError(data.error || "Failed to update profile");
+      }
+    } catch (err) {
+      console.error("Profile update error:", err);
+      setProfileError("Network error. Please try again.");
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
+
+  // Handle local file upload for profile picture
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setProfileError("Please select an image file.");
+      setTimeout(() => setProfileError(""), 4000);
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setProfileError("File size exceeds 2MB limit.");
+      setTimeout(() => setProfileError(""), 4000);
+      return;
+    }
+
+    setUpdatingProfile(true);
+    setProfileError("");
+    setProfileSuccess("");
+
+    try {
+      // 1. Get signed URL
+      const res = await fetch(`${BASE_URL}/user/profile/picture-upload-url?contentType=${file.type}&filename=${file.name}`, {
+        credentials: "include"
+      });
+      if (!res.ok) throw new Error("Failed to get upload URL");
+      const { uploadUrl, key } = await res.json();
+
+      // 2. Upload to S3
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file
+      });
+      if (!uploadRes.ok) throw new Error("Upload to storage failed");
+
+      // 3. Update profile with the new S3 key
+      const updateRes = await fetch(`${BASE_URL}/user/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          picture: key,
+        }),
+      });
+
+      const data = await updateRes.json();
+
+      if (updateRes.ok) {
+        setProfileSuccess("Profile picture updated successfully!");
+        refreshUser(); // Refresh global user state
+        setTimeout(() => setProfileSuccess(""), 4000);
+      } else {
+        setProfileError(data.error || "Failed to update profile");
+      }
+    } catch (err) {
+      console.error("Profile picture upload error:", err);
+      setProfileError("Network error. Please try again.");
+    } finally {
+      setUpdatingProfile(false);
+      // Reset input
+      e.target.value = "";
+    }
+  };
 
   // Handle password change/set
   const handlePasswordSubmit = async (e) => {
@@ -321,6 +444,140 @@ function UserSettings() {
             <AlertDescription>{success}</AlertDescription>
           </Alert>
         )}
+
+        {/* Profile Settings Section */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex items-center gap-3 mb-6 border-b pb-4">
+            <FaUser className="w-5 h-5 text-gray-700" />
+            <h2 className="text-xl font-semibold text-gray-900">
+              Profile Settings
+            </h2>
+          </div>
+
+          {profileError && (
+            <Alert variant="destructive" withIcon dismissible onDismiss={() => setProfileError("")} duration={5000} className="mb-4 bg-white shadow-sm">
+              <AlertDescription>{profileError}</AlertDescription>
+            </Alert>
+          )}
+          {profileSuccess && (
+            <Alert variant="success" withIcon dismissible onDismiss={() => setProfileSuccess("")} duration={4000} className="mb-4 bg-white shadow-sm">
+              <AlertDescription>{profileSuccess}</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleProfileUpdate} className="space-y-6">
+            {/* Profile Picture Display */}
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-900">
+                Profile Picture
+              </label>
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  {profilePicture ? (
+                    <img 
+                      src={profilePicture} 
+                      alt="Profile" 
+                      className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center border-4 border-white shadow-md">
+                      <FaUser className="w-10 h-10 text-blue-500" />
+                    </div>
+                  )}
+                  <div className="absolute -bottom-1 -right-1 bg-blue-600 p-2 rounded-full border-2 border-white shadow-sm">
+                    <FaCamera className="w-3 h-3 text-white" />
+                  </div>
+                </div>
+                
+                <div className="flex-1 space-y-3">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('profileInput').click()}
+                      disabled={updatingProfile}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm whitespace-nowrap"
+                    >
+                      <FaCamera className="w-3.5 h-3.5" />
+                      Upload New Picture
+                    </button>
+                    <input 
+                      id="profileInput"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-500">OR URL:</span>
+                      <input
+                        type="url"
+                        value={profilePicture}
+                        onChange={(e) => setProfilePicture(e.target.value)}
+                        placeholder="Enter image URL"
+                        className="flex-1 px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-400">
+                      JPG, PNG or GIF. Max size 2MB.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Name Field */}
+            <div className="space-y-2">
+              <label htmlFor="pname" className="block text-sm font-semibold text-gray-900">
+                Full Name
+              </label>
+              <input
+                type="text"
+                id="pname"
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                placeholder="Varun Mendre"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            {/* Email Field (Disabled) */}
+            <div className="space-y-2 opacity-70">
+              <label className="block text-sm font-semibold text-gray-900">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={user?.email || ""}
+                disabled
+                className="w-full px-4 py-2 border border-blue-50 bg-blue-50/30 rounded-lg cursor-not-allowed"
+              />
+              <p className="text-xs text-gray-500">
+                Email cannot be changed once set.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={updatingProfile}
+              className="flex items-center justify-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold w-full md:w-auto"
+            >
+              {updatingProfile ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <FaSave className="w-4 h-4" />
+                  Update Profile
+                </>
+              )}
+            </button>
+          </form>
+        </div>
 
         {/* Storage Usage Section */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
