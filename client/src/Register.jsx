@@ -8,6 +8,7 @@ import { loginWithGoogle } from "../src/apis/loginWithGoogle";
 import { Alert, AlertTitle, AlertDescription } from "./components/lightswind/alert";
 import { CheckCircle } from "lucide-react";
 import { PasswordStrengthIndicator } from "./components/lightswind/password-strength-indicator";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "./components/lightswind/input-otp";
 
 const Register = () => {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -423,25 +424,24 @@ const Register = () => {
 
               {/* OTP Input */}
               <div>
-                <label htmlFor="otp" className="block text-sm font-semibold mb-2" style={{ color: '#0D2440' }}>
+                <label htmlFor="otp" className="block text-sm font-semibold mb-6 text-center" style={{ color: '#0D2440' }}>
                   Verification Code
                 </label>
-                <input
-                  type="text"
-                  id="otp"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  placeholder="Enter 4-digit code"
-                  maxLength={4}
-                  className="w-full px-4 py-3 border-2 rounded-lg text-center text-2xl font-bold tracking-widest transition-all duration-200 focus:outline-none"
-                  style={{
-                    borderColor: otpError ? '#EF4444' : '#E7F0FA',
-                    backgroundColor: '#FFFFFF',
-                    color: '#0D2440'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = otpError ? '#EF4444' : '#2E5E99'}
-                  onBlur={(e) => !otpError && (e.target.style.borderColor = '#E7F0FA')}
-                />
+                
+                <div className="flex justify-center mb-6">
+                  <InputOTP 
+                    maxLength={4} 
+                    value={otp} 
+                    onChange={(value) => setOtp(value)}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
 
                 {otpError && (
                   <Alert variant="destructive" withIcon className="mt-4 p-3 text-xs bg-red-50/50">

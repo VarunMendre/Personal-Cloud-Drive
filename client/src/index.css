@@ -106,6 +106,15 @@
     to { transform: translateX(-50%); }
   }
 
+  @keyframes caret-blink {
+    0%, 70%, 100% {
+      opacity: 1;
+    }
+    20%, 50% {
+      opacity: 0;
+    }
+  }
+
   /* Animation Utilities */
   --animate-fadeIn: fadeIn 0.3s ease-out;
   --animate-slideUp: slideUp 0.3s ease-out;
@@ -115,6 +124,7 @@
   --animate-spin: spin 1s linear infinite;
   --animate-marquee: marquee 20s linear infinite;
   --animate-progressIndeterminate: progressIndeterminate 1.5s ease-in-out infinite;
+  --animate-caret-blink: caret-blink 1.25s ease-out infinite;
 }
 
 /* Global Styles */
