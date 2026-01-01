@@ -164,14 +164,14 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b flex items-center justify-between" style={{ borderColor: '#E6FAF5' }}>
+        <div className="px-6 py-5 border-b flex items-center justify-between" style={{ borderColor: '#D1D5DB' }}>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#E6FAF5' }}>
-              <Info className="w-6 h-6" style={{ color: '#66B2D6' }} />
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
+              <Info className="w-6 h-6" style={{ color: '#000000' }} />
             </div>
             <div>
-              <h3 className="text-lg font-bold" style={{ color: '#2C3E50' }}>Details</h3>
-              <p className="text-sm mt-0.5" style={{ color: '#A3C5D9' }}>
+              <h3 className="text-lg font-bold" style={{ color: '#000000' }}>Details</h3>
+              <p className="text-sm mt-0.5" style={{ color: '#6B7280' }}>
                 {isDirectory ? "Folder" : "File"} information
               </p>
             </div>
@@ -179,7 +179,7 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
           <button
             onClick={onClose}
             className="hover:bg-opacity-10 transition-colors p-2 rounded-lg"
-            style={{ color: '#A3C5D9' }}
+            style={{ color: '#6B7280' }}
           >
             <X className="w-5 h-5" />
           </button>
@@ -188,17 +188,17 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
         {/* Content */}
         <div className="px-6 py-5">
           {/* Item Preview */}
-          <div className="flex items-center gap-4 mb-6 pb-5 border-b" style={{ borderColor: '#E6FAF5' }}>
+          <div className="flex items-center gap-4 mb-6 pb-5 border-b" style={{ borderColor: '#D1D5DB' }}>
             <div className="flex-shrink-0">{getIcon(itemType)}</div>
             <div className="flex-1 min-w-0">
               <div
                 className="font-medium truncate text-lg"
                 title={name}
-                style={{ color: '#2C3E50' }}
+                style={{ color: '#000000' }}
               >
                 {name}
               </div>
-              <div className="text-sm mt-1" style={{ color: '#A3C5D9' }}>{typeLabel}</div>
+              <div className="text-sm mt-1" style={{ color: '#6B7280' }}>{typeLabel}</div>
             </div>
           </div>
 
@@ -206,41 +206,41 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
           <div className="space-y-4">
             {/* Location */}
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#fafdff' }}>
-                <MapPin className="w-4 h-4" style={{ color: '#66B2D6' }} />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#F3F4F6' }}>
+                <MapPin className="w-4 h-4" style={{ color: '#000000' }} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium mb-1" style={{ color: '#2C3E50' }}>
+                <div className="text-sm font-medium mb-1" style={{ color: '#000000' }}>
                   Location
                 </div>
-                <div className="text-sm break-all" style={{ color: '#A3C5D9' }}>{path}</div>
+                <div className="text-sm break-all" style={{ color: '#6B7280' }}>{path}</div>
               </div>
             </div>
 
             {/* Size */}
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#fafdff' }}>
-                <Database className="w-4 h-4" style={{ color: '#66B2D6' }} />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#F3F4F6' }}>
+                <Database className="w-4 h-4" style={{ color: '#000000' }} />
               </div>
               <div className="flex-1">
-                <div className="text-sm font-medium mb-1" style={{ color: '#2C3E50' }}>
+                <div className="text-sm font-medium mb-1" style={{ color: '#000000' }}>
                   Size
                 </div>
-                <div className="text-sm" style={{ color: '#A3C5D9' }}>{formatSize(size)}</div>
+                <div className="text-sm" style={{ color: '#6B7280' }}>{formatSize(size)}</div>
               </div>
             </div>
 
             {/* Folder Contents */}
             {isDirectory && (
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#fafdff' }}>
-                  <Folder className="w-4 h-4" style={{ color: '#66B2D6' }} />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#F3F4F6' }}>
+                  <Folder className="w-4 h-4" style={{ color: '#000000' }} />
                 </div>
                 <div className="flex-1">
-                  <div className="text-sm font-medium mb-1" style={{ color: '#2C3E50' }}>
+                  <div className="text-sm font-medium mb-1" style={{ color: '#000000' }}>
                     Contents
                   </div>
-                  <div className="flex gap-4 text-sm" style={{ color: '#A3C5D9' }}>
+                  <div className="flex gap-4 text-sm" style={{ color: '#6B7280' }}>
                     <span>
                       {numberOfFiles} {numberOfFiles === 1 ? "File" : "Files"}
                     </span>
@@ -256,14 +256,14 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
 
             {/* Created At */}
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#fafdff' }}>
-                <Calendar className="w-4 h-4" style={{ color: '#66B2D6' }} />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#F3F4F6' }}>
+                <Calendar className="w-4 h-4" style={{ color: '#000000' }} />
               </div>
               <div className="flex-1">
-                <div className="text-sm font-medium mb-1" style={{ color: '#2C3E50' }}>
+                <div className="text-sm font-medium mb-1" style={{ color: '#000000' }}>
                   Created
                 </div>
-                <div className="text-sm" style={{ color: '#A3C5D9' }}>
+                <div className="text-sm" style={{ color: '#6B7280' }}>
                   {new Date(createdAt).toLocaleString()}
                 </div>
               </div>
@@ -271,14 +271,14 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
 
             {/* Updated At */}
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#fafdff' }}>
-                <Clock className="w-4 h-4" style={{ color: '#66B2D6' }} />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#F3F4F6' }}>
+                <Clock className="w-4 h-4" style={{ color: '#000000' }} />
               </div>
               <div className="flex-1">
-                <div className="text-sm font-medium mb-1" style={{ color: '#2C3E50' }}>
+                <div className="text-sm font-medium mb-1" style={{ color: '#000000' }}>
                   Modified
                 </div>
-                <div className="text-sm" style={{ color: '#A3C5D9' }}>
+                <div className="text-sm" style={{ color: '#6B7280' }}>
                   {new Date(updatedAt).toLocaleString()}
                 </div>
               </div>
@@ -287,22 +287,22 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t flex justify-end gap-3" style={{ borderColor: '#E6FAF5' }}>
+        <div className="px-6 py-4 border-t flex justify-end gap-3" style={{ borderColor: '#D1D5DB' }}>
           {!isDirectory && (
              <button
               className="flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 border-2"
               style={{
-                color: '#66B2D6',
+                color: '#000000',
                 backgroundColor: '#FFFFFF',
-                borderColor: '#E6FAF5'
+                borderColor: '#E5E7EB'
               }}
               onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#fafdff';
-                e.target.style.borderColor = '#A7DDE9';
+                e.target.style.backgroundColor = '#F9FAFB';
+                e.target.style.borderColor = '#D1D5DB';
               }}
               onMouseLeave={(e) => {
                 e.target.style.backgroundColor = '#FFFFFF';
-                e.target.style.borderColor = '#E6FAF5';
+                e.target.style.borderColor = '#E5E7EB';
               }}
               onClick={handleDownload}
             >
@@ -312,9 +312,9 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
           )}
           <button
             className="px-4 py-3 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-medium"
-            style={{ backgroundColor: '#66B2D6' }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#5aa0c0'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = '#66B2D6'}
+            style={{ backgroundColor: '#000000' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#374151'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
             onClick={onClose}
           >
             Close

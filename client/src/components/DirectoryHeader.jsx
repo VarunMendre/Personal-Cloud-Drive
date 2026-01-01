@@ -30,8 +30,8 @@ function DirectoryHeader({
             className="flex items-center gap-3 cursor-pointer group"
             onClick={() => navigate("/")}
           >
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 group-hover:scale-105" style={{ backgroundColor: '#FFFFFF' }}>
-              <Cloud className="w-6 h-6" style={{ color: '#1F3E66' }} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 group-hover:scale-105" style={{ backgroundColor: '#66B2D6' }}>
+              <Cloud className="w-6 h-6" style={{ color: '#FFFFFF' }} />
             </div>
             <div>
               <span className="text-lg font-bold" style={{ color: '#1F3E66' }}>CloudVault</span>
