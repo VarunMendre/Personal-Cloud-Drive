@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { loginWithGoogle } from "../src/apis/loginWithGoogle";
@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "./components/lightswind/alert";
 import { useAuth } from "./context/AuthContext";
 
 const Login = () => {
-  const { refreshUser } = useAuth();
+  const { refreshUser, evictionReason, clearEviction } = useAuth();
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const [formData, setFormData] = useState({
@@ -21,6 +21,15 @@ const Login = () => {
   const [serverError, setServerError] = useState("");
   const [notification, setNotification] = useState("");
   const navigate = useNavigate();
+
+  // Clear eviction reason when user is on login page or navigates away
+  useEffect(() => {
+    if (evictionReason) {
+      setNotification("Logged out due to login on another device");
+      // Optional: clear it from context so it doesn't persist forever
+      setTimeout(() => clearEviction(), 100);
+    }
+  }, [evictionReason, clearEviction]);
 
   const loginWithGitHubHandler = () => {
     const CLIENT_ID = "Ov23lifBnGMie0EjK9Zz";

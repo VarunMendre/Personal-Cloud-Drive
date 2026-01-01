@@ -14,6 +14,7 @@ import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { connectDB } from "./config/db.js";
 import { startCronJobs } from "./cron-jobs/index.js";
+import { initializeRedisindex } from "./utils/authUtils.js";
 
 const mySecretKey = process.env.MY_SECRET_KEY;
 
@@ -86,7 +87,8 @@ app.use((err, req, res, next) => {
   res.status(status).json({ status, message });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async() => {
+  await initializeRedisindex();
   startCronJobs();
   console.log(`Server Started on port ${PORT}`);
 });

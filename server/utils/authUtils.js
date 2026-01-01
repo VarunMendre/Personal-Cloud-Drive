@@ -2,6 +2,33 @@ import crypto from "crypto";
 import redisClient from "../config/redis.js";
 
 /**
+ * Initializes the Redis Search index for session management
+ */
+export const initializeRedisindex = async () => {
+  try {
+    const allIndexes = await redisClient.ft._list();
+
+    // If index already exists, we might need to drop it to update schema
+    if (allIndexes.includes("userIdInx")) {
+      await redisClient.ft.dropIndex("userIdInx");
+      console.log("Old Redis Search Index 'userIdInx' dropped for schema update");
+    }
+
+    await redisClient.ft.create("userIdInx", {
+      "$.userId": { type: 'TAG', AS: "userId" },
+      "$.createdAt": { type: 'NUMERIC', AS: "createdAt", SORTABLE: true },
+    }, { ON: "JSON", PREFIX: "session:" });
+
+    console.log("✅ Redis Search Index 'userIdInx' created with createdAt field");
+  } catch (error) {
+    if (!error.message.includes("Index already exists")) {
+      console.error("Failed to initialize index:", error);
+    }
+  }
+}
+
+
+/**
  * Deletes all active sessions for a given user from Redis
  * @param {string} userId - ID of the user whose sessions should be deleted
  * @returns {Promise<number>} - Number of sessions deleted
@@ -28,6 +55,7 @@ export const deleteUserSessions = async (userId) => {
     throw new Error("Failed to clear user sessions");
   }
 };
+
 /**
  * Creates a new session for a user, managing device limits and cookies
  * @param {object} res - Express response object
@@ -40,19 +68,53 @@ export const createSession = async (res, user) => {
 
   // 1. Manage device limits
   try {
-    const allSessions = await redisClient.ft.search(
-      "userIdInx",
-      `@userId:{${userId}}`,
-      { RETURN: [] }
-    );
+    let allSessions;
+    try {
+      // Try sorted search first
+      allSessions = await redisClient.ft.search(
+        "userIdInx",
+        `@userId:{${userId}}`,
+        {
+          SORTBY: { BY: "createdAt", DIRECTION: "ASC" },
+          RETURN: ["$.createdAt"]
+        }
+      );
+    } catch (searchErr) {
+      console.warn("Sorted Redis search failed, falling back to unsorted search:", searchErr.message);
+      // Fallback: regular search and we'll sort in memory if needed
+      allSessions = await redisClient.ft.search(
+        "userIdInx",
+        `@userId:{${userId}}`,
+        { RETURN: ["$.createdAt"] }
+      );
+      
+      // Sort in JS if there are multiple documents
+      if (allSessions.documents.length > 1) {
+        allSessions.documents.sort((a, b) => {
+          const aTime = a.value["$.createdAt"] || 0;
+          const bTime = b.value["$.createdAt"] || 0;
+          return aTime - bTime;
+        });
+      }
+    }
 
     if (allSessions.total >= maxDevicesLimit) {
-      // Delete the oldest session
-      await redisClient.del(allSessions.documents[0].id);
+      // Delete the oldest session(s) until we are below the limit
+      const sessionsToDeleteCount = (allSessions.total - maxDevicesLimit) + 1;
+      
+      for (let i = 0; i < sessionsToDeleteCount; i++) {
+        if (allSessions.documents[i]) {
+          const oldestSessionId = allSessions.documents[i].id;
+          await redisClient.del(oldestSessionId);
+          
+          const sid = oldestSessionId.replace("session:", "");
+          await redisClient.set(`eviction:${sid}`, "true", { EX: 600 });
+          console.log(`[DeviceLimit] Evicted session: ${sid} for user: ${userId}`);
+        }
+      }
     }
   } catch (err) {
-    console.error("Redis search for device limits failed. Skipping limit enforcement:", err.message);
-    // Continue session creation even if search fails (e.g. index missing)
+    console.error("Device limit enforcement failed critical error:", err.message);
   }
 
   // 2. Create session in Redis using RedisJSON
@@ -63,6 +125,7 @@ export const createSession = async (res, user) => {
     userId: user._id.toString(),
     rootDirId: user.rootDirId.toString(),
     role: user.role,
+    createdAt: Date.now(),
   });
 
   // Set 7-day expiration
@@ -71,7 +134,7 @@ export const createSession = async (res, user) => {
   // 3. Set cookie
   res.cookie("sid", sessionId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // Must be true for SameSite: None
+    secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     signed: true,
     maxAge: 1000 * 60 * 60 * 24 * 7,

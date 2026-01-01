@@ -13,9 +13,15 @@ export default async function checkAuth(req, res, next) {
   const session = await redisClient.json.get(`session:${sid}`);
 
   if (!session) {
+    const isEvicted = await redisClient.get(`eviction:${sid}`);
     res.clearCookie("sid");
+
+    if (isEvicted) {
+      return res.status(401).json({ error: "Logged out due to login on another device" });
+    }
     return res.status(401).json({ error: "2 Not logged in!" });
   }
+  
   const user = await User.findById(session.userId);
   if (!user) {
     res.clearCookie("sid");

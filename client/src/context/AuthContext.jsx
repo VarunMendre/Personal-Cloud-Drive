@@ -5,6 +5,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
+  const [evictionReason, setEvictionReason] = useState(null);
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const fetchUser = useCallback(async () => {
@@ -16,7 +17,12 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const data = await response.json();
         setUser(data);
+        setEvictionReason(null);
       } else {
+        const data = await response.json().catch(() => ({}));
+        if (data.error === "Logged out due to login on another device") {
+          setEvictionReason(data.error);
+        }
         setUser(null);
       }
     } catch (err) {
@@ -33,7 +39,17 @@ export const AuthProvider = ({ children }) => {
   }, [fetchUser]);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, isAuthenticating, setIsAuthenticating, refreshUser: fetchUser }}>
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        setUser, 
+        isAuthenticating, 
+        setIsAuthenticating, 
+        refreshUser: fetchUser,
+        evictionReason,
+        clearEviction: () => setEvictionReason(null)
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
