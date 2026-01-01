@@ -206,7 +206,7 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
           <div className="space-y-4">
             {/* Location */}
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#F0F8FF' }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#fafdff' }}>
                 <MapPin className="w-4 h-4" style={{ color: '#66B2D6' }} />
               </div>
               <div className="flex-1 min-w-0">
@@ -219,7 +219,7 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
 
             {/* Size */}
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#F0F8FF' }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#fafdff' }}>
                 <Database className="w-4 h-4" style={{ color: '#66B2D6' }} />
               </div>
               <div className="flex-1">
@@ -233,7 +233,7 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
             {/* Folder Contents */}
             {isDirectory && (
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#F0F8FF' }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#fafdff' }}>
                   <Folder className="w-4 h-4" style={{ color: '#66B2D6' }} />
                 </div>
                 <div className="flex-1">
@@ -256,7 +256,7 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
 
             {/* Created At */}
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#F0F8FF' }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#fafdff' }}>
                 <Calendar className="w-4 h-4" style={{ color: '#66B2D6' }} />
               </div>
               <div className="flex-1">
@@ -271,7 +271,7 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
 
             {/* Updated At */}
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#F0F8FF' }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#fafdff' }}>
                 <Clock className="w-4 h-4" style={{ color: '#66B2D6' }} />
               </div>
               <div className="flex-1">
@@ -297,7 +297,7 @@ function DetailsPopup({ item, onClose, BASE_URL, subscriptionStatus, showToast }
                 borderColor: '#E6FAF5'
               }}
               onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#F0F8FF';
+                e.target.style.backgroundColor = '#fafdff';
                 e.target.style.borderColor = '#A7DDE9';
               }}
               onMouseLeave={(e) => {

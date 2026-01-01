@@ -107,7 +107,7 @@ function RenameModal({
           <div className="px-6 py-5">
             {/* Current Item Info */}
             <div className="flex items-center gap-3 mb-5 pb-4 border-b" style={{ borderColor: '#E6FAF5' }}>
-              <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#F0F8FF' }}>
+              <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#fafdff' }}>
                 {getIcon(itemType)}
               </div>
               <div className="flex-1 min-w-0">
@@ -159,7 +159,7 @@ function RenameModal({
                   borderColor: '#E6FAF5'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#F0F8FF';
+                  e.target.style.backgroundColor = '#fafdff';
                   e.target.style.borderColor = '#A7DDE9';
                 }}
                 onMouseLeave={(e) => {

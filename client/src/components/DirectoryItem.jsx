@@ -108,7 +108,7 @@ function DirectoryItem({
       <div className="flex items-start gap-3 p-3">
         {/* Icon */}
         <div className="flex-shrink-0 mt-0.5">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F0F8FF' }}>
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fafdff' }}>
             {renderIcon()}
           </div>
         </div>
@@ -123,7 +123,7 @@ function DirectoryItem({
                 Folder
               </span>
             ) : fileExtension ? (
-              <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded" style={{ backgroundColor: '#F0F8FF', color: '#66B2D6' }}>
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded" style={{ backgroundColor: '#fafdff', color: '#66B2D6' }}>
                 {fileExtension}
               </span>
             ) : null}
@@ -145,7 +145,7 @@ function DirectoryItem({
                 <div className="relative group/tooltip">
                   <button
                     onClick={handleDownload}
-                    className="flex items-center justify-center p-2 rounded-full transition-colors text-[#66B2D6] hover:bg-[#F0F8FF]"
+                    className="flex items-center justify-center p-2 rounded-full transition-colors text-[#66B2D6] hover:bg-[#fafdff]"
                     title="Download"
                   >
                     <Download className="w-4 h-4" />
@@ -156,7 +156,7 @@ function DirectoryItem({
               {/* Details button - for both files and folders */}
               <button
                 onClick={handleDetailsClick}
-                className="flex items-center justify-center p-2 text-[#A3C5D9] hover:bg-[#F0F8FF] rounded-full transition-colors"
+                className="flex items-center justify-center p-2 text-[#A3C5D9] hover:bg-[#fafdff] rounded-full transition-colors"
                 title="Details"
               >
                 <Info className="w-4 h-4" />
@@ -166,7 +166,7 @@ function DirectoryItem({
 
           {/* Three dots for context menu - always visible */}
           <div
-            className="flex items-center justify-center cursor-pointer text-[#A3C5D9] rounded-full p-2 hover:bg-[#F0F8FF] transition-colors"
+            className="flex items-center justify-center cursor-pointer text-[#A3C5D9] rounded-full p-2 hover:bg-[#fafdff] transition-colors"
             onClick={(e) => handleContextMenu(e, item.id)}
           >
             <MoreVertical className="w-5 h-5" />

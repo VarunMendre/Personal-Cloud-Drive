@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "./components/lightswind/ale
 
 function UserSettings() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Storage info
   const maxStorageLimit = user?.maxStorageLimit || 1073741824;
@@ -79,11 +80,7 @@ function UserSettings() {
           passwordStatus = passwordData.hasPassword;
         }
 
-        // WORKAROUND: Backend /user/has-password is broken
-        const storedPasswordStatus = localStorage.getItem(`hasPassword_${user.email}`);
-        if (storedPasswordStatus !== null) {
-          passwordStatus = storedPasswordStatus === 'true';
-        }
+        // WORKAROUND REMOVED: Now relying on backend source of truth
         
         setHasPassword(passwordStatus);
 
@@ -240,13 +237,16 @@ function UserSettings() {
         method: "POST",
         credentials: "include",
       });
-      if (response.ok) {
+      // If success (204) OR Unauthorized (401 - means already logged out)
+      if (response.ok || response.status === 401) {
         navigate("/login");
       } else {
         setError("Logout failed");
       }
     } catch (err) {
       console.error("Logout error:", err);
+      // Even if network error, maybe we should let them go? 
+      // For now keeping consistent with error reporting but usually logout should be aggressive.
       setError("Logout failed");
     }
   };

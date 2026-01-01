@@ -178,8 +178,8 @@ export const logOutById = async (req, res, next) => {
 
 export const getUserPassword = async (req, res, next) => {
   try {
-    // req.user is already populated by checkAuth middleware
-    const hasPassword = req.user.password && req.user.password.length > 0;
+    // req.user is already populated by checkAuth middleware, forcing to return boolean value
+    const hasPassword = !!(req.user.password && req.user.password.length > 0);
 
     return successResponse(res, { hasPassword });
   } catch (err) {

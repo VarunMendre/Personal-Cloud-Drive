@@ -36,7 +36,7 @@ const GitHubCallbackHandler = () => {
   }, [navigate]);
 
   return (
-    <div className="flex items-center justify-center min-vh-100 h-screen bg-[#F0F8FF]">
+    <div className="flex items-center justify-center min-vh-100 h-screen bg-[#fafdff]">
       <div className="p-8 rounded-2xl glass-effect shadow-medium max-w-md w-full animate-fadeIn border-2 border-[#E6FAF5] bg-white flex flex-col items-center gap-6">
         <div className="relative">
           <div className="w-16 h-16 rounded-full bg-[#E6FAF5] flex items-center justify-center">
@@ -50,7 +50,7 @@ const GitHubCallbackHandler = () => {
           <p className="text-[#A3C5D9] font-medium">Securing your connection to GitHub...</p>
         </div>
 
-        <div className="w-full bg-[#F0F8FF] rounded-full h-1.5 overflow-hidden">
+        <div className="w-full bg-[#fafdff] rounded-full h-1.5 overflow-hidden">
           <div className="h-full bg-[#66B2D6] rounded-full animate-progressIndeterminate"></div>
         </div>
       </div>

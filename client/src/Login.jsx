@@ -242,7 +242,7 @@ const Login = () => {
                 color: '#2C3E50'
               }}
               onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#F0F8FF';
+                e.target.style.backgroundColor = '#fafdff';
                 e.target.style.borderColor = '#A7DDE9';
               }}
               onMouseLeave={(e) => {

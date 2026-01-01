@@ -24,7 +24,7 @@ export default async function checkAuth(req, res, next) {
 
   // Fetch Subscription Status
 
-  let subscriptionStatus = "free"; //default
+  let subscriptionStatus = "free";
 
   if (user.subscriptionId) {
     const sub = await Subscription.findOne({

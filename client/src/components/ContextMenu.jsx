@@ -24,7 +24,7 @@ function ContextMenu({
   const isPaused = subscriptionStatus?.toLowerCase() === "paused";
   
   // Design system classes
-  const itemClass = "flex items-center gap-3 px-4 py-2.5 cursor-pointer whitespace-nowrap transition-all duration-200 text-sm font-medium hover:bg-[#F0F8FF]";
+  const itemClass = "flex items-center gap-3 px-4 py-2.5 cursor-pointer whitespace-nowrap transition-all duration-200 text-sm font-medium hover:bg-[#fafdff]";
   const disabledClass = "flex items-center gap-3 px-4 py-2.5 cursor-not-allowed whitespace-nowrap text-[#A3C5D9] bg-gray-50 opacity-60 text-sm font-medium";
   const textPrimary = "text-[#2C3E50]";
   const iconColor = "#66B2D6";

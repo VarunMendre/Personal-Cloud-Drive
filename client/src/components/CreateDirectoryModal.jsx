@@ -76,7 +76,7 @@ function CreateDirectoryModal({
                   borderColor: '#E6FAF5'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#F0F8FF';
+                  e.target.style.backgroundColor = '#fafdff';
                   e.target.style.borderColor = '#A7DDE9';
                 }}
                 onMouseLeave={(e) => {
