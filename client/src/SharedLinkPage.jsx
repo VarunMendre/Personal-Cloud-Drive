@@ -22,6 +22,7 @@ function SharedLinkPage() {
   const [renameValue, setRenameValue] = useState("");
   const [extensionError, setExtensionError] = useState("");
   const [originalExtension, setOriginalExtension] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
 
   useEffect(() => {
     const fetchSharedFile = async () => {
@@ -116,6 +117,7 @@ function SharedLinkPage() {
       return;
     }
     
+    setIsRenaming(true);
     try {
         const response = await fetch(`${BASE_URL}/file/${fileData._id}`, {
             method: "PATCH",
@@ -138,6 +140,8 @@ function SharedLinkPage() {
     } catch (err) {
         console.error("Rename failed:", err);
         alert(`Rename failed: ${err.message}`);
+    } finally {
+        setIsRenaming(false);
     }
   };
 
@@ -230,6 +234,7 @@ function SharedLinkPage() {
             onClose={() => setShowRenameModal(false)}
             onRenameSubmit={handleRenameSubmit}
             extensionError={extensionError}
+            isProcessing={isRenaming}
         />
       )}
     </div>

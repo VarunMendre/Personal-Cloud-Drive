@@ -1,17 +1,16 @@
 import { useState, useEffect } from "react";
 import {
-  FaTimes,
-  FaLink,
-  FaCopy,
-  FaTrash,
-  FaEye,
-  FaGlobe,
-  FaShare,
-  FaEnvelope,
-  FaUsers,
-  FaPencilAlt,
-  FaUserCheck,
-} from "react-icons/fa";
+  X,
+  Link,
+  Copy,
+  Trash2,
+  Eye,
+  Globe,
+  Mail,
+  Users,
+  Pencil,
+  UserCheck,
+} from "lucide-react";
 import { Alert, AlertDescription } from "./lightswind/alert";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -361,7 +360,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
-              <FaUsers className="w-6 h-6 text-white" />
+              <Users className="w-6 h-6 text-white" />
             </div>
             <div>
               <h3 className="text-xl font-bold text-gray-900">Share Document</h3>
@@ -372,7 +371,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
           >
-            <FaTimes className="w-5 h-5" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -386,7 +385,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             }`}
           >
-            <FaLink className="w-4 h-4" />
+            <Link className="w-4 h-4" />
             Share Link
           </button>
           <button
@@ -397,7 +396,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             }`}
           >
-            <FaEnvelope className="w-4 h-4" />
+            <Mail className="w-4 h-4" />
             Email Invite
           </button>
           <button
@@ -408,7 +407,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             }`}
           >
-            <FaUserCheck className="w-4 h-4" />
+            <UserCheck className="w-4 h-4" />
             Shared With
           </button>
         </div>
@@ -447,7 +446,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <FaGlobe className="w-5 h-5 text-black" />
+                        <Globe className="w-5 h-5 text-black" />
                       </div>
                       <div>
                         <h4 className="text-sm font-semibold text-gray-900">Share with link</h4>
@@ -484,7 +483,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                                   : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                               }`}
                           >
-                            <FaEye className="w-4 h-4" />
+                            <Eye className="w-4 h-4" />
                             <span className="font-medium">Viewer</span>
                           </button>
                           <button
@@ -495,7 +494,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                                   : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                               }`}
                           >
-                            <FaPencilAlt className="w-4 h-4" />
+                            <Pencil className="w-4 h-4" />
                             <span className="font-medium">Editor</span>
                           </button>
                         </div>
@@ -507,7 +506,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                           Share link
                         </label>
                         <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                          <FaLink className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <Link className="w-4 h-4 text-gray-400 flex-shrink-0" />
                           <input
                             type="text"
                             value={shareLink.url}
@@ -518,7 +517,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                             onClick={handleCopyLink}
                             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
                           >
-                            <FaCopy className="w-3 h-3" />
+                            <Copy className="w-3 h-3" />
                             {copiedLink ? "Copied!" : "Copy"}
                           </button>
                         </div>
@@ -603,7 +602,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <FaUserCheck className="w-4 h-4 text-green-600" />
+                  <UserCheck className="w-4 h-4 text-green-600" />
                 </div>
                 <h4 className="text-base font-semibold text-gray-900">Users with Access</h4>
               </div>
@@ -615,7 +614,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
               ) : sharedUsers.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FaUserCheck className="w-8 h-8 text-gray-400" />
+                    <UserCheck className="w-8 h-8 text-gray-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">No users shared yet</h3>
                   <p className="text-sm text-gray-500">
@@ -659,7 +658,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                         title="Remove access"
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       >
-                        <FaTrash className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   ))}

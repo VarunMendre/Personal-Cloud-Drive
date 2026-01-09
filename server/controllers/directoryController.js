@@ -1,4 +1,3 @@
-import { rm } from "fs/promises";
 import Directory from "../models/directoryModel.js";
 import File from "../models/fileModel.js";
 import {

@@ -76,7 +76,7 @@ export const deletes3Files = async (keys) => {
     Bucket: process.env.BUCKET_NAME,
     Delete: {
       Objects: keys,
-      Quiet: false, // set true to skip individual delete responses
+      Quiet: false,
     },
   });
 

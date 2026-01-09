@@ -9,9 +9,9 @@ import {
   Archive,
   FileCode,
   Edit3,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from "lucide-react";
-
 function RenameModal({
   renameType,
   renameValue,
@@ -19,6 +19,7 @@ function RenameModal({
   onClose,
   onRenameSubmit,
   extensionError,
+  isProcessing = false,
 }) {
   const inputRef = useRef(null);
 
@@ -166,18 +167,26 @@ function RenameModal({
                   e.target.style.backgroundColor = '#FFFFFF';
                   e.target.style.borderColor = '#D1D5DB';
                 }}
+                disabled={isProcessing}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={!renameValue.trim() || !!extensionError}
-                className="flex-1 px-4 py-3 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!renameValue.trim() || !!extensionError || isProcessing}
+                className="flex-1 px-4 py-3 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 style={{ backgroundColor: '#2563EB' }}
                 onMouseEnter={(e) => !e.target.disabled && (e.target.style.backgroundColor = '#1D4ED8')}
                 onMouseLeave={(e) => e.target.style.backgroundColor = '#2563EB'}
               >
-                Save Changes
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
               </button>
             </div>
           </div>

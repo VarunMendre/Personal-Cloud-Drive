@@ -26,7 +26,8 @@ import {
   Mail,
   User,
   Shield,
-  Search
+  Search,
+  Loader2
 } from "lucide-react";
 import { Alert, AlertDescription } from "./components/lightswind/alert";
 
@@ -35,6 +36,7 @@ export default function UsersPage() {
 
   // --- State ---
   const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { user: currentUser, isAuthenticating } = useAuth();
 
   // Modals
@@ -60,6 +62,7 @@ export default function UsersPage() {
   // Selection
   const [selectedUser, setSelectedUser] = useState(null);
   const [newRole, setNewRole] = useState("");
+  const [processingAction, setProcessingAction] = useState(null); // 'pause', 'resume', 'logout', 'delete', 'hardDelete', 'recover', 'roleChange'
 
   // Data
 
@@ -71,34 +74,52 @@ export default function UsersPage() {
   // --- Fetching ---
 
   async function fetchUsers() {
+    setIsLoading(true);
     try {
-      // Fetch basic user data
-      const usersResponse = await fetch(`${BASE_URL}/users`, { credentials: "include" });
-      
-      // Fetch permission data
-      let permissionData = { users: [] };
-      try {
-        const permResponse = await fetch(`${BASE_URL}/users/permission`, { credentials: "include" });
-        if (permResponse.ok) {
-          permissionData = await permResponse.json();
-        }
-      } catch (err) {
-        console.warn("Could not fetch permission data:", err);
-      }
+      // Fetch all required data in parallel to avoid "waterfall" loading
+      const [usersResponse, permResponse, meResponse] = await Promise.all([
+        fetch(`${BASE_URL}/users`, { credentials: "include" }),
+        fetch(`${BASE_URL}/users/permission`, { credentials: "include" }).catch(err => {
+          console.warn("Could not fetch permission data:", err);
+          return { ok: false };
+        }),
+        fetch(`${BASE_URL}/user`, { credentials: "include" }).catch(err => {
+          console.warn("Could not fetch my data:", err);
+          return { ok: false };
+        })
+      ]);
 
-      // Fetch current user data to ensure self-role is correct
-      let myData = null;
-      try {
-        const meResponse = await fetch(`${BASE_URL}/user`, { credentials: "include" });
-        if (meResponse.ok) {
-          myData = await meResponse.json();
-        }
-      } catch (err) {
-        console.warn("Could not fetch my data:", err);
+      // Check for auth errors on the main users request
+      if (usersResponse.status === 403) {
+        navigate("/");
+        return;
+      }
+      if (usersResponse.status === 401) {
+        navigate("/login");
+        return;
       }
 
       if (usersResponse.ok) {
         const usersData = await usersResponse.json();
+        
+        // Process optional data
+        let permissionData = { users: [] };
+        if (permResponse.ok) {
+          try {
+            permissionData = await permResponse.json();
+          } catch (err) {
+            console.warn("Error parsing permission data:", err);
+          }
+        }
+
+        let myData = null;
+        if (meResponse.ok) {
+          try {
+            myData = await meResponse.json();
+          } catch (err) {
+            console.warn("Error parsing my data:", err);
+          }
+        }
         
         // Create a map of roles from permission data
         const roleMap = {};
@@ -112,7 +133,6 @@ export default function UsersPage() {
         // Merge data
         const normalized = usersData.map((u) => {
           // 1. Check if this is ME
-          // Ensure we don't match undefined === undefined
           const isMe = myData && (
             (myData.email && u.email === myData.email) || 
             (myData._id && u._id && u._id === myData._id) || 
@@ -143,13 +163,11 @@ export default function UsersPage() {
         });
 
         setUsers(normalized);
-      } else if (usersResponse.status === 403) {
-        navigate("/");
-      } else if (usersResponse.status === 401) {
-        navigate("/login");
       }
     } catch (err) {
       console.error("Error fetching users:", err);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -219,6 +237,7 @@ export default function UsersPage() {
 
   const confirmRoleChange = async () => {
     if (!selectedUser || !newRole) return;
+    setProcessingAction('roleChange');
     try {
       const response = await fetch(`${BASE_URL}/users/${selectedUser._id || selectedUser.id}/role`, {
         method: "PUT",
@@ -235,6 +254,8 @@ export default function UsersPage() {
       }
     } catch (err) {
       console.error("Role change error:", err);
+    } finally {
+      setProcessingAction(null);
     }
   };
 
@@ -246,6 +267,7 @@ export default function UsersPage() {
 
   const confirmLogout = async () => {
     if (!selectedUser) return;
+    setProcessingAction('logout');
     try {
       const response = await fetch(`${BASE_URL}/users/${selectedUser.id}/logout`, {
         method: "POST",
@@ -257,6 +279,8 @@ export default function UsersPage() {
       }
     } catch (err) {
       console.error("Logout error:", err);
+    } finally {
+      setProcessingAction(null);
     }
   };
 
@@ -267,6 +291,7 @@ export default function UsersPage() {
 
   const handleSoftDelete = async () => {
     if (!selectedUser) return;
+    setProcessingAction('delete');
     try {
       const response = await fetch(`${BASE_URL}/users/${selectedUser.id}`, {
         method: "DELETE",
@@ -278,11 +303,14 @@ export default function UsersPage() {
       }
     } catch (err) {
       console.error("Soft delete error:", err);
+    } finally {
+      setProcessingAction(null);
     }
   };
 
   const handleHardDelete = async () => {
     if (!selectedUser) return;
+    setProcessingAction('hardDelete');
     try {
       const response = await fetch(`${BASE_URL}/users/${selectedUser.id}/hard`, {
         method: "DELETE",
@@ -294,6 +322,8 @@ export default function UsersPage() {
       }
     } catch (err) {
       console.error("Hard delete error:", err);
+    } finally {
+      setProcessingAction(null);
     }
   };
 
@@ -304,6 +334,7 @@ export default function UsersPage() {
 
   const confirmRecover = async () => {
     if (!selectedUser) return;
+    setProcessingAction('recover');
     try {
       const response = await fetch(`${BASE_URL}/users/${selectedUser.id}/recover`, {
         method: "PUT",
@@ -315,6 +346,8 @@ export default function UsersPage() {
       }
     } catch (err) {
       console.error("Recover error:", err);
+    } finally {
+      setProcessingAction(null);
     }
   };
 
@@ -331,6 +364,7 @@ export default function UsersPage() {
 
   const confirmPause = async () => {
     if (!selectedUser) return;
+    setProcessingAction('pause');
     try {
       const response = await fetch(`${BASE_URL}/subscriptions/${selectedUser.razorpaySubscriptionId}/pause`, {
         method: "POST",
@@ -340,7 +374,10 @@ export default function UsersPage() {
         setShowPauseModal(false);
         setSuccessMessage("Subscription paused successfully");
         setShowSuccessToast(true);
-        setTimeout(() => setShowSuccessToast(false), 3000);
+        setTimeout(() => {
+          setShowSuccessToast(false);
+          window.location.reload();
+        }, 3000);
         fetchUsers();
       } else {
         const err = await response.json();
@@ -355,6 +392,7 @@ export default function UsersPage() {
       setErrorMessage("An error occurred while pausing subscription");
       setShowErrorToast(true);
       setTimeout(() => setShowErrorToast(false), 3000);
+      setProcessingAction(null);
     }
   };
 
@@ -371,6 +409,7 @@ export default function UsersPage() {
 
   const confirmResume = async () => {
     if (!selectedUser) return;
+    setProcessingAction('resume');
     console.log("Resuming subscription for user:", selectedUser.name, "ID:", selectedUser.razorpaySubscriptionId);
     try {
       const response = await fetch(`${BASE_URL}/subscriptions/${selectedUser.razorpaySubscriptionId}/resume`, {
@@ -381,7 +420,10 @@ export default function UsersPage() {
         setShowResumeModal(false);
         setSuccessMessage("Subscription resumed successfully");
         setShowSuccessToast(true);
-        setTimeout(() => setShowSuccessToast(false), 3000);
+        setTimeout(() => {
+          setShowSuccessToast(false);
+          window.location.reload();
+        }, 3000);
         fetchUsers();
       } else {
         const err = await response.json();
@@ -396,6 +438,7 @@ export default function UsersPage() {
       setErrorMessage("An error occurred while resuming subscription");
       setShowErrorToast(true);
       setTimeout(() => setShowErrorToast(false), 3000);
+      setProcessingAction(null);
     }
   };
 
@@ -553,10 +596,11 @@ export default function UsersPage() {
                 <option>All Users</option>
               </select>
               <button 
-                onClick={fetchUsers}
-                className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-1"
+                onClick={() => !processingAction && fetchUsers()}
+                disabled={!!processingAction}
+                className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-1 disabled:opacity-50"
               >
-                <RefreshCw className="w-3 h-3" />
+                <RefreshCw className={`w-3 h-3 ${processingAction ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
             </div>
@@ -575,157 +619,192 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredUsers.map((user) => (
-                  <tr key={user._id || user.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        {user.picture ? (
-                          <img src={user.picture} alt="" className="w-8 h-8 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
-                            <User className="w-4 h-4" />
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={currentUser.role === "Owner" ? "6" : "5"} className="py-24 text-center">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <div className="relative">
+                          <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                             <Users className="w-5 h-5 text-blue-400" />
                           </div>
-                        )}
-                        <div>
-                          <div className="font-medium text-gray-900 text-sm">{user.name}</div>
-                          <div className="text-xs text-gray-500">{user.email}</div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm text-gray-900 font-medium">
-                        {formatBytes(user.usedStorageInBytes || 0)}
-                      </div>
-                      <div className="text-xs text-gray-500">of {formatBytes(user.maxStorageLimit || 500 * 1024 * 1024)}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                          {user.role}
-                        </span>
-                        {canChangeRole(user) && (
-                          <button 
-                            onClick={() => handleRoleChangeClick(user)}
-                            className="text-gray-400 hover:text-blue-600 transition-colors"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.isLoggedIn, user.isDeleted)}`}>
-                        {user.isDeleted ? "Deleted" : user.isLoggedIn ? "Logged In" : "Logged Out"}
-                      </span>
-                    </td>
-                    {currentUser.role === "Owner" && (
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {user.razorpaySubscriptionId ? (
-                            <>
-                              {user.subscriptionStatus === "paused" ? (
-                                  <button
-                                    onClick={() => handleResumeSubscription(user)}
-                                    className="p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-1 shadow-sm"
-                                    title="Resume Subscription"
-                                  >
-                                    <Play className="w-3 h-3" />
-                                    <span className="text-[10px] font-bold uppercase">Resume</span>
-                                  </button>
-                              ) : (
-                                  <button
-                                    onClick={() => handlePauseSubscription(user)}
-                                    className="p-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg transition-all flex items-center gap-1 shadow-sm"
-                                    title="Pause Subscription"
-                                  >
-                                    <Pause className="w-3 h-3" />
-                                    <span className="text-[10px] font-bold uppercase">Pause</span>
-                                  </button>
-                              )}
-                              
-                              {/* Status Label */}
-                              <div className="flex items-center ml-1">
-                                {user.subscriptionStatus === "paused" ? (
-                                  <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
-                                     <AlertTriangle className="w-2.5 h-2.5 animate-pulse" />
-                                     <span className="text-[9px] font-bold uppercase">Paused</span>
-                                  </div>
-                                ) : user.subscriptionStatus === "active" ? (
-                                  <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">
-                                     <CheckCircle className="w-2.5 h-2.5" />
-                                     <span className="text-[9px] font-bold uppercase">Active</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1 text-gray-400 opacity-60">
-                                    <span className="text-[9px] font-medium italic">Basic Account</span>
-                                  </div>
-                                )}
-                              </div>
-                            </>
-                          ) : (
-                            <div className="flex items-center gap-1 text-gray-400 opacity-60">
-                               <span className="text-[9px] font-medium italic">Basic Account</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    )}
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {/* Logout */}
-                        {canLogoutUser(user) && !user.isDeleted && (
-                          <button
-                            onClick={() => handleLogoutClick(user)}
-                            disabled={!user.isLoggedIn}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              user.isLoggedIn 
-                                ? "bg-blue-600 text-white hover:bg-blue-700" 
-                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                            }`}
-                            title="Logout User"
-                          >
-                            <span className="text-xs px-2">Logout</span>
-                          </button>
-                        )}
-
-                        {/* Delete/Recover */}
-                        {canDeleteUser(user) && (
-                          <>
-                            {!user.isDeleted ? (
-                              <button
-                                onClick={() => handleDeleteClick(user)}
-                                disabled={user.email === currentUser.email}
-                                className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
-                              >
-                                Delete
-                              </button>
-                            ) : (
-                              canHardDeleteUser(user) && (
-                                <button
-                                  onClick={() => handleRecoverClick(user)}
-                                  className="px-3 py-1.5 bg-green-100 text-green-700 text-xs font-medium rounded-lg hover:bg-green-200 transition-colors"
-                                >
-                                  Recover
-                                </button>
-                              )
-                            )}
-                          </>
-                        )}
-
-                        {/* View Files */}
-                        {canViewFiles && !user.isDeleted && (
-                          <button
-                            onClick={() => handleViewClick(user)}
-                            className="p-1.5 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                            title="View Files"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        )}
+                        <p className="text-sm font-semibold text-gray-900">Fetching user data...</p>
+                        <p className="text-xs text-gray-500">Retrieving users and permissions</p>
                       </div>
                     </td>
                   </tr>
-                ))}
+                ) : filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={currentUser.role === "Owner" ? "6" : "5"} className="py-24 text-center">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+                          <Search className="w-8 h-8 text-gray-300" />
+                        </div>
+                        <p className="text-sm font-semibold text-gray-900">No users found</p>
+                        <p className="text-xs text-gray-500">Try adjusting your filters or search</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <tr key={user._id || user.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          {user.picture ? (
+                            <img src={user.picture} alt="" className="w-8 h-8 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
+                              <User className="w-4 h-4" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-medium text-gray-900 text-sm">{user.name}</div>
+                            <div className="text-xs text-gray-500">{user.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="text-sm text-gray-900 font-medium">
+                          {formatBytes(user.usedStorageInBytes || 0)}
+                        </div>
+                        <div className="text-xs text-gray-500">of {formatBytes(user.maxStorageLimit || 500 * 1024 * 1024)}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                            {user.role}
+                          </span>
+                          {canChangeRole(user) && (
+                            <button 
+                              onClick={() => !processingAction && handleRoleChangeClick(user)}
+                              disabled={!!processingAction}
+                              className={`text-gray-400 hover:text-blue-600 transition-colors ${processingAction ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              title="Change Role"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.isLoggedIn, user.isDeleted)}`}>
+                          {user.isDeleted ? "Deleted" : user.isLoggedIn ? "Logged In" : "Logged Out"}
+                        </span>
+                      </td>
+                      {currentUser.role === "Owner" && (
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            {user.razorpaySubscriptionId ? (
+                              <>
+                                {user.subscriptionStatus === "paused" ? (
+                                    <button
+                                      onClick={() => !processingAction && handleResumeSubscription(user)}
+                                      disabled={!!processingAction}
+                                      className={`p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-1 shadow-sm ${processingAction ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                      title="Resume Subscription"
+                                    >
+                                      <Play className="w-3 h-3" />
+                                      <span className="text-[10px] font-bold uppercase">Resume</span>
+                                    </button>
+                                ) : (
+                                    <button
+                                      onClick={() => !processingAction && handlePauseSubscription(user)}
+                                      disabled={!!processingAction}
+                                      className={`p-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg transition-all flex items-center gap-1 shadow-sm ${processingAction ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                      title="Pause Subscription"
+                                    >
+                                      <Pause className="w-3 h-3" />
+                                      <span className="text-[10px] font-bold uppercase">Pause</span>
+                                    </button>
+                                )}
+                                
+                                {/* Status Label */}
+                                <div className="flex items-center ml-1">
+                                  {user.subscriptionStatus === "paused" ? (
+                                    <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
+                                       <AlertTriangle className="w-2.5 h-2.5 animate-pulse" />
+                                       <span className="text-[9px] font-bold uppercase">Paused</span>
+                                    </div>
+                                  ) : user.subscriptionStatus === "active" ? (
+                                    <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">
+                                       <CheckCircle className="w-2.5 h-2.5" />
+                                       <span className="text-[9px] font-bold uppercase">Active</span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-1 text-gray-400 opacity-60">
+                                      <span className="text-[9px] font-medium italic">Basic Account</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="flex items-center gap-1 text-gray-400 opacity-60">
+                                 <span className="text-[9px] font-medium italic">Basic Account</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {/* Logout */}
+                          {canLogoutUser(user) && !user.isDeleted && (
+                            <button
+                              onClick={() => !processingAction && handleLogoutClick(user)}
+                              disabled={!user.isLoggedIn || !!processingAction}
+                              className={`p-1.5 rounded-lg transition-colors ${
+                                user.isLoggedIn && !processingAction
+                                  ? "bg-blue-600 text-white hover:bg-blue-700" 
+                                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              }`}
+                              title="Logout User"
+                            >
+                              <span className="text-xs px-2">Logout</span>
+                            </button>
+                          )}
+  
+                          {/* Delete/Recover */}
+                          {canDeleteUser(user) && (
+                            <>
+                              {!user.isDeleted ? (
+                                <button
+                                  onClick={() => !processingAction && handleDeleteClick(user)}
+                                  disabled={user.email === currentUser.email || !!processingAction}
+                                  className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
+                                >
+                                  Delete
+                                </button>
+                              ) : (
+                                canHardDeleteUser(user) && (
+                                  <button
+                                    onClick={() => !processingAction && handleRecoverClick(user)}
+                                    disabled={!!processingAction}
+                                    className="px-3 py-1.5 bg-green-100 text-green-700 text-xs font-medium rounded-lg hover:bg-green-200 transition-colors disabled:opacity-50"
+                                    >
+                                      Recover
+                                    </button>
+                                )
+                              )}
+                            </>
+                          )}
+  
+                          {/* View Files */}
+                          {canViewFiles && !user.isDeleted && (
+                            <button
+                              onClick={() => !processingAction && handleViewClick(user)}
+                              disabled={!!processingAction}
+                              className={`p-1.5 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors ${processingAction ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              title="View Files"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -775,16 +854,24 @@ export default function UsersPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowRoleModal(false)}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  disabled={processingAction === 'roleChange'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmRoleChange}
-                  disabled={!newRole}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  disabled={!newRole || processingAction === 'roleChange'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
-                  Save Changes
+                  {processingAction === 'roleChange' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
                 </button>
               </div>
             </div>
@@ -814,15 +901,24 @@ export default function UsersPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  disabled={processingAction === 'delete'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSoftDelete}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                  disabled={processingAction === 'delete'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Delete
+                  {processingAction === 'delete' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    "Delete"
+                  )}
                 </button>
                 {canHardDeleteUser(selectedUser) && (
                   <button
@@ -830,7 +926,8 @@ export default function UsersPage() {
                       setShowDeleteModal(false);
                       setShowHardDeleteConfirm(true);
                     }}
-                    className="flex-1 px-4 py-2.5 text-sm font-medium text-red-700 bg-red-100 rounded-lg hover:bg-red-200 transition-colors"
+                    disabled={processingAction === 'delete'}
+                    className="flex-1 px-4 py-2.5 text-sm font-medium text-red-700 bg-red-100 rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
                   >
                     Permanent Delete
                   </button>
@@ -863,15 +960,71 @@ export default function UsersPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowHardDeleteConfirm(false)}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  disabled={processingAction === 'hardDelete'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleHardDelete}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                  disabled={processingAction === 'hardDelete'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Confirm Delete
+                  {processingAction === 'hardDelete' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    "Confirm Delete"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recover Modal */}
+      {showRecoverModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
+            <div className="px-6 py-5 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <RotateCcw className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Recover User</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">Restore deleted user</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-600 mb-5">
+                Are you sure you want to recover <strong className="text-gray-900">{selectedUser.name}</strong>?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowRecoverModal(false)}
+                  disabled={processingAction === 'recover'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmRecover}
+                  disabled={processingAction === 'recover'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {processingAction === 'recover' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Recovering...</span>
+                    </>
+                  ) : (
+                    "Recover"
+                  )}
                 </button>
               </div>
             </div>
@@ -900,15 +1053,24 @@ export default function UsersPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowLogoutModal(false)}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  disabled={processingAction === 'logout'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmLogout}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                  disabled={processingAction === 'logout'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Logout
+                  {processingAction === 'logout' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Signing out...</span>
+                    </>
+                  ) : (
+                    "Logout"
+                  )}
                 </button>
               </div>
             </div>
@@ -946,15 +1108,24 @@ export default function UsersPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowPauseModal(false)}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  disabled={processingAction === 'pause'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmPause}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
+                  disabled={processingAction === 'pause'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Pause Subscription
+                  {processingAction === 'pause' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Pausing...</span>
+                    </>
+                  ) : (
+                    "Pause Subscription"
+                  )}
                 </button>
               </div>
             </div>
@@ -992,15 +1163,24 @@ export default function UsersPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowResumeModal(false)}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  disabled={processingAction === 'resume'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmResume}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                  disabled={processingAction === 'resume'}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Resume Subscription
+                  {processingAction === 'resume' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Resuming...</span>
+                    </>
+                  ) : (
+                    "Resume Subscription"
+                  )}
                 </button>
               </div>
             </div>

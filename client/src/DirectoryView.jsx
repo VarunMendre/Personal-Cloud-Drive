@@ -70,6 +70,7 @@ function DirectoryView() {
   const [renameId, setRenameId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const [renameVersion, setRenameVersion] = useState(undefined);
+  const [isRenaming, setIsRenaming] = useState(false);
   const [extensionError, setExtensionError] = useState("");
   const [originalRenameValue, setOriginalRenameValue] = useState("");
 
@@ -712,6 +713,7 @@ function DirectoryView() {
   async function handleRenameSubmit(e) {
     e.preventDefault();
     setErrorMessage("");
+    setIsRenaming(true);
     try {
       const url =
         renameType === "file"
@@ -748,6 +750,8 @@ function DirectoryView() {
     } catch (error) {
       setErrorMessage(error.message);
       showToast(error.message, "error");
+    } finally {
+      setIsRenaming(false);
     }
   }
 
@@ -888,7 +892,7 @@ function DirectoryView() {
         <div className="mx-6 mt-6 p-6 bg-yellow-50 border-2 border-yellow-400 rounded-xl shadow-md">
            <div className="flex flex-col sm:flex-row items-center gap-5 text-yellow-900 text-center sm:text-left">
              <div className="p-4 bg-yellow-100 rounded-2xl">
-               <FaInfoCircle className="w-10 h-10 text-yellow-600 animate-pulse" />
+                <Info className="w-10 h-10 text-yellow-600 animate-pulse" />
              </div>
              <div className="flex-1">
                <h2 className="text-2xl font-bold">Payment Failed</h2>
@@ -911,7 +915,7 @@ function DirectoryView() {
         <div className="mx-6 mt-6 p-6 bg-red-50 border-2 border-red-400 rounded-xl shadow-md">
            <div className="flex flex-col sm:flex-row items-center gap-5 text-red-900 text-center sm:text-left">
              <div className="p-4 bg-red-100 rounded-2xl">
-               <FaTimes className="w-10 h-10 text-red-600" />
+                <X className="w-10 h-10 text-red-600" />
              </div>
              <div className="flex-1">
                <h2 className="text-2xl font-bold">Access Halted</h2>
@@ -965,7 +969,7 @@ function DirectoryView() {
                   }
                   fileInputRef.current.click();
                 }}
-                disabled={errorMessage === "Directory not found or you do not have access to it!"}
+                disabled={errorMessage === "Directory not found or you do not have access to it!" || isRenaming}
                 className="flex items-center gap-2 px-5 py-3 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg hover:transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
                   backgroundColor: ["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) ? '#CBD5E0' : '#2E5E99',
@@ -995,7 +999,7 @@ function DirectoryView() {
                   }
                   setShowCreateDirModal(true);
                 }}
-                disabled={errorMessage === "Directory not found or you do not have access to it!"}
+                disabled={errorMessage === "Directory not found or you do not have access to it!" || isRenaming}
                 className="flex items-center gap-2 px-5 py-3 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg hover:transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
                   backgroundColor: ["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) ? '#CBD5E0' : '#10B981',
@@ -1024,9 +1028,9 @@ function DirectoryView() {
               }}>
                 <ImportFromDrive
                   onFilesSelected={handleDriveFileImport}
-                  disabled={["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase())}
+                  disabled={["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) || isRenaming}
                   className={`flex items-center gap-2 px-5 py-3 text-gray-700 border border-gray-300 rounded-lg shadow-sm transition-all duration-200 font-semibold text-sm ${
-                    user?.subscriptionStatus?.toLowerCase() === "paused"
+                    user?.subscriptionStatus?.toLowerCase() === "paused" || isRenaming
                       ? "bg-gray-100 cursor-not-allowed opacity-50 grayscale pointer-events-none"
                       : "bg-white hover:bg-gray-50 hover:border-gray-400 hover:shadow-lg hover:scale-105"
                   }`}
@@ -1185,6 +1189,7 @@ function DirectoryView() {
           onClose={() => setShowRenameModal(false)}
           onRenameSubmit={handleRenameSubmit}
           extensionError={extensionError}
+          isProcessing={isRenaming}
         />
       )}
 
@@ -1253,9 +1258,10 @@ function DirectoryView() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleContextMenu(e, item);
+                        if (!isRenaming) handleContextMenu(e, item);
                       }}
-                      className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                      disabled={isRenaming}
+                      className={`p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors ${isRenaming ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <MoreVertical className="w-5 h-5" />
                     </button>

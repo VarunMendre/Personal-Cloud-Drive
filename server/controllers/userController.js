@@ -8,7 +8,7 @@ import Subscription from "../models/subscriptionModel.js";
 import { getEditableRoles } from "../utils/permissions.js";
 import redisClient from "../config/redis.js";
 import { loginSchema, registerSchema } from "../validators/authSchema.js";
-import { getFileUrl, createUploadSignedUrl } from "../services/s3.js";
+import { getFileUrl, createUploadSignedUrl, deletes3Files } from "../services/s3.js";
 import { createCloudFrontSignedGetUrl } from "../services/cloudFront.js";
 import { successResponse, errorResponse } from "../utils/response.js";
 import { sanitize } from "../utils/sanitizer.js";
@@ -390,24 +390,40 @@ export const hardDeleteUser = async (req, res, next) => {
 
   try {
     await runInTransaction(async (session) => {
-      const files = await File.find({ userId }).select("_id extension").lean();
+      const user = await User.findById(userId).session(session);
+      if (!user) {
+        throw { statusCode: 404, message: "User not found" }
+      }
 
-      for (const { _id, extension } of files) {
-        const filePath = `${import.meta.dirname}/../storage/${_id.toString()}${extension}`;
+      const files = await File.find({ userId }).select("_id extension").lean();
+      const s3Keys = files.map(file => ({ Key: `${file._id.toString()}${file.extension}` }));
+
+      // Include profile picture if it's stored in S3
+      if (user.picture && user.picture.startsWith("profile-pictures/")) {
+        s3Keys.push({ Key: user.picture });
+      }
+
+      if (s3Keys.length > 0) {
         try {
-          await rm(filePath, { force: true });
+          await deletes3Files(s3Keys);
         } catch (err) {
-          if (err.code !== "ENOENT") throw err;
+          console.error("Error deleting files from S3:", err);
+          throw { statusCode: 500, message: "Error deleting files from S3" };
         }
       }
 
       await File.deleteMany({ userId }, { session });
       await Directory.deleteMany({ userId }, { session });
+      await Subscription.deleteMany({ userId }, { session });
+      await OTP.deleteMany({ email: user.email }, { session });
       await User.deleteOne({ _id: userId }, { session });
     });
 
     res.status(204).end();
   } catch (err) {
+    if (err.statusCode) {
+      return errorResponse(res, err.message, err.statusCode);
+    }
     next(err);
   }
 };
@@ -625,7 +641,6 @@ export const getUserList = async (req, res, next) => {
     return errorResponse(res, "Failed to fetch users", 500);
   }
 };
-
 
 export const updateUserProfile = async (req, res) => {
   try {
