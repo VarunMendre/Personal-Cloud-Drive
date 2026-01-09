@@ -69,7 +69,7 @@ app.use("/subscriptions", checkAuth, subscriptionRoutes);
 
 // Testing rotes for AWS EC2
 app.get("/", (req, res) => {
-	res.json({message: "Backend is Live from AWS"});
+	res.json({message: "Mono Repo Backend is Live from AWS"});
 })
 
 // Checking how pm2 not restarts the with npm command
