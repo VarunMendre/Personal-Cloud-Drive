@@ -363,49 +363,76 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
               <Users className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900">Share Document</h3>
-              <p className="text-sm text-gray-500 mt-0.5">Collaborate with others</p>
+              <h3 className="text-xl font-bold" style={{ color: '#2C3E50' }}>Share Document</h3>
+              <p className="text-sm mt-0.5" style={{ color: '#A3C5D9' }}>Collaborate with others</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+            className="transition-colors p-2 rounded-lg hover:bg-opacity-10"
+            style={{ color: '#A3C5D9' }}
+            onMouseEnter={(e) => {
+              e.target.style.color = '#66B2D6';
+              e.target.style.backgroundColor = '#E6FAF5';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.color = '#A3C5D9';
+              e.target.style.backgroundColor = 'transparent';
+            }}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 bg-gray-50 px-6">
+        <div className="flex border-b px-6" style={{ borderColor: '#D1DCE5', backgroundColor: '#fafdff' }}>
           <button
             onClick={() => setActiveTab("shareLink")}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative ${
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative border-b-2 ${
               activeTab === "shareLink"
-                ? "text-blue-600 border-b-2 border-blue-600 bg-white"
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                ? "bg-white"
+                : "hover:bg-gray-100"
             }`}
+            style={{
+              color: activeTab === "shareLink" ? '#66B2D6' : '#2C3E50',
+              borderColor: activeTab === "shareLink" ? '#66B2D6' : 'transparent'
+            }}
+            onMouseEnter={(e) => activeTab !== "shareLink" && (e.target.style.color = '#2C3E50')}
+            onMouseLeave={(e) => activeTab !== "shareLink" && (e.target.style.color = '#2C3E50')}
           >
             <Link className="w-4 h-4" />
             Share Link
           </button>
           <button
             onClick={() => setActiveTab("emailInvite")}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative ${
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative border-b-2 ${
               activeTab === "emailInvite"
-                ? "text-blue-600 border-b-2 border-blue-600 bg-white"
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                ? "bg-white"
+                : "hover:bg-gray-100"
             }`}
+            style={{
+              color: activeTab === "emailInvite" ? '#66B2D6' : '#2C3E50',
+              borderColor: activeTab === "emailInvite" ? '#66B2D6' : 'transparent'
+            }}
+            onMouseEnter={(e) => activeTab !== "emailInvite" && (e.target.style.color = '#2C3E50')}
+            onMouseLeave={(e) => activeTab !== "emailInvite" && (e.target.style.color = '#2C3E50')}
           >
             <Mail className="w-4 h-4" />
             Email Invite
           </button>
           <button
             onClick={() => setActiveTab("sharedWith")}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative ${
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative border-b-2 ${
               activeTab === "sharedWith"
-                ? "text-blue-600 border-b-2 border-blue-600 bg-white"
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                ? "bg-white"
+                : "hover:bg-gray-100"
             }`}
+            style={{
+              color: activeTab === "sharedWith" ? '#66B2D6' : '#2C3E50',
+              borderColor: activeTab === "sharedWith" ? '#66B2D6' : 'transparent'
+            }}
+            onMouseEnter={(e) => activeTab !== "sharedWith" && (e.target.style.color = '#2C3E50')}
+            onMouseLeave={(e) => activeTab !== "sharedWith" && (e.target.style.color = '#2C3E50')}
           >
             <UserCheck className="w-4 h-4" />
             Shared With
@@ -436,9 +463,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
             <div className="space-y-6">
               {loading ? (
                 <div className="flex justify-center py-8">
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#66B2D6' }}></div>
                 </div>
               ) : (
                 <>
@@ -449,15 +474,16 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                         <Globe className="w-5 h-5 text-black" />
                       </div>
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-900">Share with link</h4>
-                        <p className="text-xs text-gray-500">Anyone with the link can access</p>
+                        <h4 className="text-sm font-semibold" style={{ color: '#2C3E50' }}>Share with link</h4>
+                        <p className="text-xs" style={{ color: '#A3C5D9' }}>Anyone with the link can access</p>
                       </div>
                     </div>
                     <button
                       onClick={handleToggleLink}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        linkEnabled ? "bg-blue-600" : "bg-gray-300"
+                        linkEnabled ? "" : "bg-gray-300"
                       }`}
+                      style={{ backgroundColor: linkEnabled ? '#66B2D6' : undefined }}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -471,7 +497,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                     <>
                       {/* Permission Level */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium mb-2" style={{ color: '#2C3E50' }}>
                           Permission level
                         </label>
                         <div className="flex gap-2">
@@ -479,9 +505,13 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                             onClick={() => handleUpdateLinkRole("viewer")}
                               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
                                 linkRole === "viewer"
-                                  ? "border-blue-500 bg-blue-50 text-blue-700"
-                                  : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                                  ? "bg-blue-50"
+                                  : "border-gray-200 bg-white hover:border-gray-300"
                               }`}
+                              style={{
+                                borderColor: linkRole === "viewer" ? '#66B2D6' : undefined,
+                                color: linkRole === "viewer" ? '#66B2D6' : '#2C3E50'
+                              }}
                           >
                             <Eye className="w-4 h-4" />
                             <span className="font-medium">Viewer</span>
@@ -490,9 +520,13 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                             onClick={() => handleUpdateLinkRole("editor")}
                               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
                                 linkRole === "editor"
-                                  ? "border-blue-500 bg-blue-50 text-blue-700"
-                                  : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                                  ? "bg-blue-50"
+                                  : "border-gray-200 bg-white hover:border-gray-300"
                               }`}
+                              style={{
+                                borderColor: linkRole === "editor" ? '#66B2D6' : undefined,
+                                color: linkRole === "editor" ? '#66B2D6' : '#2C3E50'
+                              }}
                           >
                             <Pencil className="w-4 h-4" />
                             <span className="font-medium">Editor</span>
@@ -502,20 +536,24 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
 
                       {/* Share Link */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium mb-2" style={{ color: '#2C3E50' }}>
                           Share link
                         </label>
-                        <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                          <Link className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <div className="flex items-center gap-2 p-3 rounded-lg border" style={{ backgroundColor: '#fafdff', borderColor: '#D1DCE5' }}>
+                          <Link className="w-4 h-4 flex-shrink-0" style={{ color: '#A3C5D9' }} />
                           <input
                             type="text"
                             value={shareLink.url}
                             readOnly
-                            className="flex-1 bg-transparent border-none text-sm text-gray-700 focus:outline-none"
+                            className="flex-1 bg-transparent border-none text-sm focus:outline-none"
+                            style={{ color: '#2C3E50' }}
                           />
                           <button
                             onClick={handleCopyLink}
-                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                            className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2"
+                            style={{ backgroundColor: '#66B2D6' }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = '#5aa0c0'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = '#66B2D6'}
                           >
                             <Copy className="w-3 h-3" />
                             {copiedLink ? "Copied!" : "Copy"}
@@ -533,7 +571,7 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
           {activeTab === "emailInvite" && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium mb-2" style={{ color: '#2C3E50' }}>
                   Select users to invite
                 </label>
                 <input
@@ -541,7 +579,10 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                   placeholder="Choose users to invite"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900"
+                  className="w-full px-4 py-2 bg-white border rounded-lg transition-all text-sm focus:outline-none"
+                  style={{ borderColor: '#D1DCE5', color: '#2C3E50' }}
+                  onFocus={(e) => e.target.style.borderColor = '#66B2D6'}
+                  onBlur={(e) => e.target.style.borderColor = '#D1DCE5'}
                 />
               </div>
 
@@ -561,13 +602,13 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 truncate">
+                        <div className="text-sm font-medium truncate" style={{ color: '#2C3E50' }}>
                           {user.name}
                         </div>
-                        <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                        <div className="text-xs truncate" style={{ color: '#A3C5D9' }}>{user.email}</div>
                       </div>
                       {isSelected && (
-                        <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: '#66B2D6' }}>
                           <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path
                               fillRule="evenodd"
@@ -586,7 +627,10 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
               <button
                 onClick={handleSendInvites}
                 disabled={selectedUsers.length === 0 || isSharing}
-                className="w-full px-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="w-full px-4 py-3 text-sm font-medium text-white rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                style={{ backgroundColor: '#66B2D6' }}
+                onMouseEnter={(e) => !e.target.disabled && (e.target.style.backgroundColor = '#5aa0c0')}
+                onMouseLeave={(e) => !e.target.disabled && (e.target.style.backgroundColor = '#66B2D6')}
               >
                 {isSharing
                   ? "Sending..."
@@ -604,19 +648,19 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                   <UserCheck className="w-4 h-4 text-green-600" />
                 </div>
-                <h4 className="text-base font-semibold text-gray-900">Users with Access</h4>
+                <h4 className="text-base font-semibold" style={{ color: '#2C3E50' }}>Users with Access</h4>
               </div>
 
               {loading ? (
                 <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#66B2D6' }}></div>
                 </div>
               ) : sharedUsers.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <UserCheck className="w-8 h-8 text-gray-400" />
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#E6FAF5' }}>
+                    <UserCheck className="w-8 h-8" style={{ color: '#A3C5D9' }} />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No users shared yet</h3>
+                  <h3 className="text-lg font-semibold mb-2" style={{ color: '#2C3E50' }}>No users shared yet</h3>
                   <p className="text-sm text-gray-500">
                     Use the Email Invite tab to share this document with others.
                   </p>
@@ -640,15 +684,18 @@ function ShareModal({ resourceType, resourceId, resourceName, onClose }) {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 truncate">
+                        <div className="text-sm font-medium truncate" style={{ color: '#2C3E50' }}>
                           {user.name}
                         </div>
-                        <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                        <div className="text-xs truncate" style={{ color: '#A3C5D9' }}>{user.email}</div>
                       </div>
                       <select
                         value={user.role}
                         onChange={(e) => handleUpdateAccess(user.userId, e.target.value)}
-                        className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="px-2 py-1 bg-white border rounded-md text-xs focus:outline-none"
+                        style={{ borderColor: '#D1DCE5', color: '#2C3E50' }}
+                        onFocus={(e) => e.target.style.borderColor = '#66B2D6'}
+                        onBlur={(e) => e.target.style.borderColor = '#D1DCE5'}
                       >
                         <option value="viewer">Viewer</option>
                         <option value="editor">Editor</option>

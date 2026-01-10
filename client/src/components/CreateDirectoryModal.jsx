@@ -33,12 +33,12 @@ function CreateDirectoryModal({
         {/* Header */}
         <div className="px-6 py-5 border-b" style={{ borderColor: '#D1D5DB' }}>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
-              <FolderPlus className="w-6 h-6" style={{ color: '#2563EB'}} />
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#E6FAF5' }}>
+              <FolderPlus className="w-6 h-6" style={{ color: '#66B2D6'}} />
             </div>
             <div>
-              <h3 className="text-lg font-bold" style={{ color: '#000000' }}>Create New Folder</h3>
-              <p className="text-sm mt-0.5" style={{ color: '#6B7280' }}>Enter a name for your new folder</p>
+              <h3 className="text-lg font-bold" style={{ color: '#2C3E50' }}>Create New Folder</h3>
+              <p className="text-sm mt-0.5" style={{ color: '#A3C5D9' }}>Enter a name for your new folder</p>
             </div>
           </div>
         </div>
@@ -48,7 +48,7 @@ function CreateDirectoryModal({
           <div className="px-6 py-5">
             {/* Input Field */}
             <div className="mb-5">
-              <label className="block text-sm font-semibold mb-2" style={{ color: '#000000' }}>
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#2C3E50' }}>
                 Folder Name
               </label>
               <input
@@ -57,9 +57,9 @@ function CreateDirectoryModal({
                 value={newDirname}
                 onChange={(e) => setNewDirname(e.target.value)}
                 className="w-full px-4 py-3 bg-white border-2 rounded-lg transition-all focus:outline-none"
-                style={{ borderColor: '#D1D5DB', color: '#000000' }}
-                onFocus={(e) => e.target.style.borderColor = '#2563EB'}
-                onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
+                style={{ borderColor: '#D1DCE5', color: '#2C3E50' }}
+                onFocus={(e) => e.target.style.borderColor = '#66B2D6'}
+                onBlur={(e) => e.target.style.borderColor = '#D1DCE5'}
                 placeholder="Enter folder name"
               />
             </div>
@@ -71,17 +71,17 @@ function CreateDirectoryModal({
                 onClick={onClose}
                 className="flex-1 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 border-2"
                 style={{
-                  color: '#000000',
+                  color: '#2C3E50',
                   backgroundColor: '#FFFFFF',
-                  borderColor: '#D1D5DB'
+                  borderColor: '#D1DCE5'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#F9FAFB';
-                  e.target.style.borderColor = '#D1D5DB';
+                  e.target.style.backgroundColor = '#fafdff';
+                  e.target.style.borderColor = '#A7DDE9';
                 }}
                 onMouseLeave={(e) => {
                   e.target.style.backgroundColor = '#FFFFFF';
-                  e.target.style.borderColor = '#D1D5DB';
+                  e.target.style.borderColor = '#D1DCE5';
                 }}
               >
                 Cancel
@@ -90,9 +90,9 @@ function CreateDirectoryModal({
                 type="submit"
                 disabled={!newDirname.trim()}
                 className="flex-1 px-4 py-3 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: '#2563EB' }}
-                onMouseEnter={(e) => !e.target.disabled && (e.target.style.backgroundColor = '#1D4ED8')}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#2563EB'}
+                style={{ backgroundColor: '#66B2D6' }}
+                onMouseEnter={(e) => !e.target.disabled && (e.target.style.backgroundColor = '#5aa0c0')}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#66B2D6'}
               >
                 Create Folder
               </button>

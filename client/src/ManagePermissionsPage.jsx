@@ -289,9 +289,15 @@ function ManagePermissionsPage() {
                         onClick={() => setActiveTab("shareLink")}
                         className={`w-full flex items-center gap-3 px-4 py-4 text-sm font-medium transition-colors border-l-4 ${
                             activeTab === "shareLink"
-                            ? "border-blue-600 bg-blue-50 text-blue-700"
-                            : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            ? "bg-blue-50"
+                            : "border-transparent hover:bg-gray-50"
                         }`}
+                        style={{
+                            borderColor: activeTab === "shareLink" ? '#66B2D6' : 'transparent',
+                            color: activeTab === "shareLink" ? '#66B2D6' : '#2C3E50'
+                        }}
+                        onMouseEnter={(e) => activeTab !== "shareLink" && (e.target.style.color = '#2C3E50')}
+                        onMouseLeave={(e) => activeTab !== "shareLink" && (e.target.style.color = '#2C3E50')}
                     >
                         <Link className="w-4 h-4" />
                         Share Link
@@ -300,9 +306,15 @@ function ManagePermissionsPage() {
                         onClick={() => setActiveTab("sharedWith")}
                         className={`w-full flex items-center gap-3 px-4 py-4 text-sm font-medium transition-colors border-l-4 ${
                             activeTab === "sharedWith"
-                            ? "border-blue-600 bg-blue-50 text-blue-700"
-                            : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            ? "bg-blue-50"
+                            : "border-transparent hover:bg-gray-50"
                         }`}
+                        style={{
+                            borderColor: activeTab === "sharedWith" ? '#66B2D6' : 'transparent',
+                            color: activeTab === "sharedWith" ? '#66B2D6' : '#2C3E50'
+                        }}
+                        onMouseEnter={(e) => activeTab !== "sharedWith" && (e.target.style.color = '#2C3E50')}
+                        onMouseLeave={(e) => activeTab !== "sharedWith" && (e.target.style.color = '#2C3E50')}
                     >
                         <Users className="w-4 h-4" />
                         Shared With
@@ -340,8 +352,9 @@ function ManagePermissionsPage() {
                                     <button
                                         onClick={handleToggleLink}
                                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                            linkEnabled ? "bg-blue-600" : "bg-gray-300"
+                                            linkEnabled ? "" : "bg-gray-300"
                                         }`}
+                                        style={{ backgroundColor: linkEnabled ? '#66B2D6' : undefined }}
                                     >
                                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                                             linkEnabled ? "translate-x-6" : "translate-x-1"
@@ -360,9 +373,13 @@ function ManagePermissionsPage() {
                                                     onClick={() => handleUpdateLinkRole("viewer")}
                                                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all ${
                                                         linkRole === "viewer"
-                                                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                                                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                                                        ? "bg-blue-50"
+                                                        : "border-gray-200 bg-white hover:border-gray-300"
                                                     }`}
+                                                    style={{
+                                                        borderColor: linkRole === "viewer" ? '#66B2D6' : undefined,
+                                                        color: linkRole === "viewer" ? '#66B2D6' : '#2C3E50'
+                                                    }}
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                     <span className="font-medium">Viewer</span>
@@ -371,9 +388,13 @@ function ManagePermissionsPage() {
                                                     onClick={() => handleUpdateLinkRole("editor")}
                                                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all ${
                                                         linkRole === "editor"
-                                                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                                                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                                                        ? "bg-blue-50"
+                                                        : "border-gray-200 bg-white hover:border-gray-300"
                                                     }`}
+                                                    style={{
+                                                        borderColor: linkRole === "editor" ? '#66B2D6' : undefined,
+                                                        color: linkRole === "editor" ? '#66B2D6' : '#2C3E50'
+                                                    }}
                                                 >
                                                     <Pencil className="w-4 h-4" />
                                                     <span className="font-medium">Editor</span>
@@ -395,7 +416,10 @@ function ManagePermissionsPage() {
                                                 />
                                                 <button
                                                     onClick={handleCopyLink}
-                                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm"
+                                                    className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+                                                    style={{ backgroundColor: '#66B2D6' }}
+                                                    onMouseEnter={(e) => e.target.style.backgroundColor = '#5aa0c0'}
+                                                    onMouseLeave={(e) => e.target.style.backgroundColor = '#66B2D6'}
                                                 >
                                                     <Copy className="w-3 h-3" />
                                                     {copiedLink ? "Copied!" : "Copy"}

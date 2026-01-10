@@ -186,7 +186,10 @@ function SharedLinkPage() {
                         <a
                             href={fileData.downloadUrl}
                             download
-                            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5 text-sm"
+                            className="flex items-center gap-2 px-6 py-2.5 text-white rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5 text-sm"
+                            style={{ backgroundColor: '#66B2D6' }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = '#5aa0c0'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = '#66B2D6'}
                         >
                             <Download className="w-3.5 h-3.5" />
                             Download

@@ -88,7 +88,10 @@ function SharedWithMePage() {
         <div className="mb-6">
           <button
             onClick={() => navigate("/share")}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4 text-sm font-medium"
+            className="flex items-center gap-2 mb-4 text-sm font-medium transition-colors"
+            style={{ color: '#66B2D6' }}
+            onMouseEnter={(e) => e.target.style.color = '#5aa0c0'}
+            onMouseLeave={(e) => e.target.style.color = '#66B2D6'}
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
@@ -98,34 +101,48 @@ function SharedWithMePage() {
               <FileText className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Files Shared with Me</h1>
-              <p className="text-sm text-gray-500">Access files others have shared with you</p>
+              <h1 className="text-2xl font-bold" style={{ color: '#2C3E50' }}>Files Shared with Me</h1>
+              <p className="text-sm" style={{ color: '#A3C5D9' }}>Access files others have shared with you</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
-            <span className="text-blue-600 font-medium">{filteredFiles.length} files</span>
+          <div className="flex items-center gap-2 text-sm mt-2" style={{ color: '#A3C5D9' }}>
+            <span className="font-medium" style={{ color: '#66B2D6' }}>{filteredFiles.length} files</span>
             <span>•</span>
             <span>Last updated: {new Date().toLocaleDateString()}</span>
           </div>
         </div>
 
         {/* Search and Filter */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
+        <div className="bg-white rounded-xl p-4 shadow-sm border mb-6" style={{ borderColor: '#D1DCE5' }}>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: '#A3C5D9' }} />
               <input
                 type="text"
                 placeholder="Search files or people..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                className="w-full pl-10 pr-4 py-2 rounded-lg transition-all text-sm focus:outline-none"
+                style={{ 
+                  backgroundColor: '#fafdff', 
+                  borderColor: '#D1DCE5',
+                  color: '#2C3E50'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#66B2D6'}
+                onBlur={(e) => e.target.style.borderColor = '#D1DCE5'}
               />
             </div>
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+              className="px-4 py-2 rounded-lg transition-all text-sm focus:outline-none"
+              style={{
+                backgroundColor: '#fafdff',
+                borderColor: '#D1DCE5',
+                color: '#2C3E50'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#66B2D6'}
+              onBlur={(e) => e.target.style.borderColor = '#D1DCE5'}
             >
               <option value="all">All Files (0)</option>
               <option value="document">Documents</option>

@@ -62,6 +62,7 @@ export default function UsersPage() {
   // Selection
   const [selectedUser, setSelectedUser] = useState(null);
   const [newRole, setNewRole] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [processingAction, setProcessingAction] = useState(null); // 'pause', 'resume', 'logout', 'delete', 'hardDelete', 'recover', 'roleChange'
 
   // Data
@@ -174,18 +175,18 @@ export default function UsersPage() {
   // --- Helpers ---
   const getRoleColor = (role) => {
     switch (role) {
-      case "Owner": return "bg-red-100 text-red-800";
-      case "Admin": return "bg-orange-100 text-orange-800";
-      case "Manager": return "bg-blue-100 text-blue-800";
-      case "User": return "bg-gray-100 text-gray-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "Owner": return "bg-rose-50 text-rose-700 border border-rose-100";
+      case "Admin": return "bg-amber-50 text-amber-700 border border-amber-100";
+      case "Manager": return "bg-indigo-50 text-indigo-700 border border-indigo-100";
+      case "User": return "bg-slate-50 text-slate-700 border border-slate-100";
+      default: return "bg-gray-50 text-gray-700 border border-gray-100";
     }
   };
 
   const getStatusColor = (isLoggedIn, isDeleted) => {
-    if (isDeleted) return "bg-red-100 text-red-800";
-    if (isLoggedIn) return "bg-green-100 text-green-800";
-    return "bg-gray-100 text-gray-800";
+    if (isDeleted) return "bg-red-50 text-red-700 border border-red-100";
+    if (isLoggedIn) return "bg-emerald-50 text-emerald-700 border border-emerald-100";
+    return "bg-slate-50 text-slate-500 border border-slate-100";
   };
 
   const getRolePriority = (role) => {
@@ -458,10 +459,18 @@ export default function UsersPage() {
 
   // Filter users based on role
   const filteredUsers = users.filter(u => {
-    if (currentUser.role === "Owner") return true;
-    if (currentUser.role === "Admin") return u.role !== "Owner";
-    if (currentUser.role === "Manager") return u.role !== "Owner" && u.role !== "Admin";
-    return false;
+    // Role filter
+    let roleMatch = false;
+    if (currentUser.role === "Owner") roleMatch = true;
+    else if (currentUser.role === "Admin") roleMatch = (u.role !== "Owner");
+    else if (currentUser.role === "Manager") roleMatch = (u.role !== "Owner" && u.role !== "Admin");
+
+    // Search filter
+    const searchMatch = !searchQuery || 
+      u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      u.email.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return roleMatch && searchMatch;
   });
 
   // --- Stats ---
@@ -501,309 +510,344 @@ export default function UsersPage() {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-6">
-        {/* Top Section: Back Button & User Info */}
-        <div className="bg-white rounded-lg shadow-sm p-3 mb-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Top Section: Navigation & User Identity */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 group">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 px-3 py-1.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+            className="flex items-center gap-2.5 px-5 py-2.5 bg-white border border-slate-200 rounded-2xl transition-all text-sm font-bold text-slate-600 hover:text-indigo-600 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/5 group-hover:-translate-x-1"
           >
-            <ArrowLeft className="w-3 h-3" />
-            <span>Back to Home</span>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Workspace</span>
           </button>
 
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <div className="text-sm font-medium text-gray-900">{currentUser.name}</div>
-              <div className="text-xs text-gray-500">{currentUser.email}</div>
+          <div className="flex items-center gap-4 bg-white p-2 pr-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+            <div className="relative">
+              {currentUser.picture ? (
+                <img
+                  src={currentUser.picture}
+                  alt={currentUser.name}
+                  className="w-10 h-10 rounded-xl object-cover border-2 border-white shadow-sm"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-sm border-2 border-white shadow-sm">
+                  {currentUser.name.charAt(0)}
+                </div>
+              )}
+              <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></div>
             </div>
-            {currentUser.picture ? (
-              <img
-                src={currentUser.picture}
-                alt={currentUser.name}
-                className="w-8 h-8 rounded-full object-cover border border-gray-200"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-xs">
-                {currentUser.name.charAt(0)}
-              </div>
-            )}
-            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getRoleColor(currentUser.role)}`}>
+            <div className="hidden sm:block">
+              <div className="text-sm font-bold text-slate-800 leading-tight">{currentUser.name}</div>
+              <div className="text-[11px] text-slate-400 font-medium">{currentUser.email}</div>
+            </div>
+            <div className="h-6 w-px bg-slate-100 hidden sm:block mx-1"></div>
+            <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-lg ${getRoleColor(currentUser.role)}`}>
               {currentUser.role}
             </span>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total Users */}
-          <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 border border-gray-100">
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white shadow-sm">
-              <Users className="w-5 h-5" />
+          <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all p-5 flex items-center gap-4 border border-slate-100">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-indigo-50 text-indigo-600">
+              <Users className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500">Total Users</p>
-              <p className="text-xl font-bold text-gray-900">{totalUsers}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Users</p>
+              <p className="text-2xl font-bold text-slate-800">{totalUsers}</p>
             </div>
           </div>
 
           {/* Active Users */}
-          <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 border border-gray-100">
-            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center text-white shadow-sm">
-              <CheckCircle className="w-5 h-5" />
+          <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all p-5 flex items-center gap-4 border border-slate-100">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-50 text-emerald-600">
+              <CheckCircle className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500">Active Users</p>
-              <p className="text-xl font-bold text-gray-900">{activeUsers}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Active Users</p>
+              <p className="text-2xl font-bold text-slate-800">{activeUsers}</p>
             </div>
           </div>
 
           {/* Online Users */}
-          <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 border border-gray-100">
-            <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center text-white shadow-sm">
-              <Zap className="w-5 h-5" />
+          <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all p-5 flex items-center gap-4 border border-slate-100">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-50 text-amber-600">
+              <Zap className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500">Online Users</p>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Online Users</p>
+              <p className="text-2xl font-bold text-slate-800">
                 {users.filter(u => u.isLoggedIn && !u.isDeleted).length}
               </p>
             </div>
           </div>
 
           {/* Deleted Users */}
-          <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 border border-gray-100">
-            <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center text-white shadow-sm">
-              <Trash2 className="w-5 h-5" />
+          <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all p-5 flex items-center gap-4 border border-slate-100">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-rose-50 text-rose-600">
+              <Trash2 className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500">Deleted Users</p>
-              <p className="text-xl font-bold text-gray-900">{deletedUsers}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Deleted Users</p>
+              <p className="text-2xl font-bold text-slate-800">{deletedUsers}</p>
             </div>
           </div>
         </div>
 
         {/* Users Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="px-6 py-5 border-b border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4 bg-white">
             <div>
-              <h2 className="text-base font-semibold text-gray-900">Users Management</h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Total users: {totalUsers} | Active: {activeUsers} | Deleted: {deletedUsers}
+              <h2 className="text-lg font-bold text-slate-800">User Management</h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Manage accounts, roles, and storage quotas
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <select className="text-xs border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 py-1.5 pl-2 pr-6">
-                <option>All Users</option>
-              </select>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all w-full sm:w-64"
+                />
+              </div>
               <button 
                 onClick={() => !processingAction && fetchUsers()}
                 disabled={!!processingAction}
-                className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-1 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
               >
-                <RefreshCw className={`w-3 h-3 ${processingAction ? 'animate-spin' : ''}`} />
-                Refresh
+                <RefreshCw className={`w-4 h-4 ${processingAction ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
               </button>
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-medium">
-                  <th className="px-4 py-2">Name</th>
-                  <th className="px-4 py-2">Storage Used</th>
-                  <th className="px-4 py-2">Role</th>
-                  <th className="px-4 py-2">Status</th>
-                  {currentUser.role === "Owner" && <th className="px-4 py-2">Subscription</th>}
-                  <th className="px-4 py-2">Actions</th>
+                <tr className="bg-slate-50/50 border-b border-slate-100 text-[11px] uppercase tracking-wider text-slate-500 font-bold">
+                  <th className="px-6 py-4">User</th>
+                  <th className="px-6 py-4">Storage Usage</th>
+                  <th className="px-6 py-4">Role & Status</th>
+                  {currentUser.role === "Owner" && <th className="px-6 py-4">Subscription</th>}
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-50">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={currentUser.role === "Owner" ? "6" : "5"} className="py-24 text-center">
-                      <div className="flex flex-col items-center justify-center gap-3">
+                    <td colSpan={currentUser.role === "Owner" ? "6" : "5"} className="py-32 text-center">
+                      <div className="flex flex-col items-center justify-center gap-4">
                         <div className="relative">
-                          <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+                          <div className="w-24 h-24 rounded-full border-4 border-slate-50 border-t-indigo-500 animate-spin"></div>
                           <div className="absolute inset-0 flex items-center justify-center">
-                             <Users className="w-5 h-5 text-blue-400" />
+                             <Users className="w-8 h-8 text-indigo-500 shadow-sm" />
                           </div>
                         </div>
-                        <p className="text-sm font-semibold text-gray-900">Fetching user data...</p>
-                        <p className="text-xs text-gray-500">Retrieving users and permissions</p>
+                        <div>
+                          <p className="text-lg font-bold text-slate-800">Synchronizing Users</p>
+                          <p className="text-sm text-slate-400 font-medium">Please wait while we fetch the latest directory data...</p>
+                        </div>
                       </div>
                     </td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={currentUser.role === "Owner" ? "6" : "5"} className="py-24 text-center">
-                      <div className="flex flex-col items-center justify-center gap-3">
-                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-                          <Search className="w-8 h-8 text-gray-300" />
+                    <td colSpan={currentUser.role === "Owner" ? "6" : "5"} className="py-32 text-center">
+                      <div className="flex flex-col items-center justify-center gap-6">
+                         <div className="w-24 h-24 bg-slate-50 rounded-3xl flex items-center justify-center shadow-inner border border-slate-100 transform rotate-3">
+                          <Search className="w-10 h-10 text-slate-300 transform -rotate-3" />
                         </div>
-                        <p className="text-sm font-semibold text-gray-900">No users found</p>
-                        <p className="text-xs text-gray-500">Try adjusting your filters or search</p>
+                        <div className="max-w-xs mx-auto">
+                          <p className="text-lg font-bold text-slate-800">No users matched your search</p>
+                          <p className="text-sm text-slate-400 mt-2">We couldn't find any users matching "<span className="text-slate-600 font-bold">{searchQuery}</span>". Try a different search term.</p>
+                        </div>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((user) => (
-                    <tr key={user._id || user.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          {user.picture ? (
-                            <img src={user.picture} alt="" className="w-8 h-8 rounded-full object-cover" />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
-                              <User className="w-4 h-4" />
-                            </div>
-                          )}
-                          <div>
-                            <div className="font-medium text-gray-900 text-sm">{user.name}</div>
-                            <div className="text-xs text-gray-500">{user.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm text-gray-900 font-medium">
-                          {formatBytes(user.usedStorageInBytes || 0)}
-                        </div>
-                        <div className="text-xs text-gray-500">of {formatBytes(user.maxStorageLimit || 500 * 1024 * 1024)}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                            {user.role}
-                          </span>
-                          {canChangeRole(user) && (
-                            <button 
-                              onClick={() => !processingAction && handleRoleChangeClick(user)}
-                              disabled={!!processingAction}
-                              className={`text-gray-400 hover:text-blue-600 transition-colors ${processingAction ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              title="Change Role"
-                            >
-                              <Pencil className="w-3 h-3" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.isLoggedIn, user.isDeleted)}`}>
-                          {user.isDeleted ? "Deleted" : user.isLoggedIn ? "Logged In" : "Logged Out"}
-                        </span>
-                      </td>
-                      {currentUser.role === "Owner" && (
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            {user.razorpaySubscriptionId ? (
-                              <>
-                                {user.subscriptionStatus === "paused" ? (
-                                    <button
-                                      onClick={() => !processingAction && handleResumeSubscription(user)}
-                                      disabled={!!processingAction}
-                                      className={`p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-1 shadow-sm ${processingAction ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                      title="Resume Subscription"
-                                    >
-                                      <Play className="w-3 h-3" />
-                                      <span className="text-[10px] font-bold uppercase">Resume</span>
-                                    </button>
-                                ) : (
-                                    <button
-                                      onClick={() => !processingAction && handlePauseSubscription(user)}
-                                      disabled={!!processingAction}
-                                      className={`p-1.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg transition-all flex items-center gap-1 shadow-sm ${processingAction ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                      title="Pause Subscription"
-                                    >
-                                      <Pause className="w-3 h-3" />
-                                      <span className="text-[10px] font-bold uppercase">Pause</span>
-                                    </button>
-                                )}
-                                
-                                {/* Status Label */}
-                                <div className="flex items-center ml-1">
-                                  {user.subscriptionStatus === "paused" ? (
-                                    <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
-                                       <AlertTriangle className="w-2.5 h-2.5 animate-pulse" />
-                                       <span className="text-[9px] font-bold uppercase">Paused</span>
-                                    </div>
-                                  ) : user.subscriptionStatus === "active" ? (
-                                    <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">
-                                       <CheckCircle className="w-2.5 h-2.5" />
-                                       <span className="text-[9px] font-bold uppercase">Active</span>
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center gap-1 text-gray-400 opacity-60">
-                                      <span className="text-[9px] font-medium italic">Basic Account</span>
-                                    </div>
-                                  )}
+                  filteredUsers.map((user) => {
+                    const usagePercent = Math.min(100, Math.round(((user.usedStorageInBytes || 0) / (user.maxStorageLimit || 500 * 1024 * 1024)) * 100));
+                    
+                    return (
+                      <tr key={user._id || user.id} className="hover:bg-slate-50/50 transition-colors group">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="relative">
+                              {user.picture ? (
+                                <img src={user.picture} alt="" className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm outline outline-1 outline-slate-100" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm font-bold border-2 border-white shadow-sm outline outline-1 outline-slate-100">
+                                  {user.name.charAt(0)}
                                 </div>
-                              </>
-                            ) : (
-                              <div className="flex items-center gap-1 text-gray-400 opacity-60">
-                                 <span className="text-[9px] font-medium italic">Basic Account</span>
+                              )}
+                              {user.isLoggedIn && !user.isDeleted && (
+                                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-bold text-slate-800 text-sm">{user.name}</div>
+                              <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                <Mail className="w-3 h-3" />
+                                {user.email}
                               </div>
-                            )}
+                            </div>
                           </div>
                         </td>
-                      )}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {/* Logout */}
-                          {canLogoutUser(user) && !user.isDeleted && (
-                            <button
-                              onClick={() => !processingAction && handleLogoutClick(user)}
-                              disabled={!user.isLoggedIn || !!processingAction}
-                              className={`p-1.5 rounded-lg transition-colors ${
-                                user.isLoggedIn && !processingAction
-                                  ? "bg-blue-600 text-white hover:bg-blue-700" 
-                                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                              }`}
-                              title="Logout User"
-                            >
-                              <span className="text-xs px-2">Logout</span>
-                            </button>
-                          )}
-  
-                          {/* Delete/Recover */}
-                          {canDeleteUser(user) && (
-                            <>
-                              {!user.isDeleted ? (
-                                <button
-                                  onClick={() => !processingAction && handleDeleteClick(user)}
-                                  disabled={user.email === currentUser.email || !!processingAction}
-                                  className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
-                                >
-                                  Delete
-                                </button>
+                        <td className="px-6 py-4">
+                          <div className="w-48">
+                            <div className="flex justify-between items-end mb-1.5">
+                              <span className="text-[11px] font-bold text-slate-700">{formatBytes(user.usedStorageInBytes || 0)}</span>
+                              <span className="text-[10px] font-medium text-slate-400">{usagePercent}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  usagePercent > 90 ? 'bg-rose-500' : usagePercent > 70 ? 'bg-amber-500' : 'bg-indigo-500'
+                                }`}
+                                style={{ width: `${usagePercent}%` }}
+                              />
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-1.5">of {formatBytes(user.maxStorageLimit || 500 * 1024 * 1024)}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getRoleColor(user.role)}`}>
+                              {user.role}
+                            </span>
+                            {canChangeRole(user) && (
+                              <button 
+                                onClick={() => !processingAction && handleRoleChangeClick(user)}
+                                disabled={!!processingAction}
+                                className="p-1 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all opacity-0 group-hover:opacity-100 disabled:opacity-0"
+                                title="Change Role"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(user.isLoggedIn, user.isDeleted)}`}>
+                            {user.isDeleted ? "Deleted" : user.isLoggedIn ? "Online" : "Offline"}
+                          </span>
+                        </td>
+                        {currentUser.role === "Owner" && (
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              {user.razorpaySubscriptionId ? (
+                                <>
+                                  <div className="flex flex-col gap-1.5">
+                                    {user.subscriptionStatus === "paused" ? (
+                                      <div className="flex items-center gap-1.5 text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100 w-fit">
+                                        <AlertTriangle className="w-3 h-3 animate-pulse" />
+                                        <span className="text-[10px] font-bold uppercase">Paused</span>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 w-fit">
+                                        <CheckCircle className="w-3 h-3" />
+                                        <span className="text-[10px] font-bold uppercase">Active</span>
+                                      </div>
+                                    )}
+                                    
+                                    <div className="flex gap-1">
+                                      {user.subscriptionStatus === "paused" ? (
+                                        <button
+                                          onClick={() => !processingAction && handleResumeSubscription(user)}
+                                          disabled={!!processingAction}
+                                          className="text-[9px] font-bold text-emerald-600 hover:underline uppercase"
+                                        >
+                                          Resume
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => !processingAction && handlePauseSubscription(user)}
+                                          disabled={!!processingAction}
+                                          className="text-[9px] font-bold text-amber-600 hover:underline uppercase"
+                                        >
+                                          Pause
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </>
                               ) : (
-                                canHardDeleteUser(user) && (
+                                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">Basic</span>
+                              )}
+                            </div>
+                          </td>
+                        )}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* View Files */}
+                            {canViewFiles && !user.isDeleted && (
+                              <button
+                                onClick={() => !processingAction && handleViewClick(user)}
+                                disabled={!!processingAction}
+                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all disabled:opacity-50"
+                                title="View User Files"
+                              >
+                                <Eye className="w-4.5 h-4.5" />
+                              </button>
+                            )}
+
+                            {/* Logout */}
+                            {canLogoutUser(user) && !user.isDeleted && user.isLoggedIn && (
+                              <button
+                                onClick={() => !processingAction && handleLogoutClick(user)}
+                                disabled={!!processingAction}
+                                className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all disabled:opacity-50"
+                                title="Force Logout"
+                              >
+                                <LogOut className="w-4.5 h-4.5" />
+                              </button>
+                            )}
+    
+                            {/* Delete/Recover */}
+                            {canDeleteUser(user) && (
+                              <>
+                                {!user.isDeleted ? (
                                   <button
-                                    onClick={() => !processingAction && handleRecoverClick(user)}
-                                    disabled={!!processingAction}
-                                    className="px-3 py-1.5 bg-green-100 text-green-700 text-xs font-medium rounded-lg hover:bg-green-200 transition-colors disabled:opacity-50"
+                                    onClick={() => !processingAction && handleDeleteClick(user)}
+                                    disabled={user.email === currentUser.email || !!processingAction}
+                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all disabled:opacity-50"
+                                    title="Delete User"
+                                  >
+                                    <Trash2 className="w-4.5 h-4.5" />
+                                  </button>
+                                ) : (
+                                  <div className="flex gap-1">
+                                    <button
+                                      onClick={() => !processingAction && handleRecoverClick(user)}
+                                      disabled={!!processingAction}
+                                      className="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase rounded-lg hover:bg-emerald-100 transition-all border border-emerald-100"
                                     >
                                       Recover
                                     </button>
-                                )
-                              )}
-                            </>
-                          )}
-  
-                          {/* View Files */}
-                          {canViewFiles && !user.isDeleted && (
-                            <button
-                              onClick={() => !processingAction && handleViewClick(user)}
-                              disabled={!!processingAction}
-                              className={`p-1.5 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors ${processingAction ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              title="View Files"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                                    {canHardDeleteUser(user) && (
+                                       <button
+                                       onClick={() => {
+                                         setSelectedUser(user);
+                                         setShowHardDeleteConfirm(true);
+                                       }}
+                                       disabled={!!processingAction}
+                                       className="px-2.5 py-1 bg-rose-50 text-rose-700 text-[10px] font-bold uppercase rounded-lg hover:bg-rose-100 transition-all border border-rose-100"
+                                     >
+                                       Purge
+                                     </button>
+                                    )}
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -815,37 +859,37 @@ export default function UsersPage() {
 
       {/* Role Modal */}
       {showRoleModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
-            <div className="px-6 py-5 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900">Change User Role</h3>
-              <p className="text-sm text-gray-500 mt-1">Update role for {selectedUser.name}</p>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full animate-slideUp overflow-hidden border border-slate-100">
+            <div className="px-8 py-6 border-b border-slate-50 bg-slate-50/50">
+              <h3 className="text-xl font-bold text-slate-800">Update User Role</h3>
+              <p className="text-sm text-slate-500 mt-1 font-medium">Set permissions hierarchy for the team member</p>
             </div>
-            <div className="px-6 py-5">
-              <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+            <div className="px-8 py-8">
+              <div className="flex items-center gap-4 mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 {selectedUser.picture ? (
-                  <img src={selectedUser.picture} alt="" className="w-10 h-10 rounded-full object-cover" />
+                  <img src={selectedUser.picture} alt="" className="w-12 h-12 rounded-xl object-cover shadow-sm border border-white" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
+                  <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold border border-white shadow-sm">
                     {selectedUser.name.charAt(0)}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 truncate">{selectedUser.name}</div>
-                  <div className="text-sm text-gray-500 truncate">{selectedUser.email}</div>
+                  <div className="font-bold text-slate-800 truncate">{selectedUser.name}</div>
+                  <div className="text-xs text-slate-400 font-medium truncate">{selectedUser.email}</div>
                 </div>
-                <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${getRoleColor(selectedUser.role)}`}>
+                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${getRoleColor(selectedUser.role)}`}>
                   {selectedUser.role}
                 </span>
               </div>
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">New Role</label>
+              <div className="mb-8">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-1">New Assignment</label>
                 <select
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-800 font-semibold appearance-none"
                 >
-                  <option value="">Select a role</option>
+                  <option value="">Select a new role...</option>
                   {getAvailableRolesForUser(selectedUser.role).map(role => (
                     <option key={role} value={role}>{role}</option>
                   ))}
@@ -855,22 +899,19 @@ export default function UsersPage() {
                 <button
                   onClick={() => setShowRoleModal(false)}
                   disabled={processingAction === 'roleChange'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex-1 px-6 py-3.5 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmRoleChange}
                   disabled={!newRole || processingAction === 'roleChange'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3.5 text-sm font-bold text-white bg-indigo-600 rounded-2xl hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-[0.98] transition-all disabled:bg-slate-200 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {processingAction === 'roleChange' ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Saving...</span>
-                    </>
+                    <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    "Save Changes"
+                    "Update Role"
                   )}
                 </button>
               </div>
@@ -881,45 +922,40 @@ export default function UsersPage() {
 
       {/* Delete/Soft Delete Modal */}
       {showDeleteModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
-            <div className="px-6 py-5 border-b border-gray-100">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full animate-slideUp overflow-hidden border border-slate-100">
+            <div className="px-8 py-6 border-b border-rose-50 bg-rose-50/30">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center shadow-sm">
+                  <AlertTriangle className="w-6 h-6 text-rose-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Delete User</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">Remove user from the system</p>
+                  <h3 className="text-xl font-bold text-slate-800">Deactivate User</h3>
+                  <p className="text-sm text-rose-500 font-semibold uppercase tracking-wider">Restricted Action</p>
                 </div>
               </div>
             </div>
-            <div className="px-6 py-5">
-              <p className="text-sm text-gray-600 mb-5">
-                Are you sure you want to delete <strong className="text-gray-900">{selectedUser.name}</strong>? This will move the user to the deleted list.
+            <div className="px-8 py-8">
+              <p className="text-slate-600 font-medium leading-relaxed mb-8">
+                You are about to deactivate <strong className="text-slate-900">{selectedUser.name}</strong>. The user's files will remain preserved, but access will be suspended.
               </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  disabled={processingAction === 'delete'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSoftDelete}
-                  disabled={processingAction === 'delete'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {processingAction === 'delete' ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Deleting...</span>
-                    </>
-                  ) : (
-                    "Delete"
-                  )}
-                </button>
+              <div className="flex flex-col gap-3">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeleteModal(false)}
+                    disabled={processingAction === 'delete'}
+                    className="flex-1 px-6 py-3.5 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all disabled:opacity-50"
+                  >
+                    Keep User
+                  </button>
+                  <button
+                    onClick={handleSoftDelete}
+                    disabled={processingAction === 'delete'}
+                    className="flex-1 px-6 py-3.5 text-sm font-bold text-white bg-rose-600 rounded-2xl hover:bg-rose-700 hover:shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {processingAction === 'delete' ? <Loader2 className="w-5 h-5 animate-spin" /> : "Deactivate"}
+                  </button>
+                </div>
                 {canHardDeleteUser(selectedUser) && (
                   <button
                     onClick={() => {
@@ -927,9 +963,9 @@ export default function UsersPage() {
                       setShowHardDeleteConfirm(true);
                     }}
                     disabled={processingAction === 'delete'}
-                    className="flex-1 px-4 py-2.5 text-sm font-medium text-red-700 bg-red-100 rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
+                    className="w-full px-6 py-3.5 text-xs font-bold text-rose-400 bg-rose-50/50 rounded-2xl hover:bg-rose-100 hover:text-rose-600 transition-all disabled:opacity-50 uppercase tracking-widest border border-rose-100/50"
                   >
-                    Permanent Delete
+                    Permanent Deletion
                   </button>
                 )}
               </div>
@@ -940,44 +976,40 @@ export default function UsersPage() {
 
       {/* Hard Delete Confirm */}
       {showHardDeleteConfirm && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
-            <div className="px-6 py-5 border-b border-gray-100">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full animate-slideUp overflow-hidden border border-slate-100">
+            <div className="px-8 py-6 border-b border-rose-100 bg-rose-600">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-red-600">Permanent Delete</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">This action cannot be undone</p>
+                  <h3 className="text-xl font-bold text-white">Security Check</h3>
+                  <p className="text-xs text-rose-100 font-bold uppercase tracking-widest opacity-80">Irreversible Action</p>
                 </div>
               </div>
             </div>
-            <div className="px-6 py-5">
-              <p className="text-sm text-gray-600 mb-5">
-                This action is <strong className="text-red-600">irreversible</strong>. All data for <strong className="text-gray-900">{selectedUser.name}</strong> will be permanently wiped.
+            <div className="px-8 py-8 text-center">
+              <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-white shadow-sm">
+                <Trash2 className="w-10 h-10 text-rose-500" />
+              </div>
+              <p className="text-slate-600 font-medium leading-relaxed mb-8">
+                This will <strong className="text-rose-600 uppercase tracking-tighter">permanently erase</strong> all data for <strong className="text-slate-900">{selectedUser.name}</strong>. This content cannot be recovered under any circumstances.
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowHardDeleteConfirm(false)}
                   disabled={processingAction === 'hardDelete'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex-1 px-6 py-3.5 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all disabled:opacity-50"
                 >
-                  Cancel
+                  Abort
                 </button>
                 <button
                   onClick={handleHardDelete}
                   disabled={processingAction === 'hardDelete'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3.5 text-sm font-bold text-white bg-rose-600 rounded-2xl hover:bg-rose-700 hover:shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {processingAction === 'hardDelete' ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Deleting...</span>
-                    </>
-                  ) : (
-                    "Confirm Delete"
-                  )}
+                  {processingAction === 'hardDelete' ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Wipe"}
                 </button>
               </div>
             </div>
@@ -987,44 +1019,40 @@ export default function UsersPage() {
 
       {/* Recover Modal */}
       {showRecoverModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
-            <div className="px-6 py-5 border-b border-gray-100">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full animate-slideUp overflow-hidden border border-slate-100">
+            <div className="px-8 py-6 border-b border-emerald-50 bg-emerald-50/30">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <RotateCcw className="w-5 h-5 text-green-600" />
+                <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center shadow-sm">
+                  <RotateCcw className="w-6 h-6 text-emerald-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Recover User</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">Restore deleted user</p>
+                  <h3 className="text-xl font-bold text-slate-800">Restore User</h3>
+                  <p className="text-xs text-emerald-500 font-bold uppercase tracking-widest">Account Recovery</p>
                 </div>
               </div>
             </div>
-            <div className="px-6 py-5">
-              <p className="text-sm text-gray-600 mb-5">
-                Are you sure you want to recover <strong className="text-gray-900">{selectedUser.name}</strong>?
+            <div className="px-8 py-8 text-center">
+              <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-white shadow-sm font-bold text-emerald-600 text-2xl">
+                {selectedUser.name.charAt(0)}
+              </div>
+              <p className="text-slate-600 font-medium leading-relaxed mb-8 text-center">
+                Are you sure you want to restore <strong className="text-slate-900">{selectedUser.name}</strong>'s account? All their files and permissions will be reactivated.
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowRecoverModal(false)}
                   disabled={processingAction === 'recover'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex-1 px-6 py-3.5 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmRecover}
                   disabled={processingAction === 'recover'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3.5 text-sm font-bold text-white bg-emerald-600 rounded-2xl hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {processingAction === 'recover' ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Recovering...</span>
-                    </>
-                  ) : (
-                    "Recover"
-                  )}
+                  {processingAction === 'recover' ? <Loader2 className="w-5 h-5 animate-spin" /> : "Recover User"}
                 </button>
               </div>
             </div>
@@ -1034,43 +1062,37 @@ export default function UsersPage() {
 
       {/* Logout Modal */}
       {showLogoutModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
-            <div className="px-6 py-5 border-b border-gray-100">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full animate-slideUp overflow-hidden border border-slate-100">
+            <div className="px-8 py-6 border-b border-indigo-50 bg-indigo-50/30">
               <div className="flex items-center gap-3">
-
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <LogOut className="w-5 h-5 text-blue-600" />
+                <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center shadow-sm">
+                  <LogOut className="w-6 h-6 text-indigo-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Confirm Logout</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">Force user to sign out</p>
+                  <h3 className="text-xl font-bold text-slate-800">Terminate Session</h3>
+                  <p className="text-xs text-indigo-500 font-bold uppercase tracking-widest">Security Action</p>
                 </div>
               </div>
             </div>
-            <div className="px-6 py-5">
-              <p className="text-sm text-gray-600 mb-5">Force logout for <strong className="text-gray-900">{selectedUser.name}</strong>?</p>
-              <div className="flex gap-3">
+            <div className="px-8 py-8">
+              <p className="text-slate-600 font-medium leading-relaxed mb-8">
+                Force logout for <strong className="text-slate-900">{selectedUser.name}</strong>? They will need to re-authenticate to access the platform.
+              </p>
+              <div className="flex gap-4">
                 <button
                   onClick={() => setShowLogoutModal(false)}
                   disabled={processingAction === 'logout'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex-1 px-6 py-3.5 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmLogout}
                   disabled={processingAction === 'logout'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3.5 text-sm font-bold text-white bg-indigo-600 rounded-2xl hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {processingAction === 'logout' ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Signing out...</span>
-                    </>
-                  ) : (
-                    "Logout"
-                  )}
+                  {processingAction === 'logout' ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign Out User"}
                 </button>
               </div>
             </div>
@@ -1080,52 +1102,44 @@ export default function UsersPage() {
 
       {/* Pause Subscription Modal */}
       {showPauseModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
-            <div className="px-6 py-5 border-b border-gray-100">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full animate-slideUp overflow-hidden border border-slate-100">
+            <div className="px-8 py-6 border-b border-amber-50 bg-amber-50/30">
               <div className="flex items-center gap-3">
-
-                <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                  <Pause className="w-5 h-5 text-amber-600" />
+                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center shadow-sm">
+                  <Pause className="w-6 h-6 text-amber-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Pause Subscription</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">Temporarily restrict user access</p>
+                  <h3 className="text-xl font-bold text-slate-800">Pause Benefits</h3>
+                  <p className="text-xs text-amber-500 font-bold uppercase tracking-widest">Quota Restriction</p>
                 </div>
               </div>
             </div>
-            <div className="px-6 py-5">
-              <p className="text-sm text-gray-600 mb-4">
-                Are you sure you want to <strong className="text-amber-600">PAUSE</strong> the subscription for <strong className="text-gray-900">{selectedUser.name}</strong>?
-              </p>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5">
-                <p className="text-xs text-amber-800 font-medium flex items-start gap-2">
-
-                  <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                  <span>This will block their uploads and downloads until the subscription is resumed.</span>
-                </p>
+            <div className="px-8 py-8">
+              <div className="bg-amber-50/50 border-2 border-amber-100/50 rounded-2xl p-4 mb-8">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
+                    <AlertTriangle className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <p className="text-xs text-amber-800 font-bold leading-relaxed">
+                    Pausing the subscription for <span className="text-slate-900">{selectedUser.name}</span> will instantly disable all premium features and block further data uploads.
+                  </p>
+                </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 <button
                   onClick={() => setShowPauseModal(false)}
                   disabled={processingAction === 'pause'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex-1 px-6 py-3.5 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmPause}
                   disabled={processingAction === 'pause'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3.5 text-sm font-bold text-white bg-amber-600 rounded-2xl hover:bg-amber-700 hover:shadow-lg hover:shadow-amber-500/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {processingAction === 'pause' ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Pausing...</span>
-                    </>
-                  ) : (
-                    "Pause Subscription"
-                  )}
+                  {processingAction === 'pause' ? <Loader2 className="w-5 h-5 animate-spin" /> : "Pause Access"}
                 </button>
               </div>
             </div>
@@ -1135,52 +1149,44 @@ export default function UsersPage() {
 
       {/* Resume Subscription Modal */}
       {showResumeModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-slideUp">
-            <div className="px-6 py-5 border-b border-gray-100">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full animate-slideUp overflow-hidden border border-slate-100">
+            <div className="px-8 py-6 border-b border-emerald-50 bg-emerald-50/30">
               <div className="flex items-center gap-3">
-
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Play className="w-5 h-5 text-green-600" />
+                <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center shadow-sm">
+                  <Play className="w-6 h-6 text-emerald-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Resume Subscription</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">Restore user access</p>
+                  <h3 className="text-xl font-bold text-slate-800">Resume Access</h3>
+                  <p className="text-xs text-emerald-500 font-bold uppercase tracking-widest">Restore Full Quota</p>
                 </div>
               </div>
             </div>
-            <div className="px-6 py-5">
-              <p className="text-sm text-gray-600 mb-4">
-                Are you sure you want to <strong className="text-green-600">RESUME</strong> the subscription for <strong className="text-gray-900">{selectedUser.name}</strong>?
-              </p>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-5">
-                <p className="text-xs text-green-800 font-medium flex items-start gap-2">
-
-                  <CheckCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                  <span>This will restore their ability to upload and download files.</span>
-                </p>
+            <div className="px-8 py-8">
+              <div className="bg-emerald-50/50 border-2 border-emerald-100/50 rounded-2xl p-4 mb-8">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
+                    <CheckCircle className="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <p className="text-xs text-emerald-800 font-bold leading-relaxed">
+                    Restoring access for <span className="text-slate-900">{selectedUser.name}</span> will immediately reactivate all premium quotas and features.
+                  </p>
+                </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 <button
                   onClick={() => setShowResumeModal(false)}
                   disabled={processingAction === 'resume'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex-1 px-6 py-3.5 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmResume}
                   disabled={processingAction === 'resume'}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3.5 text-sm font-bold text-white bg-emerald-600 rounded-2xl hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {processingAction === 'resume' ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Resuming...</span>
-                    </>
-                  ) : (
-                    "Resume Subscription"
-                  )}
+                  {processingAction === 'resume' ? <Loader2 className="w-5 h-5 animate-spin" /> : "Resume Access"}
                 </button>
               </div>
             </div>

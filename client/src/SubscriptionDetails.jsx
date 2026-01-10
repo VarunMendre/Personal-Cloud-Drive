@@ -97,9 +97,9 @@ export default function SubscriptionDetails() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: '#E7F0FA' }}>
-        <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mb-4" style={{ borderColor: '#2E5E99', borderTopColor: 'transparent' }}></div>
-        <p className="font-medium" style={{ color: '#0D2440' }}>Loading subscription details...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: '#fafdff' }}>
+        <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mb-4" style={{ borderColor: '#66B2D6', borderTopColor: 'transparent' }}></div>
+        <p className="font-medium" style={{ color: '#2C3E50' }}>Loading subscription details...</p>
       </div>
     );
   }
@@ -209,8 +209,8 @@ export default function SubscriptionDetails() {
       )}
 
       <header className="mb-10">
-        <h1 className="text-3xl font-extrabold" style={{ color: '#0D2440' }}>Your Subscription</h1>
-        <p className="mt-1" style={{ color: '#7BA4D0' }}>Manage your plan and view usage details</p>
+        <h1 className="text-3xl font-extrabold" style={{ color: '#2C3E50' }}>Your Subscription</h1>
+        <p className="mt-1" style={{ color: '#A3C5D9' }}>Manage your plan and view usage details</p>
       </header>
       
       {/* Bonus Trial Banner */}

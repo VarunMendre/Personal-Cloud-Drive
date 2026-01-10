@@ -152,17 +152,18 @@ function PlanCard({ plan, onSelect, isLoading, isDisabled }) {
         "relative flex flex-col rounded-2xl border bg-white p-5 shadow-sm transition",
         "hover:shadow-md",
         plan.popular
-          ? "border-blue-500/60 ring-1 ring-blue-500/20"
+          ? "ring-1"
           : isFree 
             ? "border-green-500 ring-1 ring-green-500/20"
             : "border-slate-200"
       )}
+      style={plan.popular ? { borderColor: '#66B2D6', borderOpacity: 0.6 } : undefined}
     >
-      {plan.popular && (
-        <div className="absolute -top-2 right-4 select-none rounded-full bg-blue-600 px-2 py-0.5 text-xs font-medium text-white shadow">
-          MOST POPULAR
-        </div>
-      )}
+          {plan.popular && (
+            <div className="absolute -top-2 right-4 select-none rounded-full px-2 py-0.5 text-xs font-medium text-white shadow" style={{ backgroundColor: '#66B2D6' }}>
+              MOST POPULAR
+            </div>
+          )}
       
       {isFree && (
         <div className="absolute -top-2 right-4 select-none rounded-sm bg-green-600 px-2 py-0.5 text-[10px] font-bold text-white shadow">
@@ -187,7 +188,7 @@ function PlanCard({ plan, onSelect, isLoading, isDisabled }) {
              </div>
              <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
           </div>
-          <p className="text-xs font-semibold text-blue-600">{plan.tagline}</p>
+              <p className="text-xs font-semibold" style={{ color: '#66B2D6' }}>{plan.tagline}</p>
           <p className="text-[11px] text-slate-500 leading-tight">{plan.description}</p>
         </div>
       </div>
@@ -216,14 +217,17 @@ function PlanCard({ plan, onSelect, isLoading, isDisabled }) {
       <button
         onClick={() => !isFree && !isDisabled && onSelect?.(plan)}
         disabled={isDisabled || isFree}
-        className={classNames(
-          "mb-6 cursor-pointer inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-bold transition focus:outline-none",
-          isFree 
-            ? "bg-green-600 text-white cursor-default" 
-            : plan.popular
-              ? "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed"
-              : "bg-slate-900 text-white hover:bg-slate-800 disabled:bg-slate-700 disabled:cursor-not-allowed"
-        )}
+            className={classNames(
+              "mb-6 cursor-pointer inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-bold transition focus:outline-none",
+              isFree 
+                ? "bg-green-600 text-white cursor-default" 
+                : plan.popular
+                  ? "text-white disabled:cursor-not-allowed"
+                  : "bg-slate-900 text-white hover:bg-slate-800 disabled:bg-slate-700 disabled:cursor-not-allowed"
+            )}
+            style={plan.popular ? { backgroundColor: '#66B2D6' } : undefined}
+            onMouseEnter={(e) => plan.popular && !isFree && !isLoading && !isDisabled && (e.target.style.backgroundColor = '#5aa0c0')}
+            onMouseLeave={(e) => plan.popular && !isFree && !isLoading && !isDisabled && (e.target.style.backgroundColor = '#66B2D6')}
       >
         {isFree ? (
           <span className="flex items-center gap-1">
@@ -432,8 +436,11 @@ export default function Plans() {
             onClick={() => setMode("monthly")}
             className={classNames(
               "rounded-lg px-8 py-2.5 text-sm font-bold transition-all cursor-pointer",
-              mode === "monthly" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
+              mode === "monthly" ? "text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
             )}
+            style={mode === "monthly" ? { backgroundColor: '#66B2D6' } : undefined}
+            onMouseEnter={(e) => mode !== "monthly" && (e.target.style.color = '#2C3E50')}
+            onMouseLeave={(e) => mode !== "monthly" && (e.target.style.color = '#A3C5D9')}
           >
             Monthly
           </button>
@@ -441,8 +448,11 @@ export default function Plans() {
             onClick={() => setMode("yearly")}
             className={classNames(
               "rounded-lg px-8 py-2.5 text-sm font-bold transition-all cursor-pointer flex items-center gap-2",
-              mode === "yearly" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
+              mode === "yearly" ? "text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
             )}
+            style={mode === "yearly" ? { backgroundColor: '#66B2D6' } : undefined}
+            onMouseEnter={(e) => mode !== "yearly" && (e.target.style.color = '#2C3E50')}
+            onMouseLeave={(e) => mode !== "yearly" && (e.target.style.color = '#A3C5D9')}
           >
             Yearly
             {mode !== "yearly" && (
@@ -516,7 +526,8 @@ function SuccessModal({ subscriptionId, onClose }) {
       <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 text-center animate-in zoom-in-95 fade-in duration-300 border border-slate-100">
         {/* Icon */}
         <div className={`mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full transition-colors duration-500 ${activating ? 'bg-blue-50' : 'bg-green-50'}`}>
-          <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-colors duration-500 ${activating ? 'bg-blue-600' : 'bg-green-600'}`}>
+          <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-colors duration-500`}
+            style={{ backgroundColor: activating ? '#66B2D6' : '#10B981' }}>
             {activating ? (
                <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -542,7 +553,7 @@ function SuccessModal({ subscriptionId, onClose }) {
         {/* Loading bar only when activating */}
         {activating && (
            <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-2">
-             <div className="h-full bg-blue-600 animate-progress-indeterminate"></div>
+             <div className="h-full animate-progress-indeterminate" style={{ backgroundColor: '#66B2D6' }}></div>
            </div>
         )}
       </div>
@@ -593,7 +604,7 @@ function CountdownModal({ countdown, onCancel }) {
 
           {/* Icon */}
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full text-white" style={{ backgroundColor: '#66B2D6' }}>
               <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M7 17L17 7M17 7H7M17 7v10" />
               </svg>
@@ -615,7 +626,7 @@ function CountdownModal({ countdown, onCancel }) {
 
           {/* Security badge */}
           <div className="flex items-center justify-center gap-2 text-xs text-slate-500 mb-6">
-            <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#66B2D6' }}>
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
             Secure connection

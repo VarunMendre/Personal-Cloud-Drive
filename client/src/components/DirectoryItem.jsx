@@ -95,7 +95,7 @@ function DirectoryItem({
   return (
     <div
       className="flex flex-col relative gap-1 border rounded-lg bg-white cursor-pointer hover:bg-opacity-50 group transition-all duration-200"
-      style={{ borderColor: '#D1D5DB' }}
+      style={{ borderColor: '#D1DCE5' }}
       onClick={() =>
         !(activeContextMenu || isUploading)
           ? handleRowClick(item.isDirectory ? "directory" : "file", item.id)
@@ -117,7 +117,7 @@ function DirectoryItem({
         <div className="flex-1 min-w-0">
           {/* Name and Type Badge */}
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold text-gray-900 truncate" style={{ color: '#000000' }}>{item.name}</span>
+            <span className="font-semibold truncate" style={{ color: '#2C3E50' }}>{item.name}</span>
             {item.isDirectory ? (
               <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded" style={{ backgroundColor: '#E6FAF5', color: '#66B2D6' }}>
                 Folder
@@ -130,7 +130,7 @@ function DirectoryItem({
           </div>
 
           {/* Size and Modified Date */}
-          <div className="flex items-center gap-3 text-xs text-gray-500">
+          <div className="flex items-center gap-3 text-xs" style={{ color: '#A3C5D9' }}>
             <span>Size: {formatSize(item.size || 0)}</span>
             <span>Modified: {formatDate(item.updatedAt || item.createdAt)}</span>
           </div>
@@ -145,7 +145,10 @@ function DirectoryItem({
                 <div className="relative group/tooltip">
                   <button
                     onClick={handleDownload}
-                    className="flex items-center justify-center p-2 rounded-full transition-colors text-[#000000] hover:bg-[#F3F4F6]"
+                    className="flex items-center justify-center p-2 rounded-full transition-colors hover:bg-opacity-10"
+                    style={{ color: '#66B2D6' }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#E6FAF5'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                     title="Download"
                   >
                     <Download className="w-4 h-4" />
@@ -156,7 +159,10 @@ function DirectoryItem({
               {/* Details button - for both files and folders */}
               <button
                 onClick={handleDetailsClick}
-                className="flex items-center justify-center p-2 text-[#000000] hover:bg-[#F3F4F6] rounded-full transition-colors"
+                className="flex items-center justify-center p-2 rounded-full transition-colors hover:bg-opacity-10"
+                style={{ color: '#66B2D6' }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#E6FAF5'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                 title="Details"
               >
                 <Info className="w-4 h-4" />
@@ -166,7 +172,16 @@ function DirectoryItem({
 
           {/* Three dots for context menu - always visible */}
           <div
-            className="flex items-center justify-center cursor-pointer text-[#000000] rounded-full p-2 hover:bg-[#F3F4F6] transition-colors"
+            className="flex items-center justify-center cursor-pointer rounded-full p-2 transition-colors"
+            style={{ color: '#A3C5D9' }}
+            onMouseEnter={(e) => {
+              e.target.style.color = '#66B2D6';
+              e.target.style.backgroundColor = '#E6FAF5';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.color = '#A3C5D9';
+              e.target.style.backgroundColor = 'transparent';
+            }}
             onClick={(e) => handleContextMenu(e, item.id)}
           >
             <MoreVertical className="w-5 h-5" />
@@ -176,13 +191,13 @@ function DirectoryItem({
 
       {/* PROGRESS BAR: shown if an item is in queue or actively uploading */}
       {isUploadingItem && (
-        <div className="bg-[#7c7c7c] rounded-[4px] mt-[5px] mb-[8px] overflow-hidden relative mx-[10px]">
-          <span className="absolute text-[12px] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white">{Math.floor(uploadProgress)}%</span>
+        <div className="rounded-[4px] mt-[5px] mb-[8px] overflow-hidden relative mx-[10px]" style={{ backgroundColor: '#D1DCE5' }}>
+          <span className="absolute text-[12px] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white z-10">{Math.floor(uploadProgress)}%</span>
           <div
-            className="bg-[#007bff] rounded-[4px] h-[16px]"
+            className="rounded-[4px] h-[16px] transition-all duration-300"
             style={{
               width: `${uploadProgress}%`,
-              backgroundColor: uploadProgress === 100 ? "#039203" : "#007bff",
+              backgroundColor: uploadProgress === 100 ? "#10B981" : "#66B2D6",
             }}
           ></div>
         </div>

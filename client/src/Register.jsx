@@ -192,13 +192,13 @@ const Register = () => {
         <div className="bg-white rounded-2xl shadow-strong p-8">
           {/* Header with Step Indicator */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#2E5E99' }}>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#66B2D6' }}>
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold mb-2" style={{ color: '#0D2440' }}>Create Account</h2>
-            <p className="text-sm mb-4" style={{ color: '#7BA4D0' }}>
+            <h2 className="text-2xl font-bold mb-2" style={{ color: '#2C3E50' }}>Create Account</h2>
+            <p className="text-sm mb-4" style={{ color: '#A3C5D9' }}>
               {currentStep === 1 ? "Fill in your details to get started" : "Verify your email to complete registration"}
             </p>
             
@@ -208,8 +208,8 @@ const Register = () => {
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
                   style={{
-                    backgroundColor: currentStep >= 1 ? '#2E5E99' : '#E7F0FA',
-                    color: currentStep >= 1 ? '#FFFFFF' : '#7BA4D0',
+                    backgroundColor: currentStep >= 1 ? '#66B2D6' : '#E6FAF5',
+                    color: currentStep >= 1 ? '#FFFFFF' : '#A3C5D9',
                   }}
                 >
                   {currentStep > 1 ? (
@@ -218,22 +218,22 @@ const Register = () => {
                     </svg>
                   ) : "1"}
                 </div>
-                <span className="ml-2 text-xs font-semibold" style={{ color: currentStep >= 1 ? '#2E5E99' : '#7BA4D0' }}>Details</span>
+                <span className="ml-2 text-xs font-semibold" style={{ color: currentStep >= 1 ? '#66B2D6' : '#A3C5D9' }}>Details</span>
               </div>
               
-              <div className="w-12 h-0.5" style={{ backgroundColor: currentStep >= 2 ? '#2E5E99' : '#E7F0FA' }}></div>
+              <div className="w-12 h-0.5" style={{ backgroundColor: currentStep >= 2 ? '#66B2D6' : '#E6FAF5' }}></div>
               
               <div className="flex items-center">
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
                   style={{
-                    backgroundColor: currentStep >= 2 ? '#2E5E99' : '#E7F0FA',
-                    color: currentStep >= 2 ? '#FFFFFF' : '#7BA4D0',
+                    backgroundColor: currentStep >= 2 ? '#66B2D6' : '#E6FAF5',
+                    color: currentStep >= 2 ? '#FFFFFF' : '#A3C5D9',
                   }}
                 >
                   2
                 </div>
-                <span className="ml-2 text-xs font-semibold" style={{ color: currentStep >= 2 ? '#2E5E99' : '#7BA4D0' }}>Verify</span>
+                <span className="ml-2 text-xs font-semibold" style={{ color: currentStep >= 2 ? '#66B2D6' : '#A3C5D9' }}>Verify</span>
               </div>
             </div>
           </div>
@@ -243,12 +243,12 @@ const Register = () => {
             <div className="space-y-5 animate-fadeIn">
               {/* Name Field */}
               <div>
-                <label htmlFor="name" className="block text-sm font-semibold mb-2" style={{ color: '#0D2440' }}>
+                <label htmlFor="name" className="block text-sm font-semibold mb-2" style={{ color: '#2C3E50' }}>
                   Full Name
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="w-5 h-5" style={{ color: '#7BA4D0' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" style={{ color: '#A7DDE9' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
@@ -261,21 +261,21 @@ const Register = () => {
                     placeholder="Enter your full name"
                     required
                     className="w-full pl-11 pr-4 py-3 border-2 rounded-lg transition-all duration-200 focus:outline-none"
-                    style={{ borderColor: '#E7F0FA', backgroundColor: '#FFFFFF' }}
-                    onFocus={(e) => e.target.style.borderColor = '#2E5E99'}
-                    onBlur={(e) => e.target.style.borderColor = '#E7F0FA'}
+                    style={{ borderColor: '#E6FAF5', backgroundColor: '#FFFFFF' }}
+                    onFocus={(e) => e.target.style.borderColor = '#66B2D6'}
+                    onBlur={(e) => e.target.style.borderColor = '#E6FAF5'}
                   />
                 </div>
               </div>
 
               {/* Email Field */}
               <div>
-                <label htmlFor="email" className="block text-sm font-semibold mb-2" style={{ color: '#0D2440' }}>
+                <label htmlFor="email" className="block text-sm font-semibold mb-2" style={{ color: '#2C3E50' }}>
                   Email Address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="w-5 h-5" style={{ color: '#7BA4D0' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" style={{ color: '#A7DDE9' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                     </svg>
                   </div>
@@ -289,11 +289,11 @@ const Register = () => {
                     required
                     className="w-full pl-11 pr-4 py-3 border-2 rounded-lg transition-all duration-200 focus:outline-none"
                     style={{
-                      borderColor: serverError ? '#EF4444' : '#E7F0FA',
+                      borderColor: serverError ? '#EF4444' : '#E6FAF5',
                       backgroundColor: '#FFFFFF'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = serverError ? '#EF4444' : '#2E5E99'}
-                    onBlur={(e) => !serverError && (e.target.style.borderColor = '#E7F0FA')}
+                    onFocus={(e) => e.target.style.borderColor = serverError ? '#EF4444' : '#66B2D6'}
+                    onBlur={(e) => !serverError && (e.target.style.borderColor = '#E6FAF5')}
                   />
                 </div>
 
@@ -326,9 +326,9 @@ const Register = () => {
                 onClick={handleSendOtp}
                 disabled={isSending}
                 className="w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 hover:shadow-medium hover:transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: '#2E5E99' }}
-                onMouseEnter={(e) => !isSending && (e.target.style.backgroundColor = '#254a7f')}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#2E5E99'}
+                style={{ backgroundColor: '#66B2D6' }}
+                onMouseEnter={(e) => !isSending && (e.target.style.backgroundColor = '#5aa0c0')}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#66B2D6'}
               >
                 {isSending ? (
                   <span className="flex items-center justify-center gap-2">
@@ -342,9 +342,9 @@ const Register = () => {
               </button>
 
               {/* Login Link */}
-              <p className="text-center text-sm" style={{ color: '#0D2440' }}>
+              <p className="text-center text-sm" style={{ color: '#2C3E50' }}>
                 Already have an account?{" "}
-                <Link to="/login" className="font-semibold hover:underline" style={{ color: '#2E5E99' }}>
+                <Link to="/login" className="font-semibold hover:underline" style={{ color: '#66B2D6' }}>
                   Sign In
                 </Link>
               </p>
@@ -352,10 +352,10 @@ const Register = () => {
               {/* Divider */}
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t" style={{ borderColor: '#E7F0FA' }}></div>
+                  <div className="w-full border-t" style={{ borderColor: '#E6FAF5' }}></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white" style={{ color: '#7BA4D0' }}>Or register with</span>
+                  <span className="px-4 bg-white" style={{ color: '#A3C5D9' }}>Or register with</span>
                 </div>
               </div>
 
@@ -388,16 +388,16 @@ const Register = () => {
                   className="w-full flex items-center justify-center gap-3 py-3 px-4 border-2 rounded-lg font-semibold transition-all duration-200 hover:shadow-soft"
                   style={{
                     backgroundColor: '#FFFFFF',
-                    borderColor: '#E7F0FA',
-                    color: '#0D2440'
+                    borderColor: '#E6FAF5',
+                    color: '#2C3E50'
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#E7F0FA';
-                    e.target.style.borderColor = '#7BA4D0';
+                    e.target.style.backgroundColor = '#fafdff';
+                    e.target.style.borderColor = '#A7DDE9';
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.backgroundColor = '#FFFFFF';
-                    e.target.style.borderColor = '#E7F0FA';
+                    e.target.style.borderColor = '#E6FAF5';
                   }}
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -422,7 +422,7 @@ const Register = () => {
 
               {/* OTP Input */}
               <div>
-                <label htmlFor="otp" className="block text-sm font-semibold mb-6 text-center" style={{ color: '#0D2440' }}>
+                <label htmlFor="otp" className="block text-sm font-semibold mb-6 text-center" style={{ color: '#2C3E50' }}>
                   Verification Code
                 </label>
                 
@@ -456,10 +456,10 @@ const Register = () => {
                 disabled={isVerifying || otpVerified}
                 className="w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 hover:shadow-medium hover:transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  backgroundColor: otpVerified ? '#10B981' : '#2E5E99'
+                  backgroundColor: otpVerified ? '#10B981' : '#66B2D6'
                 }}
-                onMouseEnter={(e) => !isVerifying && !otpVerified && (e.target.style.backgroundColor = '#254a7f')}
-                onMouseLeave={(e) => !otpVerified && (e.target.style.backgroundColor = '#2E5E99')}
+                onMouseEnter={(e) => !isVerifying && !otpVerified && (e.target.style.backgroundColor = '#5aa0c0')}
+                onMouseLeave={(e) => !otpVerified && (e.target.style.backgroundColor = '#66B2D6')}
               >
                 {isVerifying ? (
                   <span className="flex items-center justify-center gap-2">
@@ -482,14 +482,14 @@ const Register = () => {
               {/* Resend Code */}
               <div className="text-center">
                 {countdown > 0 ? (
-                  <p className="text-sm" style={{ color: '#7BA4D0' }}>
+                  <p className="text-sm" style={{ color: '#A3C5D9' }}>
                     Resend code in {countdown}s
                   </p>
                 ) : (
                   <button
                     onClick={handleSendOtp}
                     className="text-sm font-semibold hover:underline"
-                    style={{ color: '#2E5E99' }}
+                    style={{ color: '#66B2D6' }}
                   >
                     Resend verification code
                   </button>
@@ -505,7 +505,7 @@ const Register = () => {
                   setOtpVerified(false);
                 }}
                 className="w-full py-2 text-sm font-semibold"
-                style={{ color: '#7BA4D0' }}
+                style={{ color: '#A3C5D9' }}
               >
                 ← Back to details
               </button>

@@ -161,8 +161,8 @@ export default function ChangePlan() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <div className="w-16 h-16 border-4 border-t-transparent rounded-full animate-spin mb-6" style={{ borderColor: '#2E5E99', borderTopColor: 'transparent' }}></div>
-        <p className="font-bold animate-pulse uppercase tracking-widest text-xs" style={{ color: '#7BA4D0' }}>Preparing upgrade options...</p>
+        <div className="w-16 h-16 border-4 border-t-transparent rounded-full animate-spin mb-6" style={{ borderColor: '#66B2D6', borderTopColor: 'transparent' }}></div>
+        <p className="font-bold animate-pulse uppercase tracking-widest text-xs" style={{ color: '#A3C5D9' }}>Preparing upgrade options...</p>
       </div>
     );
   }
@@ -193,7 +193,7 @@ export default function ChangePlan() {
         
         {/* Header */}
         <div className="mb-12">
-            <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-widest mb-4">
+            <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-widest mb-4" style={{ color: '#66B2D6' }}>
                 <BsShieldCheck className="w-4 h-4" />
                 <span>Subscription Management</span>
             </div>

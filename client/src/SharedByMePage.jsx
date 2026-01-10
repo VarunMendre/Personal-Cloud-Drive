@@ -61,7 +61,10 @@ function SharedByMePage() {
         <div className="mb-6">
           <button
             onClick={() => navigate("/share")}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4 text-sm font-medium"
+            className="flex items-center gap-2 mb-4 text-sm font-medium transition-colors"
+            style={{ color: '#66B2D6' }}
+            onMouseEnter={(e) => e.target.style.color = '#5aa0c0'}
+            onMouseLeave={(e) => e.target.style.color = '#66B2D6'}
           >
             <FaArrowLeft className="w-4 h-4" />
             Back to Dashboard
@@ -71,34 +74,48 @@ function SharedByMePage() {
               <FaFileAlt className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Files Shared by Me</h1>
-              <p className="text-sm text-gray-500">Manage files you've shared with others</p>
+              <h1 className="text-2xl font-bold" style={{ color: '#2C3E50' }}>Files Shared by Me</h1>
+              <p className="text-sm" style={{ color: '#A3C5D9' }}>Manage files you've shared with others</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
-            <span className="text-green-600 font-medium">{filteredFiles.length} files</span>
+          <div className="flex items-center gap-2 text-sm mt-2" style={{ color: '#A3C5D9' }}>
+            <span className="font-medium" style={{ color: '#66B2D6' }}>{filteredFiles.length} files</span>
             <span>•</span>
             <span>Last updated: {new Date().toLocaleDateString()}</span>
           </div>
         </div>
 
         {/* Search and Filter */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
+        <div className="bg-white rounded-xl p-4 shadow-sm border mb-6" style={{ borderColor: '#D1DCE5' }}>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: '#A3C5D9' }} />
               <input
                 type="text"
                 placeholder="Search files or people..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                className="w-full pl-10 pr-4 py-2 rounded-lg transition-all text-sm focus:outline-none"
+                style={{ 
+                  backgroundColor: '#fafdff', 
+                  borderColor: '#D1DCE5',
+                  color: '#2C3E50'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#66B2D6'}
+                onBlur={(e) => e.target.style.borderColor = '#D1DCE5'}
               />
             </div>
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+              className="px-4 py-2 rounded-lg transition-all text-sm focus:outline-none"
+              style={{
+                backgroundColor: '#fafdff',
+                borderColor: '#D1DCE5',
+                color: '#2C3E50'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#66B2D6'}
+              onBlur={(e) => e.target.style.borderColor = '#D1DCE5'}
             >
               <option value="all">All Files (0)</option>
               <option value="document">Documents</option>
@@ -126,7 +143,10 @@ function SharedByMePage() {
               </p>
               <button
                 onClick={() => navigate("/")}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                className="px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium"
+                style={{ backgroundColor: '#66B2D6' }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#5aa0c0'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#66B2D6'}
               >
                 Go to My Drive
               </button>
@@ -203,7 +223,10 @@ function SharedByMePage() {
                       <td className="px-6 py-4 text-right">
                         <button 
                           onClick={() => navigate(`/share/manage/${file.fileType === 'directory' ? 'folder' : 'file'}/${file.fileId}`)}
-                          className="text-sm text-green-600 hover:text-green-700 font-medium hover:underline"
+                          className="text-sm font-medium hover:underline transition-colors"
+                          style={{ color: '#66B2D6' }}
+                          onMouseEnter={(e) => e.target.style.color = '#5aa0c0'}
+                          onMouseLeave={(e) => e.target.style.color = '#66B2D6'}
                         >
                           Manage
                         </button>

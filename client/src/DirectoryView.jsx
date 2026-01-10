@@ -878,7 +878,7 @@ function DirectoryView() {
                <AlertTriangle className="w-10 h-10 text-white" />
              </div>
              <div>
-               <h2 className="text-2xl font-bold" style={{ color: '#0D2440' }}>Account Paused</h2>
+               <h2 className="text-2xl font-bold" style={{ color: '#2C3E50' }}>Account Paused</h2>
                <p className="text-sm mt-2" style={{ color: '#856404' }}>
                  Administrator has paused your account. Access is restricted.
                </p>
@@ -945,15 +945,15 @@ function DirectoryView() {
 
       {/* Upload Section with 3 Buttons */}
       <div className="max-w-7xl mx-auto px-6 pt-8 pb-8">
-        <div className="bg-white rounded-2xl border-2 border-dashed p-8 text-center shadow-soft transition-all duration-300 hover:shadow-medium" style={{ borderColor: '#7BA4D0' }}>
+        <div className="bg-white rounded-2xl border-2 border-dashed p-8 text-center shadow-soft transition-all duration-300 hover:shadow-medium" style={{ borderColor: '#A7DDE9' }}>
           <div className="mb-6">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#E7F0FA' }}>
-              <Upload className="w-8 h-8" style={{ color: '#2E5E99' }} />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#E6FAF5' }}>
+              <Upload className="w-8 h-8" style={{ color: '#66B2D6' }} />
             </div>
-            <h2 className="text-xl font-bold mb-1" style={{ color: '#0D2440' }}>
+            <h2 className="text-xl font-bold mb-1" style={{ color: '#2C3E50' }}>
               Upload Files or Create Directory
             </h2>
-            <p className="text-sm" style={{ color: '#7BA4D0' }}>
+            <p className="text-sm" style={{ color: '#A3C5D9' }}>
               Drag and drop files here, or click to select files
             </p>
           </div>
@@ -972,11 +972,11 @@ function DirectoryView() {
                 disabled={errorMessage === "Directory not found or you do not have access to it!" || isRenaming}
                 className="flex items-center gap-2 px-5 py-3 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg hover:transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  backgroundColor: ["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) ? '#CBD5E0' : '#2E5E99',
+                  backgroundColor: ["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) ? '#CBD5E0' : '#66B2D6',
                   cursor: ["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) ? 'not-allowed' : 'pointer'
                 }}
-                onMouseEnter={(e) => !["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && (e.target.style.backgroundColor = '#254a7f')}
-                onMouseLeave={(e) => !["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && (e.target.style.backgroundColor = '#2E5E99')}
+                onMouseEnter={(e) => !["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && (e.target.style.backgroundColor = '#5aa0c0')}
+                onMouseLeave={(e) => !["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && (e.target.style.backgroundColor = '#66B2D6')}
               >
                 <Upload className="w-4 h-4" />
                 Upload Files {["paused", "halted", "expired"].includes(user?.subscriptionStatus?.toLowerCase()) && "⚠️"}
@@ -1051,7 +1051,7 @@ function DirectoryView() {
           {/* Search Bar */}
           <div className="flex-1 relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Search className="w-5 h-5" style={{ color: '#9CA3AF' }} />
+              <Search className="w-5 h-5" style={{ color: '#A3C5D9' }} />
             </div>
             <input
               type="text"
@@ -1059,15 +1059,15 @@ function DirectoryView() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-white border rounded-lg transition-all focus:outline-none"
-              style={{ borderColor: '#D1D5DB', color: '#000000' }}
-              onFocus={(e) => e.target.style.borderColor = '#000000'}
-              onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
+              style={{ borderColor: '#D1DCE5', color: '#2C3E50' }}
+              onFocus={(e) => e.target.style.borderColor = '#66B2D6'}
+              onBlur={(e) => e.target.style.borderColor = '#D1DCE5'}
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
                 className="absolute inset-y-0 right-0 pr-4 flex items-center"
-                style={{ color: '#9CA3AF' }}
+                style={{ color: '#A3C5D9' }}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1079,15 +1079,15 @@ function DirectoryView() {
             onClick={() => setViewMode(viewMode === "list" ? "grid" : "list")}
             className="flex items-center justify-center gap-2 px-5 py-3 bg-white border rounded-lg font-semibold text-sm transition-all duration-200 hover:shadow-soft whitespace-nowrap"
             style={{
-              borderColor: '#D1D5DB',
-              color: '#000000'
+              borderColor: '#D1DCE5',
+              color: '#2C3E50'
             }}
             onMouseEnter={(e) => {
-              e.target.style.borderColor = '#9CA3AF';
-              e.target.style.backgroundColor = '#F3F4F6';
+              e.target.style.borderColor = '#A7DDE9';
+              e.target.style.backgroundColor = '#fafdff';
             }}
             onMouseLeave={(e) => {
-              e.target.style.borderColor = '#D1D5DB';
+              e.target.style.borderColor = '#D1DCE5';
               e.target.style.backgroundColor = '#FFFFFF';
             }}
           >
@@ -1111,18 +1111,18 @@ function DirectoryView() {
               onChange={(e) => setSortBy(e.target.value)}
               className="px-5 py-3 bg-white border rounded-lg font-semibold text-sm transition-all duration-200 hover:shadow-soft appearance-none pr-10 cursor-pointer"
               style={{
-                borderColor: '#D1D5DB',
-                color: '#000000'
+                borderColor: '#D1DCE5',
+                color: '#2C3E50'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#000000'}
-              onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
+              onFocus={(e) => e.target.style.borderColor = '#66B2D6'}
+              onBlur={(e) => e.target.style.borderColor = '#D1DCE5'}
             >
               <option value="name">Sort by Name</option>
               <option value="date">Sort by Date</option>
               <option value="size">Sort by Size</option>
             </select>
             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <ChevronDown className="w-5 h-5" style={{ color: '#000000' }} />
+              <ChevronDown className="w-5 h-5" style={{ color: '#2C3E50' }} />
             </div>
           </div>
         </div>
@@ -1239,7 +1239,7 @@ function DirectoryView() {
               <div
                 key={item.id}
                 className="bg-white rounded-xl border-2 hover:shadow-medium transition-all duration-200 cursor-pointer group flex flex-col justify-between overflow-hidden"
-                style={{ borderColor: '#D1D5DB' }}
+                style={{ borderColor: '#D1DCE5' }}
                 onClick={() => handleRowClick(item)}
                 onContextMenu={(e) => handleContextMenu(e, item)}
               >
@@ -1250,7 +1250,7 @@ function DirectoryView() {
                       <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#fafdff' }}>
                         {getFileIcon(item)}
                       </div>
-                      <span className="text-xs font-semibold tracking-wider" style={{ color: '#9CA3AF' }}>
+                      <span className="text-xs font-semibold tracking-wider" style={{ color: '#A3C5D9' }}>
                         {item.isDirectory ? "FOLDER" : (item.name && typeof item.name === 'string' ? item.name.split('.').pop()?.toUpperCase() || 'FILE' : 'FILE')}
                       </span>
                     </div>
@@ -1271,21 +1271,21 @@ function DirectoryView() {
                   <div className="space-y-1">
                     <h3 
                       className="text-sm font-semibold truncate mb-1" 
-                      style={{ color: '#000000' }}
+                      style={{ color: '#2C3E50' }}
                       title={item.name}
                     >
                       {item.name}
                     </h3>
                     <div className="flex flex-col gap-1 mt-2">
                        <div className="flex justify-between items-center text-xs">
-                         <span style={{ color: '#9CA3AF' }}>Size</span>
-                         <span className="font-medium" style={{ color: '#4B5563' }}>
+                         <span style={{ color: '#A3C5D9' }}>Size</span>
+                         <span className="font-medium" style={{ color: '#2C3E50' }}>
                            {item.isDirectory ? `${item.fileCount || 0} items` : formatSize(item.size)}
                          </span>
                        </div>
                        <div className="flex justify-between items-center text-xs">
-                         <span style={{ color: '#9CA3AF' }}>Modified</span>
-                         <span className="font-medium" style={{ color: '#4B5563' }}>
+                         <span style={{ color: '#A3C5D9' }}>Modified</span>
+                         <span className="font-medium" style={{ color: '#2C3E50' }}>
                            {new Date(item.updatedAt || item.createdAt).toLocaleDateString('en-US', {
                              year: 'numeric',
                              month: 'short',
@@ -1298,14 +1298,14 @@ function DirectoryView() {
                 </div>
 
                 {/* Footer: Info | Download */}
-                <div className="flex border-t" style={{ borderColor: '#D1D5DB' }}>
+                <div className="flex border-t" style={{ borderColor: '#D1DCE5' }}>
                    <button
                     onClick={(e) => {
                       e.stopPropagation();
                       openDetailsPopup(item);
                     }}
                     className="flex-1 py-3 text-xs font-medium flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors border-r"
-                    style={{ borderColor: '#D1D5DB', color: '#4B5563' }}
+                    style={{ borderColor: '#D1DCE5', color: '#2C3E50' }}
                   >
                     <Info className="w-3.5 h-3.5" />
                     Info
@@ -1323,7 +1323,7 @@ function DirectoryView() {
                         window.location.href = `${BASE_URL}/file/${item.id}?action=download`;
                       }}
                       className="flex-1 py-3 text-xs font-medium flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
-                      style={{ color: '#4B5563' }}
+                      style={{ color: '#2C3E50' }}
                     >
                       <Download className="w-3.5 h-3.5" />
                       Download

@@ -146,11 +146,11 @@ const Login = () => {
                   required
                   className="w-full pl-11 pr-4 py-3 border-2 rounded-lg transition-all duration-200 focus:outline-none"
                   style={{
-                    borderColor: hasError ? '#EF4444' : '#E6FAF5',
+                    borderColor: hasError ? '#EF4444' : '#D1DCE5',
                     backgroundColor: '#FFFFFF',
                   }}
                   onFocus={(e) => e.target.style.borderColor = '#66B2D6'}
-                  onBlur={(e) => !hasError && (e.target.style.borderColor = '#E6FAF5')}
+                  onBlur={(e) => !hasError && (e.target.style.borderColor = '#D1DCE5')}
                 />
               </div>
             </div>
@@ -174,11 +174,11 @@ const Login = () => {
                   required
                   className="w-full pl-11 pr-4 py-3 border-2 rounded-lg transition-all duration-200 focus:outline-none"
                   style={{
-                    borderColor: hasError ? '#EF4444' : '#E6FAF5',
+                    borderColor: hasError ? '#EF4444' : '#D1DCE5',
                     backgroundColor: '#FFFFFF',
                   }}
                   onFocus={(e) => e.target.style.borderColor = '#66B2D6'}
-                  onBlur={(e) => !hasError && (e.target.style.borderColor = '#E6FAF5')}
+                  onBlur={(e) => !hasError && (e.target.style.borderColor = '#D1DCE5')}
                 />
               </div>
 
