@@ -126,7 +126,7 @@ app.post("/github-webhook", gitHubWebhook, (req, res, next) => {
 });
 // Testing rotes for AWS EC2
 app.get("/", (req, res) => {
-  res.json({ message: "Storage App Backend is Live, Deployed on AWS " });
+  res.json({ message: "Storage App Backend is Live, Deployed with NGINX" });
 });
 
 // Checking how pm2 not restarts the with npm command
