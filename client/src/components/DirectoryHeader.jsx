@@ -34,7 +34,7 @@ function DirectoryHeader({
               <Cloud className="w-6 h-6" style={{ color: '#FFFFFF' }} />
             </div>
             <div>
-              <span className="text-lg font-bold" style={{ color: '#2C3E50' }}>cloudvault</span>
+              <span className="text-lg font-bold" style={{ color: '#2C3E50' }}>my cloudvault</span>
               <p className="text-xs" style={{ color: '#A3C5D9' }}>My Secure Storage</p>
             </div>
           </div>
