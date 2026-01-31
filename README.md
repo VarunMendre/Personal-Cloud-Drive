@@ -33,6 +33,58 @@ A professional, secure, and full‑featured **personal cloud storage system** bu
 
 ---
 
+## 📸 Visual Tour & Features
+
+### 🏠 Home & Dashboard
+Experience a clean and intuitive dashboard for all your cloud storage needs.
+
+| ![Home Screen 1](Screenshots/home/1.png) | ![Home Screen 2](Screenshots/home/2.png) |
+| :---: | :---: |
+| ![Home Screen 3](Screenshots/home/3.png) | ![Home Screen 4](Screenshots/home/4.png) |
+
+---
+
+### 🤝 Collaborative Sharing & Security
+Manage file sharing and permissions with ease.
+
+| ![Sharing 1](Screenshots/sharing/5.png) | ![Sharing 2](Screenshots/sharing/6.png) |
+| :---: | :---: |
+| ![Sharing 3](Screenshots/sharing/7.png) | ![Sharing 4](Screenshots/sharing/8.png) |
+| ![Sharing 5](Screenshots/sharing/9.png) | ![Sharing 6](Screenshots/sharing/10.png) |
+| ![Sharing 7](Screenshots/sharing/11.png) | ![Sharing 8](Screenshots/sharing/12.png) |
+| ![Sharing 9](Screenshots/sharing/13.png) | ![Sharing 10](Screenshots/sharing/14.png) |
+
+---
+
+### 🔐 Role-Based Access Control (RBAC)
+Granular access control for teams and individuals.
+
+| ![RBAC 1](Screenshots/RBAC/15.png) | ![RBAC 2](Screenshots/RBAC/16.png) |
+| :---: | :---: |
+| ![RBAC 3](Screenshots/RBAC/17.png) | ![RBAC 4](Screenshots/RBAC/18.png) |
+| ![RBAC 5](Screenshots/RBAC/19.png) | |
+
+---
+
+### 💳 Subscription & Payments
+Flexible plans integrated with Razorpay for seamless storage upgrades.
+
+| ![Subscription 1](Screenshots/Subscription/23.png) | ![Subscription 2](Screenshots/Subscription/24.png) |
+| :---: | :---: |
+| ![Subscription 3](Screenshots/Subscription/25.png) | ![Subscription 4](Screenshots/Subscription/26.png) |
+| ![Subscription 5](Screenshots/Subscription/27.png) | ![Subscription 6](Screenshots/Subscription/28.png) |
+
+---
+
+### ⚙️ Account Settings
+Customize your profile and manage account security.
+
+| ![Settings 1](Screenshots/Settings/20.png) | ![Settings 2](Screenshots/Settings/21.png) |
+| :---: | :---: |
+| ![Settings 3](Screenshots/Settings/22.png) | |
+
+---
+
 ## 🏗️ Tech Stack Overview
 
 ### 🎨 **Frontend (Client)**

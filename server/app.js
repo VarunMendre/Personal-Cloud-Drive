@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import "dotenv/config.js";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -126,7 +126,7 @@ app.post("/github-webhook", gitHubWebhook, (req, res, next) => {
 });
 // Testing rotes for AWS EC2
 app.get("/", (req, res) => {
-  res.json({ message: "Storage App Backend is Live....." });
+  res.json({ message: "Storage App Backend is Live & Deployed Successfully by Custom CI-CD server..." });
 });
 
 // Checking how pm2 not restarts the with npm command

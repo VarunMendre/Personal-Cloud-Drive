@@ -128,7 +128,7 @@ router.post(
       const parallelUploads3 = new Upload({
         client: s3Client,
         params: {
-          Bucket: "varun-personal-stuff",
+          Bucket: process.env.BUCKET_NAME,
           Key: key,
           Body: driveStream,
           ContentType: contentType,
