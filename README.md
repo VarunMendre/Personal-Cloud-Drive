@@ -1,35 +1,45 @@
-# 📦 Storage Drive - Personal Cloud Storage Application
+# 📦 CloudVault (Storage Drive) - Personal Cloud Storage Application
 
-A professional, secure, and full‑featured **personal cloud storage system** built using the **MERN stack** (MongoDB, Express, React, Node.js). Storage Drive provides users with a smooth, premium, and intuitive cloud experience—allowing effortless file uploads, folder navigation, sharing, permissions management, and real-time storage tracking.
+A professional, secure, and full‑featured **personal cloud storage system** built using the **MERN stack** (MongoDB, Express, React, Node.js). CloudVault (Storage Drive) provides users with a smooth, premium, and intuitive cloud experience—allowing effortless file uploads, folder navigation, sharing, permissions management, real-time storage tracking, and seamless external imports.
 
 ---
 
 ## 🚀 Key Features
 
 ### 🔐 **Authentication & Security**
-- **Multiple Login Methods:** Email/Password (OTP Verified), Google OAuth, and GitHub OAuth.
-- **Secure Session Handling:** Redis-powered session store with signed cookies and **multi-device session limiting**.
+- **Multi-Method Login:** Support for traditional Email/Password, Google OAuth, and GitHub OAuth.
+- **Secure Registration:** 2-step registration process with mandatory **Email OTP Verification**.
+- **Password Security:** Built-in password strength indicator to ensure robust user credentials.
+- **Secure Session Handling:** Redis-powered session store with signed cookies.
+- **Multi-Device Session Management:** Intelligent eviction logic that notifies users and logs them out if they log in from another device (based on subscription limits).
 - **Role-Based Access Control (RBAC):** Granular permissions with `Owner`, `Admin`, `Manager`, and `User` roles.
 - **Advanced Sanitization:** Automated input sanitization using **DOMPurify** to eliminate XSS risks.
 - **Reliable Validation:** Comprehensive schema validation using **Zod**.
 - **Transaction Integrity:** Mongoose Transactions for atomic operations (e.g., user creation with root directory).
 
-### 📂 **Cloud File Management**
-- **AWS S3 Integration:** High-performance file storage with multipart upload support.
+### 📂 **Intelligent File Management**
+- **High-Performance Uploads:** AWS S3 Integration with multipart/direct upload support, progress tracking, multiple file selections, and cancellation.
+- **External Imports:** Seamlessly import files directly from **Google Drive** using the integrated Google Picker.
 - **CloudFront Content Delivery:** Secure file access via **CloudFront Signed URLs** for low-latency streaming and downloads.
 - **Intelligent Navigation:** Folder-based structure with breadcrumbs and nested directory support.
+- **Smart Actions:** Rename (with automated extension protection), Delete (safely remove), View/Download.
 - **Optimistic Locking:** Prevent data corruption during simultaneous file renames.
 - **Advanced Previews:** Seamless previewing for Images, PDFs, Videos, Audio, and Text files.
+- **View Modes:** Toggle between **List View** and **Grid View** based on user preference.
+- **Smart Search & Sort:** Efficiently find files with real-time search and sorting by name, date, or size.
 
 ### 🤝 **Collaborative Sharing**
-- **Role-Based Sharing:** Share files/folders with specific users as `Viewer` or `Editor`.
-- **Public/Protected Share Links:** Generate temporary or permanent share links with configurable access levels.
-- **Direct Access Management:** Real-time permission updates and access revocation for shared resources.
+- **Public & Private Share Links:** Generate temporary or permanent share links with configurable access levels.
+- **Granular Permissions:** Control access by assigning **Viewer** or **Editor** roles to collaborators.
+- **Collaboration Dashboard:** Dedicated "Shared with Me" and "Shared by Me" views to track all shared resources.
+- **Management Center:** Centralized page to manage and revoke permissions for any shared item, with real-time permission updates.
 
 ### 💳 **Storage & Subscriptions**
-- **Flexible Plans:** Subscription-based storage tiers integrated with **Razorpay**.
+- **Tiered Plans:** Flexible plans (Free, Standard, Premium) with varying storage limits and device access.
+- **Razorpay Integration:** Fully integrated payment gateway for secure monthly or yearly subscription renewals.
 - **Storage Quotas:** Real-time tracking of used space vs. plan limits.
-- **Seamless Upgrades:** Direct integration for plan transitions and storage expansion.
+- **Restriction Logic:** Graceful handling of "Paused", "Expired", or "Halted" subscriptions, limiting actions like uploads, downloads, and deletions.
+- **Smooth Redirects:** Visual countdown and status polling during subscription activation.
 
 ---
 
@@ -89,29 +99,33 @@ Customize your profile and manage account security.
 
 ### 🎨 **Frontend (Client)**
 - **Framework:** React (Vite)
-- **Styling:** Vanilla CSS (Custom premium design system) / Tailwind CSS v4 support.
-- **Routing:** React Router DOM
+- **Styling:** Tailwind CSS v4 & Vanilla CSS (Custom premium design system)
+- **Routing:** React Router v7
 - **State Management:** Context API + Custom Hooks
-- **Icons:** React Icons
+- **Icons:** Lucide-React & React-Icons
+- **Security & Utilities:** DOMPurify, Input-OTP, Tailwind-Merge, Clsx
 
 ### ⚡ **Backend (Server)**
-- **Runtime:** Node.js
+- **Runtime:** Node.js (v22.x)
 - **Framework:** Express.js
 - **Database:** MongoDB (Mongoose ODM)
 - **Caching/Sessions:** Redis (Redis Cloud integration)
 - **Cloud Services:** AWS S3 (Storage), AWS CloudFront (CDN)
 - **Payments:** Razorpay
+- **Emails:** Resend
+- **Other:** Serverless deployment support
 
 ---
 
-## ⚙️ Installation & Setup Guide
+## ⚙️ Local Installation & Setup Guide
 
 ### 📌 Prerequisites
-- Node.js v18+
+- Node.js v18+ (v22.x recommended)
 - MongoDB (Atlas recommended)
 - Redis Server (Redis Cloud recommended)
 - AWS Account (S3 Bucket & CloudFront Distribution)
 - Razorpay Account (for subscriptions)
+- Resend Account (for Email OTPs)
 
 ---
 
@@ -168,10 +182,50 @@ npm run dev
 
 ---
 
-##  Folder Structure
+## ☁️ Production Deployment Guide (AWS EC2 + PM2)
+
+Step-by-step instructions to launch an Ubuntu EC2 instance, deploy this backend, and keep it running with PM2.
+
+### **1. Server Setup**
+- Launch an Ubuntu 22.04/24.04 EC2 instance (t2.micro or larger).
+- Assign an Elastic IP and open ports 80 (HTTP), 443 (HTTPS), 22 (SSH), and 4000 (Custom API Port).
+- SSH into the server: `ssh -i "your-key.pem" ubuntu@<Elastic-IP>`
+
+### **2. Install Dependencies**
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y git curl build-essential
+# Install Node.js 22.x
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
 ```
+
+### **3. Install PM2 and Start App**
+```bash
+sudo npm install -g pm2
+git clone <your-repo-url>
+cd Storage-Drive/server
+npm install
+# Configure your .env
+nano .env 
+
+pm2 start node --name "StorageApp" -- --env-file=.env app.js
+pm2 save
+pm2 startup
+```
+
+---
+
+##  Folder Structure
+```text
 Storage-Drive/
-├── client/                # React Frontend
+├── client/                # React Frontend (Vite)
+│   ├── src/
+│   │   ├── apis/          # API & OAuth integration
+│   │   ├── components/    # Reusable UI components
+│   │   ├── context/       # State management
+│   │   ├── lib/           # Utility functions
+│   │   └── main.jsx       # App root & routing
 ├── server/                # Node.js Backend
 │   ├── config/            # Database & Cloud service configs
 │   ├── controllers/       # Business logic (Refactored/Standardized)
@@ -212,6 +266,7 @@ Storage-Drive/
 - **Signed CloudFront URLs:** Direct, secure file streaming without exposing S3 buckets.
 - **Standardized Responses:** Unified `successResponse` and `errorResponse` helpers for predictable API behavior.
 - **Redis Resilience:** Robust reconnection strategy and keep-alive heartbeats for cloud stability.
+- **XSS Protection:** Automatic sanitization of all inputs using `DOMPurify`.
 
 ---
 
