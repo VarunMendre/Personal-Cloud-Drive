@@ -1,0 +1,66 @@
+requirement gathering for new Cloudvault feature : 
+
+Answers of you're question area-wise : 
+
+
+
+ Area 1: Team / Group Structure : 
+
+
+
+
+
+yes team will have a profile — like a name, description, avatar/icon
+
+
+
+no it will be depend on subscription plan lets say for ex : there will be 4 plans in total 2 monthly & 2 yealy lets say 1. Standard  plan (Monthly, Yearly same features), 2. Premium plan (Monthly, Yearly, same features), so Standard plan says: user could join or create 5 Teams , & on the other Plan 10 Teams 
+
+
+
+yes creator automatically the Owner
+
+
+
+If deleted all files and messages will get Deleted Permanently we'll give them super warning before doing this move 
+
+
+
+yes a user could leave a team , and if owner leaves, we'll give Ownership to an random person in that team 
+
+
+
+Area 2: Invitations & Joining: 
+
+
+
+
+
+yes it will expire after week 
+
+
+
+no not anyone only the users which are using CloudVault Subscription and also when Subscipted user got the link and they click on join after that super admin or admin have to explicitly approve the req 
+
+
+
+Direct invite yes search that user name/email and directly invite it , user wil say join then that user will dirctly join to teams not futher pending approval or something from super admin / admin 
+
+
+
+a Notifications bell in the existing app and also via his email using resend emails 
+
+
+
+yes admin and super admin both could add the users 
+
+
+
+Area 3: Chat & Messages : 
+
+
+
+
+
+
+
